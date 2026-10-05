@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import type { CardSummary } from '@/types/card'
 import { formatPrice, isAvailable } from '@/utils/format'
+import AddToCartButton from './AddToCartButton.vue'
 
 defineProps<{ card: CardSummary }>()
 
@@ -10,7 +11,8 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <RouterLink :to="`/cards/${card.id}`" class="tile">
+  <article class="tile">
+    <RouterLink :to="`/cards/${card.id}`" class="link">
     <div class="image" :class="{ sold: !isAvailable(card) }">
       <img
         v-if="card.imageUrl"
@@ -31,10 +33,26 @@ const { t } = useI18n()
       <div v-if="card.salePrice > 0" class="price">{{ formatPrice(card.salePrice) }}</div>
       <div v-else class="price unset">{{ t('detail.unpriced') }}</div>
     </div>
-  </RouterLink>
+    </RouterLink>
+    <div class="actions">
+      <AddToCartButton :card="card" />
+    </div>
+  </article>
 </template>
 
 <style scoped>
+.link {
+  display: block;
+}
+
+.actions {
+  padding: 0 10px 10px;
+}
+
+.actions :deep(.add) {
+  width: 100%;
+}
+
 .tile {
   display: block;
   background: #fff;

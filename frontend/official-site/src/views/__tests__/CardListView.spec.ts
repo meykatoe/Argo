@@ -1,4 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
+import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { ApiError } from '@/api/http'
@@ -52,7 +53,7 @@ describe('CardListView', () => {
     const router = makeRouter()
     router.push('/cards?keyword=zoro&page=2')
     await router.isReady()
-    const w = mount(CardListView, { global: { plugins: [router, i18n] } })
+    const w = mount(CardListView, { global: { plugins: [router, i18n, createPinia()] } })
     await flushPromises()
 
     expect(searchCards).toHaveBeenCalledWith(
@@ -69,7 +70,7 @@ describe('CardListView', () => {
     const router = makeRouter()
     router.push('/cards')
     await router.isReady()
-    const w = mount(CardListView, { global: { plugins: [router, i18n] } })
+    const w = mount(CardListView, { global: { plugins: [router, i18n, createPinia()] } })
     await flushPromises()
     expect(w.text()).toContain('沒有符合條件的卡片')
   })
@@ -81,7 +82,7 @@ describe('CardListView', () => {
     const router = makeRouter()
     router.push('/cards')
     await router.isReady()
-    const w = mount(CardListView, { global: { plugins: [router, i18n] } })
+    const w = mount(CardListView, { global: { plugins: [router, i18n, createPinia()] } })
     await flushPromises()
 
     const next = w.findAll('button').find((b) => b.text() === '下一頁')!
@@ -95,7 +96,7 @@ describe('CardListView', () => {
     const router = makeRouter()
     router.push('/cards')
     await router.isReady()
-    const w = mount(CardListView, { global: { plugins: [router, i18n] } })
+    const w = mount(CardListView, { global: { plugins: [router, i18n, createPinia()] } })
     await flushPromises()
     expect(w.text()).toContain('發生未知錯誤')
   })

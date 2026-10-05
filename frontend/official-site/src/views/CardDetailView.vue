@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import { getCard } from '@/api/card'
+import AddToCartButton from '@/components/AddToCartButton.vue'
 import type { CardDetail } from '@/types/card'
 import { errorText } from '@/utils/error'
 import { colorText, formatPrice, isAvailable, typeText } from '@/utils/format'
@@ -80,6 +81,7 @@ function rows(c: CardDetail): [string, string | number | null][] {
               : t('detail.outOfStock')
           }}
         </p>
+        <AddToCartButton :card="card" class="buy" />
         <dl>
           <template v-for="[label, value] in rows(card)" :key="label">
             <template v-if="value !== null && value !== ''">
@@ -155,6 +157,7 @@ h1 {
 }
 
 dl {
+  margin-top: 20px;
   display: grid;
   grid-template-columns: 90px 1fr;
   gap: 6px 12px;

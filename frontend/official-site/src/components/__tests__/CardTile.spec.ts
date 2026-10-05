@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils'
+import { createPinia } from 'pinia'
 import { describe, expect, it } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { i18n } from '@/i18n'
@@ -27,7 +28,7 @@ function render(card: Partial<CardSummary>) {
   const router = createRouter({ history: createMemoryHistory(), routes: [] })
   return mount(CardTile, {
     props: { card: { ...base, ...card } },
-    global: { plugins: [router, i18n] },
+    global: { plugins: [router, i18n, createPinia()] },
   })
 }
 
