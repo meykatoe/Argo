@@ -26,6 +26,7 @@ public class CardService {
 	// 排序欄位白名單
 	private static final Set<String> SORTS = Set.of("cardSetId", "cardName", "marketPrice", "salePrice");
 	private static final int MAX_SIZE = 100;
+	private static final int MAX_BATCH = 50;
 
 	private final CardRepository cards;
 	private final CardSetRepository sets;
@@ -57,6 +58,20 @@ public class CardService {
 		Map<String, CardTranslation> trs = translations(q.lang(),
 				result.getContent().stream().map(Card::getCardSetId).toList());
 		return PageResult.of(result, c -> CardSummary.from(c, trs.get(c.getCardSetId())));
+	}
+
+	// 依編號批次取卡，保留請求順序
+	public List<CardSummary> getAll(List<Long> ids, String lang) {
+		if (ids.isEmpty() || ids.size() > MAX_BATCH) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_IDS");
+		}
+		String locale = Locales.normalize(lang);
+		Map<Long, Card> found = cards.findAllById(ids).stream()
+				.collect(Collectors.toMap(Card::getId, Function.identity()));
+		Map<String, CardTranslation> trs = translations(locale,
+				found.values().stream().map(Card::getCardSetId).distinct().toList());
+		return ids.stream().distinct().map(found::get).filter(java.util.Objects::nonNull)
+				.map(c -> CardSummary.from(c, trs.get(c.getCardSetId()))).toList();
 	}
 
 	public CardDetail get(Long id, String lang) {

@@ -74,4 +74,20 @@ class CardServiceTests {
 		assertThrows(ResponseStatusException.class, () -> service.search(q, 1, 20, "hack", false));
 		assertTrue(service.listSets("booster", "en").size() > 0);
 	}
+
+	@Test
+	void batchKeepsOrderAndSkipsMissing() {
+		var items = find(new CardQuery(null, "TS-01", null, null, null, null, false, "en")).items();
+		Long a = items.get(0).id();
+		Long b = items.get(1).id();
+		var res = service.getAll(java.util.List.of(b, 999999999L, a, b), "en");
+		assertEquals(java.util.List.of(b, a), res.stream().map(CardSummary::id).toList());
+	}
+
+	@Test
+	void batchRejectsBadSize() {
+		assertThrows(ResponseStatusException.class, () -> service.getAll(java.util.List.of(), "en"));
+		var many = java.util.stream.LongStream.rangeClosed(1, 51).boxed().toList();
+		assertThrows(ResponseStatusException.class, () -> service.getAll(many, "en"));
+	}
 }

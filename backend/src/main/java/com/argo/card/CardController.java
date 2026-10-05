@@ -38,6 +38,12 @@ public class CardController {
 	}
 
 	// 卡片詳情
+	@GetMapping("/cards/batch")
+	public List<CardSummary> batch(@RequestParam List<Long> ids,
+			@RequestParam(defaultValue = "en") String lang) {
+		return service.getAll(ids, lang);
+	}
+
 	@GetMapping("/cards/{id}")
 	public CardDetail detail(@PathVariable Long id,
 			@RequestParam(defaultValue = "en") String lang) {
