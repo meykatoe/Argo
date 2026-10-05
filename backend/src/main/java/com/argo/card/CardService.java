@@ -44,10 +44,10 @@ public class CardService {
 			String sortBy, boolean desc) {
 		// 頁碼從一起算
 		if (page < 1 || size < 1 || size > MAX_SIZE) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "分頁參數不正確");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_PAGING");
 		}
 		if (!SORTS.contains(sortBy)) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "不支援的排序欄位");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_SORT");
 		}
 		// 加主鍵穩定分頁
 		Sort sort = Sort.by(desc ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy)
@@ -62,7 +62,7 @@ public class CardService {
 	public CardDetail get(Long id, String lang) {
 		String locale = Locales.normalize(lang);
 		Card card = cards.findById(id)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "找不到卡片"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CARD_NOT_FOUND"));
 		String setName = setTranslations(locale).get(card.getSetId());
 		if (setName == null) {
 			setName = sets.findById(card.getSetId()).map(CardSet::getSetName).orElse(null);
