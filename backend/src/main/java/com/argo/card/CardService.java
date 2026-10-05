@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional(readOnly = true)
 public class CardService {
 
+	// 排序欄位白名單
 	private static final Set<String> SORTS = Set.of("cardSetId", "cardName", "marketPrice");
 	private static final int MAX_SIZE = 100;
 
@@ -27,12 +28,14 @@ public class CardService {
 
 	public PageResult<CardSummary> search(CardQuery query, int page, int size,
 			String sortBy, boolean desc) {
+		// 頁碼從一起算
 		if (page < 1 || size < 1 || size > MAX_SIZE) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "分頁參數不正確");
 		}
 		if (!SORTS.contains(sortBy)) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "不支援的排序欄位");
 		}
+		// 加主鍵穩定分頁
 		Sort sort = Sort.by(desc ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy)
 				.and(Sort.by("id"));
 		var result = cards.findAll(CardSpecs.of(query), PageRequest.of(page - 1, size, sort));

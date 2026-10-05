@@ -18,6 +18,7 @@ public class Card {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	// 同步比對用唯一鍵
 	@Column(nullable = false, unique = true)
 	private String sourceKey;
 
@@ -66,6 +67,7 @@ public class Card {
 
 		private LocalDate dateScraped;
 
+	// 由資料庫填入
 	@Column(insertable = false, updatable = false)
 	private OffsetDateTime createdAt;
 
@@ -159,6 +161,7 @@ public class Card {
 		return dateScraped;
 	}
 
+	// 以來源資料覆蓋
 	public void fill(OptcgCard src) {
 		this.cardSetId = src.cardSetId();
 		this.cardImageId = src.cardImageId();

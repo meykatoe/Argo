@@ -20,6 +20,7 @@ public class CardSyncService {
 
 	private static final Logger log = LoggerFactory.getLogger(CardSyncService.class);
 
+	// 類別對應來源路徑
 	private static final Map<String, String> SOURCES = Map.of(
 			"booster", "/api/allSetCards/",
 			"starter", "/api/allSTCards/",
@@ -37,17 +38,20 @@ public class CardSyncService {
 
 	public void syncAll() {
 		SOURCES.entrySet().stream()
+				// 固定同步順序
 				.sorted(Map.Entry.comparingByKey())
 				.forEach(e -> sync(e.getKey(), api.fetch(e.getValue())));
 	}
 
 	@Transactional
 	public void sync(String category, List<OptcgCard> source) {
+		// 同鍵重複取最後一筆
 		Map<String, OptcgCard> byKey = new LinkedHashMap<>();
 		source.forEach(c -> byKey.put(c.sourceKey(), c));
 
 		syncSets(category, byKey.values().stream().toList());
 
+		// 已存在則更新
 		Map<String, Card> existing = cards.findBySourceKeyIn(byKey.keySet()).stream()
 				.collect(Collectors.toMap(Card::getSourceKey, Function.identity()));
 		List<Card> toSave = byKey.entrySet().stream().map(e -> {
@@ -69,6 +73,7 @@ public class CardSyncService {
 				set = new CardSet(c.setId(), c.setName(), category);
 				known.put(c.setId(), set);
 			} else {
+				// 名稱以最新為準
 				set.setSetName(c.setName());
 			}
 			changed.put(set.getSetId(), set);

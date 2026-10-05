@@ -15,6 +15,7 @@ public final class CardSpecs {
 		return (root, query, cb) -> {
 			List<Predicate> ps = new ArrayList<>();
 			if (has(q.keyword())) {
+				// 比對名稱與編號
 				String like = "%" + q.keyword().trim().toLowerCase() + "%";
 				ps.add(cb.or(
 						cb.like(cb.lower(root.get("cardName")), like),
@@ -24,12 +25,14 @@ public final class CardSpecs {
 				ps.add(cb.equal(root.get("setId"), q.setId()));
 			}
 			if (has(q.category())) {
+				// 類別在系列表
 				Subquery<String> sub = query.subquery(String.class);
 				var set = sub.from(CardSet.class);
 				sub.select(set.get("setId")).where(cb.equal(set.get("category"), q.category()));
 				ps.add(root.get("setId").in(sub));
 			}
 			if (has(q.color())) {
+				// 多色卡用包含比對
 				ps.add(cb.like(cb.lower(root.get("cardColor")), "%" + q.color().toLowerCase() + "%"));
 			}
 			if (has(q.rarity())) {

@@ -26,6 +26,7 @@ public record OptcgCard(
 		@JsonProperty("inventory_price") double inventoryPrice,
 		@JsonProperty("date_scraped") String dateScraped) {
 
+	// 區分同卡不同版
 	public String sourceKey() {
 		String file = "";
 		if (cardImage != null) {
@@ -34,6 +35,7 @@ public record OptcgCard(
 		return setId + "|" + cardImageId + "|" + file;
 	}
 
+	// 格式不符回空值
 	public LocalDate scrapedDate() {
 		try {
 			return LocalDate.parse(dateScraped);
