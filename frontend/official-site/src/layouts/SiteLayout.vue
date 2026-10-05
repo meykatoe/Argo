@@ -18,6 +18,7 @@ const cart = useCartStore()
       <nav class="nav">
         <RouterLink to="/">{{ t('nav.home') }}</RouterLink>
         <RouterLink to="/cards">{{ t('nav.cards') }}</RouterLink>
+        <RouterLink to="/orders">{{ t('nav.orders') }}</RouterLink>
       </nav>
       <div class="right">
         <RouterLink to="/cart" class="cart" :aria-label="t('cart.title')">

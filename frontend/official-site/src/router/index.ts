@@ -6,6 +6,13 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: HomeView },
     { path: '/cart', name: 'cart', component: () => import('@/views/CartView.vue') },
+    { path: '/checkout', name: 'checkout', component: () => import('@/views/CheckoutView.vue') },
+    { path: '/orders', name: 'orders', component: () => import('@/views/OrderLookupView.vue') },
+    {
+      path: '/orders/:orderNo',
+      name: 'orderDetail',
+      component: () => import('@/views/OrderDetailView.vue'),
+    },
     {
       path: '/cards',
       name: 'cards',

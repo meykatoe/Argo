@@ -22,3 +22,10 @@ export function typeText(type: string): string {
   const { t, te } = i18n.global
   return te(`cardType.${type}`) ? t(`cardType.${type}`) : type
 }
+
+const SYMBOLS: Record<string, string> = { USD: 'US$', TWD: 'NT$' }
+
+// 依訂單幣別顯示金額
+export function formatMoney(value: number, currency: string): string {
+  return `${SYMBOLS[currency] ?? currency} ${value.toFixed(2)}`
+}

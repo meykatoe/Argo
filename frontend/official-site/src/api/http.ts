@@ -5,17 +5,24 @@ const BASE = import.meta.env.VITE_API_BASE ?? '/api'
 export class ApiError extends Error {
   readonly status: number
   readonly code: string
+  readonly details: Record<string, string>
 
-  constructor(status: number, code: string) {
+  constructor(status: number, code: string, details: Record<string, string> = {}) {
     super(code)
     this.status = status
     this.code = code
+    this.details = details
   }
 }
 
 type Params = Record<string, string | number | boolean | undefined>
 
-export async function get<T>(path: string, params: Params = {}): Promise<T> {
+async function request<T>(
+  method: 'GET' | 'POST',
+  path: string,
+  params: Params = {},
+  body?: unknown,
+): Promise<T> {
   const query = new URLSearchParams()
   for (const [key, value] of Object.entries(params)) {
     // 略過空值參數
@@ -25,18 +32,30 @@ export async function get<T>(path: string, params: Params = {}): Promise<T> {
   }
   // 依目前語言取資料
   query.set('lang', currentLocale())
-  const res = await fetch(`${BASE}${path}?${query.toString()}`)
+  const res = await fetch(`${BASE}${path}?${query.toString()}`, {
+    method,
+    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
   if (!res.ok) {
-    throw new ApiError(res.status, await readCode(res))
+    throw await readError(res)
   }
   return (await res.json()) as T
 }
 
-async function readCode(res: Response): Promise<string> {
+export function get<T>(path: string, params: Params = {}): Promise<T> {
+  return request<T>('GET', path, params)
+}
+
+export function post<T>(path: string, body: unknown, params: Params = {}): Promise<T> {
+  return request<T>('POST', path, params, body)
+}
+
+async function readError(res: Response): Promise<ApiError> {
   try {
     const body = await res.json()
-    return body.code ?? 'ERROR'
+    return new ApiError(res.status, body.code ?? 'ERROR', body.details ?? {})
   } catch {
-    return 'ERROR'
+    return new ApiError(res.status, 'ERROR')
   }
 }

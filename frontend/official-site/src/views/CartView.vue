@@ -144,7 +144,10 @@ onMounted(load)
       <div class="summary">
         <div class="count">{{ t('cart.items', { n: payableQty }) }}</div>
         <div class="total">{{ t('cart.total') }} {{ formatPrice(total) }}</div>
-        <button type="button" class="checkout" disabled>{{ t('cart.checkout') }}</button>
+        <RouterLink v-if="payable.length" to="/checkout" class="checkout">
+          {{ t('cart.checkout') }}
+        </RouterLink>
+        <button v-else type="button" class="checkout" disabled>{{ t('cart.checkout') }}</button>
       </div>
     </template>
   </section>
@@ -276,6 +279,8 @@ onMounted(load)
 }
 
 .checkout {
+  display: inline-flex;
+  align-items: center;
   height: 42px;
   padding: 0 24px;
   border: 0;

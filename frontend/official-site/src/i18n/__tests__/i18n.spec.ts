@@ -39,6 +39,6 @@ describe('i18n', () => {
     vi.stubGlobal('fetch', fn)
     setLocale('en')
     await get('/sets')
-    expect(fn).toHaveBeenCalledWith('/api/sets?lang=en')
+    expect(fn.mock.calls[0]![0]).toBe('/api/sets?lang=en')
   })
 })
