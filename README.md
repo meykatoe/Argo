@@ -9,15 +9,17 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
 - 後端：Java 25、Spring Boot 4.1、Maven、Spring Data JPA、Flyway
 - 資料庫：PostgreSQL 18
 - 前端：Vue 3、Vite、TypeScript（每個前端獨立一個資料夾）
-- 卡片資料來源：optcgapi.com
+- 卡片資料來源：optcgapi.com（英文、價格）、Bandai 官方繁中卡表（繁體中文名稱與效果）
 
 ## 功能概述（實時更新）
 
 - 卡片資料同步：從 optcgapi.com 取得補充包、起始牌組、促銷卡，寫入資料庫。每天凌晨 4 點自動同步，也可用 `--argo.sync.on-startup=true` 在啟動時手動同步一次。
+- 多語系卡片資料：卡片查詢 API 加上 `lang` 參數（`en` 預設、`zh-TW`）即回傳該語言的卡名、效果、特徵與系列名稱，找不到翻譯時回退為英文，原文固定放在 `cardNameEn`、`setNameEn`。繁中資料抓取自 Bandai 官方繁中卡表（`asia-tc.onepiece-cardgame.com`），啟動時加 `--argo.translation.on-startup=true` 手動同步，也會每週一凌晨 5 點自動同步。內容版權屬原權利人，正式營運前請自行確認使用條款。
 - 卡片查詢 API（無需登入，皆為 GET）：
   - `/api/cards`：列表，支援 `keyword`、`setId`、`category`（booster / starter / promo）、`color`、`rarity`、`cardType` 篩選，`page`（從 1 開始）、`size`（上限 100）、`sortBy`（`cardSetId` / `cardName` / `marketPrice`）、`desc` 分頁排序
   - `/api/cards/{id}`：卡片詳情
   - `/api/sets`：系列列表，可用 `category` 篩選
+  - 以上三個都支援 `lang`；`/api/cards` 的 `keyword` 在 `zh-TW` 時也會比對中文卡名
 - 官網頁面：首頁（系列入口與搜尋）、卡片列表（搜尋、類別 / 系列 / 顏色 / 稀有度 / 種類篩選、排序、分頁，條件同步在網址）、卡片詳情
 
 ## 專案架構

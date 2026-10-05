@@ -1,12 +1,10 @@
 package com.argo.sync;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
-@EnableScheduling
 @ConditionalOnProperty(name = "argo.sync.scheduled", havingValue = "true")
 public class CardSyncScheduler {
 

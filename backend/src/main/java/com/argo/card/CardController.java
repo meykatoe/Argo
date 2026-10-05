@@ -27,23 +27,26 @@ public class CardController {
 			@RequestParam(required = false) String color,
 			@RequestParam(required = false) String rarity,
 			@RequestParam(required = false) String cardType,
+			@RequestParam(defaultValue = "en") String lang,
 			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "20") int size,
 			@RequestParam(defaultValue = "cardSetId") String sortBy,
 			@RequestParam(defaultValue = "false") boolean desc) {
-		CardQuery query = new CardQuery(keyword, setId, category, color, rarity, cardType);
+		CardQuery query = new CardQuery(keyword, setId, category, color, rarity, cardType, lang);
 		return service.search(query, page, size, sortBy, desc);
 	}
 
 	// 卡片詳情
 	@GetMapping("/cards/{id}")
-	public CardDetail detail(@PathVariable Long id) {
-		return service.get(id);
+	public CardDetail detail(@PathVariable Long id,
+			@RequestParam(defaultValue = "en") String lang) {
+		return service.get(id, lang);
 	}
 
 	// 系列列表
 	@GetMapping("/sets")
-	public List<CardSetDto> sets(@RequestParam(required = false) String category) {
-		return service.listSets(category);
+	public List<CardSetDto> sets(@RequestParam(required = false) String category,
+			@RequestParam(defaultValue = "en") String lang) {
+		return service.listSets(category, lang);
 	}
 }

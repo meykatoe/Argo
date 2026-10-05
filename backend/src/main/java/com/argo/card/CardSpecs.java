@@ -1,5 +1,7 @@
 package com.argo.card;
 
+import com.argo.i18n.CardTranslation;
+import com.argo.i18n.Locales;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
 import java.util.ArrayList;
@@ -17,9 +19,20 @@ public final class CardSpecs {
 			if (has(q.keyword())) {
 				// 比對名稱與編號
 				String like = "%" + q.keyword().trim().toLowerCase() + "%";
-				ps.add(cb.or(
+				Predicate hit = cb.or(
 						cb.like(cb.lower(root.get("cardName")), like),
-						cb.like(cb.lower(root.get("cardSetId")), like)));
+						cb.like(cb.lower(root.get("cardSetId")), like));
+				if (!Locales.isDefault(q.lang())) {
+					// 也比對翻譯名稱
+					Subquery<Long> tr = query.subquery(Long.class);
+					var t = tr.from(CardTranslation.class);
+					tr.select(t.get("id")).where(
+							cb.equal(t.get("cardSetId"), root.get("cardSetId")),
+							cb.equal(t.get("locale"), q.lang()),
+							cb.like(cb.lower(t.get("cardName")), like));
+					hit = cb.or(hit, cb.exists(tr));
+				}
+				ps.add(hit);
 			}
 			if (has(q.setId())) {
 				ps.add(cb.equal(root.get("setId"), q.setId()));

@@ -45,33 +45,33 @@ class CardServiceTests {
 
 	@Test
 	void filterBySet() {
-		assertEquals(2, find(new CardQuery(null, "TS-01", null, null, null, null)).total());
+		assertEquals(2, find(new CardQuery(null, "TS-01", null, null, null, null, "en")).total());
 	}
 
 	@Test
 	void filterByKeywordAndColor() {
-		var r = find(new CardQuery("alpha", "TS-01", null, "blue", null, null));
+		var r = find(new CardQuery("alpha", "TS-01", null, "blue", null, null, "en"));
 		assertEquals(1, r.total());
 		assertEquals("Test Alpha", r.items().get(0).cardName());
 	}
 
 	@Test
 	void filterByCategory() {
-		var r = find(new CardQuery(null, "TS-01", "promo", null, null, null));
+		var r = find(new CardQuery(null, "TS-01", "promo", null, null, null, "en"));
 		assertEquals(0, r.total());
 	}
 
 	@Test
 	void detailHasSetName() {
-		Long id = find(new CardQuery("beta", null, null, null, null, null)).items().get(0).id();
-		assertEquals("測試系列", service.get(id).setName());
+		Long id = find(new CardQuery("beta", null, null, null, null, null, "en")).items().get(0).id();
+		assertEquals("測試系列", service.get(id, "en").setName());
 	}
 
 	@Test
 	void badParamsRejected() {
-		var q = new CardQuery(null, null, null, null, null, null);
+		var q = new CardQuery(null, null, null, null, null, null, "en");
 		assertThrows(ResponseStatusException.class, () -> service.search(q, 0, 20, "cardSetId", false));
 		assertThrows(ResponseStatusException.class, () -> service.search(q, 1, 20, "hack", false));
-		assertTrue(service.listSets("booster").size() > 0);
+		assertTrue(service.listSets("booster", "en").size() > 0);
 	}
 }
