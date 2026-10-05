@@ -1,4 +1,10 @@
 package com.argo.common;
 
-public record ErrorBody(String code, int status) {
+import java.util.Map;
+
+public record ErrorBody(String code, int status, Map<String, String> details) {
+
+	public ErrorBody(String code, int status) {
+		this(code, status, Map.of());
+	}
 }

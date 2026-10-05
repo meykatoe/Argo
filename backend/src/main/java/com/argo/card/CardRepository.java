@@ -13,6 +13,17 @@ public interface CardRepository extends JpaRepository<Card, Long>, JpaSpecificat
 
 	List<Card> findBySourceKeyIn(Collection<String> keys);
 
+	// 單一語句扣庫存，不足時不更新
+	@Transactional
+	@Modifying(flushAutomatically = true)
+	@Query("update Card c set c.stock = c.stock - :q where c.id = :id and c.stock >= :q and c.salePrice > 0")
+	int decrementStock(@Param("id") Long id, @Param("q") int quantity);
+
+	@Transactional
+	@Modifying(flushAutomatically = true)
+	@Query("update Card c set c.stock = c.stock + :q where c.id = :id")
+	int incrementStock(@Param("id") Long id, @Param("q") int quantity);
+
 	// 開發用，補庫存給零庫存商品
 	@Transactional
 	@Modifying
