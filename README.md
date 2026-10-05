@@ -43,6 +43,9 @@ Argo/
 
 ```
 cd backend && ./mvnw spring-boot:run
+cd frontend/official-site && npm install && npm run dev
 ```
+
+官網預設在 `http://localhost:5173`，開發時 `/api` 會自動轉發到後端 8080。
 
 ## 未來會想做的功能（實時更新）

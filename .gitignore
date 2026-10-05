@@ -1,0 +1,28 @@
+# 環境變數與機密（範例檔除外）
+.env
+.env.*
+!.env.example
+*.local
+
+# 本機設定
+application-local.properties
+application-local.yml
+
+# 日誌
+*.log
+logs/
+
+# 作業系統
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 編輯器
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 暫存
+tmp/
+*.tmp

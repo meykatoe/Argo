@@ -1,0 +1,27 @@
+:root {
+  --color-bg: #fafaf7;
+  --color-text: #1f2430;
+  --color-muted: #6b7280;
+  --color-primary: #b91c1c;
+  --color-border: #e5e7eb;
+  --page-width: 1200px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, 'Noto Sans TC', sans-serif;
+  line-height: 1.6;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

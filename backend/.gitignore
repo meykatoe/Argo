@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Argo ###
+*.log
+.env
+application-local.properties
+application-local.yml
