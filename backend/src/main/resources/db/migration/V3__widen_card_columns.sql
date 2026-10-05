@@ -1,0 +1,9 @@
+alter table card alter column card_cost type varchar(100);
+alter table card alter column card_power type varchar(100);
+alter table card alter column life type varchar(100);
+alter table card alter column rarity type varchar(20);
+alter table card alter column attribute type varchar(100);
+alter table card alter column card_color type varchar(100);
+alter table card alter column card_type type varchar(50);
+alter table card alter column card_name type varchar(300);
+alter table card alter column image_url type varchar(500);
