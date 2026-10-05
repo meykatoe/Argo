@@ -5,7 +5,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { getCard } from '@/api/card'
 import type { CardDetail } from '@/types/card'
 import { errorText } from '@/utils/error'
-import { colorText, formatPrice, typeText } from '@/utils/format'
+import { colorText, formatPrice, isAvailable, typeText } from '@/utils/format'
 
 const route = useRoute()
 const { t, locale } = useI18n()
@@ -68,7 +68,18 @@ function rows(c: CardDetail): [string, string | number | null][] {
       <div class="body">
         <h1>{{ card.cardName }}</h1>
         <p v-if="card.cardNameEn !== card.cardName" class="en">{{ card.cardNameEn }}</p>
-        <p class="price">{{ t('detail.price') }} {{ formatPrice(card.marketPrice) }}</p>
+        <p v-if="card.salePrice > 0" class="price">
+          {{ t('detail.price') }} {{ formatPrice(card.salePrice) }}
+        </p>
+        <p v-else class="price unset">{{ t('detail.unpriced') }}</p>
+        <p class="market">{{ t('detail.marketPrice') }} {{ formatPrice(card.marketPrice) }}</p>
+        <p class="stock" :class="{ out: !isAvailable(card) }">
+          {{
+            isAvailable(card)
+              ? `${t('detail.inStock')} · ${t('detail.stockLeft', { n: card.stock })}`
+              : t('detail.outOfStock')
+          }}
+        </p>
         <dl>
           <template v-for="[label, value] in rows(card)" :key="label">
             <template v-if="value !== null && value !== ''">
@@ -110,9 +121,37 @@ h1 {
 }
 
 .price {
+  margin: 12px 0 0;
   color: var(--color-primary);
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
+}
+
+.price.unset {
+  color: var(--color-muted);
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.market {
+  margin: 2px 0 0;
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.stock {
+  display: inline-block;
+  margin: 10px 0 16px;
+  padding: 2px 10px;
+  border-radius: 4px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 14px;
+}
+
+.stock.out {
+  background: #f1f1ee;
+  color: var(--color-muted);
 }
 
 dl {

@@ -33,15 +33,21 @@ const en: MessageSchema = {
     sort: {
       cardSetId: 'Sort by number',
       cardName: 'Sort by name',
-      marketPrice: 'Sort by price',
+      salePrice: 'Sort by price',
     },
     asc: 'Ascending',
     desc: 'Descending',
+    inStockOnly: 'In stock only',
     search: 'Search',
   },
   pager: { label: 'Pagination', prev: 'Previous', next: 'Next' },
   detail: {
-    price: 'Market price',
+    price: 'Price',
+    marketPrice: 'Market price',
+    unpriced: 'Price not set',
+    inStock: 'In stock',
+    stockLeft: '{n} left',
+    outOfStock: 'Out of stock',
     text: 'Effect',
     rows: {
       number: 'Number',

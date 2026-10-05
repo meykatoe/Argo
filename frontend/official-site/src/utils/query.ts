@@ -4,7 +4,7 @@ import type { CardCategory, CardSearchParams } from '@/types/card'
 export const DEFAULT_SORT = 'cardSetId'
 export const PAGE_SIZE = 24
 
-const SORTS = ['cardSetId', 'cardName', 'marketPrice']
+const SORTS = ['cardSetId', 'cardName', 'salePrice']
 const CATEGORIES = ['booster', 'starter', 'promo']
 
 function first(v?: LocationQuery[string]): string {
@@ -26,6 +26,7 @@ export function parseQuery(q: LocationQuery): CardSearchParams {
     cardType: first(q.cardType),
     page: Number.isInteger(page) && page > 0 ? page : 1,
     sortBy: SORTS.includes(sortBy) ? (sortBy as CardSearchParams['sortBy']) : DEFAULT_SORT,
+    inStock: first(q.inStock) === 'true',
     desc: first(q.desc) === 'true',
   }
 }
@@ -39,6 +40,7 @@ export function toQuery(p: CardSearchParams): LocationQueryRaw {
   }
   if (p.page && p.page > 1) out.page = String(p.page)
   if (p.sortBy && p.sortBy !== DEFAULT_SORT) out.sortBy = p.sortBy
+  if (p.inStock) out.inStock = 'true'
   if (p.desc) out.desc = 'true'
   return out
 }

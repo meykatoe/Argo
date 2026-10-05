@@ -4,6 +4,11 @@ export function formatPrice(value: number): string {
   return `US$ ${value.toFixed(2)}`
 }
 
+// 有庫存且已定價才可買
+export function isAvailable(card: { stock: number; salePrice: number }): boolean {
+  return card.stock > 0 && card.salePrice > 0
+}
+
 // 多色卡以空白分隔
 export function colorText(color: string): string {
   const { t, te } = i18n.global

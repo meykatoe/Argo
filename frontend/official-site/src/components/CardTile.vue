@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import type { CardSummary } from '@/types/card'
-import { formatPrice } from '@/utils/format'
+import { formatPrice, isAvailable } from '@/utils/format'
 
 defineProps<{ card: CardSummary }>()
 
@@ -11,7 +11,7 @@ const { t } = useI18n()
 
 <template>
   <RouterLink :to="`/cards/${card.id}`" class="tile">
-    <div class="image">
+    <div class="image" :class="{ sold: !isAvailable(card) }">
       <img
         v-if="card.imageUrl"
         :src="card.imageUrl"
@@ -20,6 +20,7 @@ const { t } = useI18n()
         referrerpolicy="no-referrer"
       />
       <span v-else class="empty">{{ t('cards.noImage') }}</span>
+      <span v-if="!isAvailable(card)" class="badge">{{ t('detail.outOfStock') }}</span>
     </div>
     <div class="info">
       <div class="code">{{ card.cardSetId }} · {{ card.rarity }}</div>
@@ -27,7 +28,8 @@ const { t } = useI18n()
       <div v-if="card.cardNameEn !== card.cardName" class="en" :title="card.cardNameEn">
         {{ card.cardNameEn }}
       </div>
-      <div class="price">{{ formatPrice(card.marketPrice) }}</div>
+      <div v-if="card.salePrice > 0" class="price">{{ formatPrice(card.salePrice) }}</div>
+      <div v-else class="price unset">{{ t('detail.unpriced') }}</div>
     </div>
   </RouterLink>
 </template>
@@ -47,11 +49,27 @@ const { t } = useI18n()
 }
 
 .image {
+  position: relative;
   aspect-ratio: 63 / 88;
   background: #f1f1ee;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.image.sold img {
+  opacity: 0.45;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #1f2430;
+  color: #fff;
+  font-size: 12px;
 }
 
 .image img {
@@ -94,5 +112,10 @@ const { t } = useI18n()
   margin-top: 4px;
   color: var(--color-primary);
   font-weight: 600;
+}
+
+.price.unset {
+  color: var(--color-muted);
+  font-weight: 400;
 }
 </style>

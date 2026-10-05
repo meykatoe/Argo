@@ -12,7 +12,7 @@ const COLORS = ['Red', 'Green', 'Blue', 'Purple', 'Black', 'Yellow']
 const RARITIES = ['L', 'C', 'UC', 'R', 'SR', 'SEC', 'TR', 'P', 'PR']
 const TYPES = ['Leader', 'Character', 'Event', 'Stage']
 const CATEGORIES = ['booster', 'starter', 'promo']
-const SORTS = ['cardSetId', 'cardName', 'marketPrice']
+const SORTS = ['cardSetId', 'cardName', 'salePrice']
 
 const keyword = ref(props.modelValue.keyword ?? '')
 watch(
@@ -68,6 +68,14 @@ function submit() {
     <select :value="modelValue.sortBy" @change="pick('sortBy', $event)">
       <option v-for="s in SORTS" :key="s" :value="s">{{ t(`filter.sort.${s}`) }}</option>
     </select>
+    <label class="stock">
+      <input
+        type="checkbox"
+        :checked="modelValue.inStock"
+        @change="emit('change', { inStock: ($event.target as HTMLInputElement).checked })"
+      />
+      {{ t('filter.inStockOnly') }}
+    </label>
     <button type="button" class="dir" @click="emit('change', { desc: !modelValue.desc })">
       {{ modelValue.desc ? t('filter.desc') : t('filter.asc') }}
     </button>
@@ -83,7 +91,7 @@ function submit() {
   margin-bottom: 20px;
 }
 
-input,
+input[type='search'],
 select,
 button {
   height: 36px;
@@ -94,8 +102,16 @@ button {
   font: inherit;
 }
 
-input {
+input[type='search'] {
   flex: 1 1 200px;
+}
+
+.stock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  cursor: pointer;
 }
 
 button {

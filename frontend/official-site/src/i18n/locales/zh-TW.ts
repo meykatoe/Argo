@@ -31,15 +31,21 @@ const zhTW = {
     sort: {
       cardSetId: '依編號排序',
       cardName: '依名稱排序',
-      marketPrice: '依價格排序',
+      salePrice: '依價格排序',
     },
     asc: '升冪',
     desc: '降冪',
+    inStockOnly: '只看有貨',
     search: '搜尋',
   },
   pager: { label: '分頁', prev: '上一頁', next: '下一頁' },
   detail: {
-    price: '參考市價',
+    price: '售價',
+    marketPrice: '參考市價',
+    unpriced: '尚未定價',
+    inStock: '有貨',
+    stockLeft: '庫存 {n} 件',
+    outOfStock: '缺貨',
     text: '效果',
     rows: {
       number: '編號',

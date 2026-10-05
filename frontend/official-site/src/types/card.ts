@@ -22,6 +22,8 @@ export interface CardSummary {
   cardPower: string | null
   imageUrl: string | null
   marketPrice: number
+  salePrice: number
+  stock: number
 }
 
 export interface CardDetail extends CardSummary {
@@ -51,6 +53,7 @@ export interface CardSearchParams {
   cardType?: string
   page?: number
   size?: number
-  sortBy?: 'cardSetId' | 'cardName' | 'marketPrice'
+  inStock?: boolean
+  sortBy?: 'cardSetId' | 'cardName' | 'salePrice'
   desc?: boolean
 }

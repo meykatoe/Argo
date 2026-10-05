@@ -25,6 +25,8 @@ const card = {
   cardPower: '5000',
   imageUrl: null,
   marketPrice: 1.5,
+  salePrice: 1.35,
+  stock: 3,
 }
 
 function makeRouter() {
