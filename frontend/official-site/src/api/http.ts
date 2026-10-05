@@ -1,11 +1,15 @@
+import { currentLocale } from '@/i18n'
+
 const BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
 export class ApiError extends Error {
   readonly status: number
+  readonly code: string
 
-  constructor(status: number, message: string) {
-    super(message)
+  constructor(status: number, code: string) {
+    super(code)
     this.status = status
+    this.code = code
   }
 }
 
@@ -19,19 +23,20 @@ export async function get<T>(path: string, params: Params = {}): Promise<T> {
       query.set(key, String(value))
     }
   }
-  const qs = query.toString()
-  const res = await fetch(`${BASE}${path}${qs ? `?${qs}` : ''}`)
+  // 依目前語言取資料
+  query.set('lang', currentLocale())
+  const res = await fetch(`${BASE}${path}?${query.toString()}`)
   if (!res.ok) {
-    throw new ApiError(res.status, await readMessage(res))
+    throw new ApiError(res.status, await readCode(res))
   }
   return (await res.json()) as T
 }
 
-async function readMessage(res: Response): Promise<string> {
+async function readCode(res: Response): Promise<string> {
   try {
     const body = await res.json()
-    return body.message ?? body.error ?? res.statusText
+    return body.code ?? 'ERROR'
   } catch {
-    return res.statusText
+    return 'ERROR'
   }
 }

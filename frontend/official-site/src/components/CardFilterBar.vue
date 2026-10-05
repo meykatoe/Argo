@@ -1,23 +1,18 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { CardSearchParams, CardSet } from '@/types/card'
 
 const props = defineProps<{ modelValue: CardSearchParams; sets: CardSet[] }>()
 const emit = defineEmits<{ change: [patch: CardSearchParams] }>()
 
+const { t } = useI18n()
+
 const COLORS = ['Red', 'Green', 'Blue', 'Purple', 'Black', 'Yellow']
 const RARITIES = ['L', 'C', 'UC', 'R', 'SR', 'SEC', 'TR', 'P', 'PR']
 const TYPES = ['Leader', 'Character', 'Event', 'Stage']
-const CATEGORIES = [
-  { value: 'booster', label: '補充包' },
-  { value: 'starter', label: '起始牌組' },
-  { value: 'promo', label: '促銷卡' },
-]
-const SORTS = [
-  { value: 'cardSetId', label: '編號' },
-  { value: 'cardName', label: '名稱' },
-  { value: 'marketPrice', label: '價格' },
-]
+const CATEGORIES = ['booster', 'starter', 'promo']
+const SORTS = ['cardSetId', 'cardName', 'marketPrice']
 
 const keyword = ref(props.modelValue.keyword ?? '')
 watch(
@@ -47,36 +42,36 @@ function submit() {
 
 <template>
   <form class="bar" @submit.prevent="submit">
-    <input v-model="keyword" type="search" placeholder="搜尋卡名或編號" />
+    <input v-model="keyword" type="search" :placeholder="t('filter.keyword')" />
     <select :value="modelValue.category ?? ''" @change="pick('category', $event)">
-      <option value="">全部類別</option>
-      <option v-for="c in CATEGORIES" :key="c.value" :value="c.value">{{ c.label }}</option>
+      <option value="">{{ t('filter.allCategories') }}</option>
+      <option v-for="c in CATEGORIES" :key="c" :value="c">{{ t(`categories.${c}`) }}</option>
     </select>
     <select :value="modelValue.setId ?? ''" @change="pick('setId', $event)">
-      <option value="">全部系列</option>
+      <option value="">{{ t('filter.allSets') }}</option>
       <option v-for="s in visibleSets" :key="s.setId" :value="s.setId">
         {{ s.setId }} {{ s.setName }}
       </option>
     </select>
     <select :value="modelValue.color ?? ''" @change="pick('color', $event)">
-      <option value="">全部顏色</option>
-      <option v-for="c in COLORS" :key="c" :value="c">{{ c }}</option>
+      <option value="">{{ t('filter.allColors') }}</option>
+      <option v-for="c in COLORS" :key="c" :value="c">{{ t(`color.${c}`) }}</option>
     </select>
     <select :value="modelValue.rarity ?? ''" @change="pick('rarity', $event)">
-      <option value="">全部稀有度</option>
+      <option value="">{{ t('filter.allRarities') }}</option>
       <option v-for="r in RARITIES" :key="r" :value="r">{{ r }}</option>
     </select>
     <select :value="modelValue.cardType ?? ''" @change="pick('cardType', $event)">
-      <option value="">全部種類</option>
-      <option v-for="t in TYPES" :key="t" :value="t">{{ t }}</option>
+      <option value="">{{ t('filter.allTypes') }}</option>
+      <option v-for="ty in TYPES" :key="ty" :value="ty">{{ t(`cardType.${ty}`) }}</option>
     </select>
     <select :value="modelValue.sortBy" @change="pick('sortBy', $event)">
-      <option v-for="s in SORTS" :key="s.value" :value="s.value">依{{ s.label }}排序</option>
+      <option v-for="s in SORTS" :key="s" :value="s">{{ t(`filter.sort.${s}`) }}</option>
     </select>
     <button type="button" class="dir" @click="emit('change', { desc: !modelValue.desc })">
-      {{ modelValue.desc ? '降冪' : '升冪' }}
+      {{ modelValue.desc ? t('filter.desc') : t('filter.asc') }}
     </button>
-    <button type="submit" class="go">搜尋</button>
+    <button type="submit" class="go">{{ t('filter.search') }}</button>
   </form>
 </template>
 

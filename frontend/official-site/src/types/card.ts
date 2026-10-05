@@ -14,6 +14,7 @@ export interface CardSummary {
   cardImageId: string
   setId: string
   cardName: string
+  cardNameEn: string
   rarity: string
   cardColor: string
   cardType: string
@@ -35,6 +36,7 @@ export interface CardDetail extends CardSummary {
 export interface CardSet {
   setId: string
   setName: string
+  setNameEn: string
   category: CardCategory
 }
 

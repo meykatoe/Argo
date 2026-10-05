@@ -1,6 +1,8 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import { ApiError } from '@/api/http'
+import { i18n } from '@/i18n'
 import CardListView from '../CardListView.vue'
 
 vi.mock('@/api/card', () => ({
@@ -15,6 +17,7 @@ const card = {
   cardImageId: 'OP01-001',
   setId: 'OP-01',
   cardName: 'Zoro',
+  cardNameEn: 'Zoro',
   rarity: 'L',
   cardColor: 'Red',
   cardType: 'Leader',
@@ -47,7 +50,7 @@ describe('CardListView', () => {
     const router = makeRouter()
     router.push('/cards?keyword=zoro&page=2')
     await router.isReady()
-    const w = mount(CardListView, { global: { plugins: [router] } })
+    const w = mount(CardListView, { global: { plugins: [router, i18n] } })
     await flushPromises()
 
     expect(searchCards).toHaveBeenCalledWith(
@@ -64,7 +67,7 @@ describe('CardListView', () => {
     const router = makeRouter()
     router.push('/cards')
     await router.isReady()
-    const w = mount(CardListView, { global: { plugins: [router] } })
+    const w = mount(CardListView, { global: { plugins: [router, i18n] } })
     await flushPromises()
     expect(w.text()).toContain('沒有符合條件的卡片')
   })
@@ -76,7 +79,7 @@ describe('CardListView', () => {
     const router = makeRouter()
     router.push('/cards')
     await router.isReady()
-    const w = mount(CardListView, { global: { plugins: [router] } })
+    const w = mount(CardListView, { global: { plugins: [router, i18n] } })
     await flushPromises()
 
     const next = w.findAll('button').find((b) => b.text() === '下一頁')!
@@ -86,12 +89,12 @@ describe('CardListView', () => {
   })
 
   it('失敗顯示錯誤訊息', async () => {
-    vi.mocked(searchCards).mockRejectedValue(new Error('伺服器錯誤'))
+    vi.mocked(searchCards).mockRejectedValue(new ApiError(500, 'ERROR'))
     const router = makeRouter()
     router.push('/cards')
     await router.isReady()
-    const w = mount(CardListView, { global: { plugins: [router] } })
+    const w = mount(CardListView, { global: { plugins: [router, i18n] } })
     await flushPromises()
-    expect(w.text()).toContain('伺服器錯誤')
+    expect(w.text()).toContain('發生未知錯誤')
   })
 })

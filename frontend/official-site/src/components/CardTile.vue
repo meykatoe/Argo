@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import type { CardSummary } from '@/types/card'
 import { formatPrice } from '@/utils/format'
 
 defineProps<{ card: CardSummary }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -16,11 +19,14 @@ defineProps<{ card: CardSummary }>()
         loading="lazy"
         referrerpolicy="no-referrer"
       />
-      <span v-else class="empty">無圖片</span>
+      <span v-else class="empty">{{ t('cards.noImage') }}</span>
     </div>
     <div class="info">
       <div class="code">{{ card.cardSetId }} · {{ card.rarity }}</div>
       <div class="name" :title="card.cardName">{{ card.cardName }}</div>
+      <div v-if="card.cardNameEn !== card.cardName" class="en" :title="card.cardNameEn">
+        {{ card.cardNameEn }}
+      </div>
       <div class="price">{{ formatPrice(card.marketPrice) }}</div>
     </div>
   </RouterLink>
@@ -71,6 +77,14 @@ defineProps<{ card: CardSummary }>()
 .name {
   font-size: 14px;
   font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.en {
+  font-size: 12px;
+  color: var(--color-muted);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;

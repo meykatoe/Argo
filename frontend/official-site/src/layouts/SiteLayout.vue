@@ -1,15 +1,20 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { RouterLink, RouterView } from 'vue-router'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+
+const { t } = useI18n()
 </script>
 
 <template>
   <header class="header">
     <div class="inner">
-      <RouterLink to="/" class="brand">Argo</RouterLink>
+      <RouterLink to="/" class="brand">{{ t('site.brand') }}</RouterLink>
       <nav class="nav">
-        <RouterLink to="/">首頁</RouterLink>
-        <RouterLink to="/cards">卡片</RouterLink>
+        <RouterLink to="/">{{ t('nav.home') }}</RouterLink>
+        <RouterLink to="/cards">{{ t('nav.cards') }}</RouterLink>
       </nav>
+      <LanguageSwitcher class="lang" />
     </div>
   </header>
 
@@ -18,7 +23,7 @@ import { RouterLink, RouterView } from 'vue-router'
   </main>
 
   <footer class="footer">
-    <div class="inner">Argo ONE PIECE 卡牌商店</div>
+    <div class="inner">{{ t('site.footer') }}</div>
   </footer>
 </template>
 
@@ -50,6 +55,10 @@ import { RouterLink, RouterView } from 'vue-router'
 .nav {
   display: flex;
   gap: 20px;
+}
+
+.lang {
+  margin-left: auto;
 }
 
 .nav a.router-link-active {

@@ -1,0 +1,85 @@
+import type { MessageSchema } from './zh-TW'
+
+const en: MessageSchema = {
+  site: {
+    title: 'Argo - ONE PIECE Card Shop',
+    brand: 'Argo',
+    footer: 'Argo ONE PIECE Card Shop',
+  },
+  lang: { label: 'Language' },
+  nav: { home: 'Home', cards: 'Cards' },
+  home: {
+    heroTitle: 'Find your ONE PIECE cards',
+    searchPlaceholder: 'Search by name or number, e.g. Luffy, OP01-001',
+    search: 'Search',
+    loadError: 'Failed to load sets',
+  },
+  categories: { booster: 'Booster Packs', starter: 'Starter Decks', promo: 'Promo Cards' },
+  cards: {
+    title: 'Cards',
+    total: '{n} cards',
+    empty: 'No cards match your filters',
+    loading: 'Loading…',
+    noImage: 'No image',
+    back: '← Back to list',
+  },
+  filter: {
+    keyword: 'Search by name or number',
+    allCategories: 'All categories',
+    allSets: 'All sets',
+    allColors: 'All colors',
+    allRarities: 'All rarities',
+    allTypes: 'All types',
+    sort: {
+      cardSetId: 'Sort by number',
+      cardName: 'Sort by name',
+      marketPrice: 'Sort by price',
+    },
+    asc: 'Ascending',
+    desc: 'Descending',
+    search: 'Search',
+  },
+  pager: { label: 'Pagination', prev: 'Previous', next: 'Next' },
+  detail: {
+    price: 'Market price',
+    text: 'Effect',
+    rows: {
+      number: 'Number',
+      set: 'Set',
+      rarity: 'Rarity',
+      type: 'Type',
+      color: 'Color',
+      cost: 'Cost',
+      power: 'Power',
+      life: 'Life',
+      counter: 'Counter',
+      attribute: 'Attribute',
+      features: 'Type tags',
+    },
+  },
+  color: {
+    Red: 'Red',
+    Green: 'Green',
+    Blue: 'Blue',
+    Purple: 'Purple',
+    Black: 'Black',
+    Yellow: 'Yellow',
+  },
+  cardType: {
+    Leader: 'Leader',
+    Character: 'Character',
+    Event: 'Event',
+    Stage: 'Stage',
+  },
+  error: {
+    CARD_NOT_FOUND: 'Card not found',
+    INVALID_PAGING: 'Invalid paging parameters',
+    INVALID_SORT: 'Unsupported sort option',
+    network: 'Cannot reach the server. Please try again later.',
+    unknown: 'Something went wrong. Please try again later.',
+    notFoundPage: 'Page not found',
+    backHome: 'Back to home',
+  },
+}
+
+export default en
