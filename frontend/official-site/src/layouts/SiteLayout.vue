@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { RouterLink, RouterView } from 'vue-router'
+import logo from '@/assets/logo.svg'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 const { t } = useI18n()
@@ -9,7 +10,9 @@ const { t } = useI18n()
 <template>
   <header class="header">
     <div class="inner">
-      <RouterLink to="/" class="brand">{{ t('site.brand') }}</RouterLink>
+      <RouterLink to="/" class="brand" :aria-label="t('site.brand')">
+        <img :src="logo" alt="" class="logo" width="40" height="40" />
+      </RouterLink>
       <nav class="nav">
         <RouterLink to="/">{{ t('nav.home') }}</RouterLink>
         <RouterLink to="/cards">{{ t('nav.cards') }}</RouterLink>
@@ -47,9 +50,12 @@ const { t } = useI18n()
 }
 
 .brand {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  display: block;
 }
 
 .nav {
