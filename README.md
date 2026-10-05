@@ -14,6 +14,10 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
 ## 功能概述（實時更新）
 
 - 卡片資料同步：從 optcgapi.com 取得補充包、起始牌組、促銷卡，寫入資料庫。每天凌晨 4 點自動同步，也可用 `--argo.sync.on-startup=true` 在啟動時手動同步一次。
+- 卡片查詢 API（無需登入，皆為 GET）：
+  - `/api/cards`：列表，支援 `keyword`、`setId`、`category`（booster / starter / promo）、`color`、`rarity`、`cardType` 篩選，`page`（從 1 開始）、`size`（上限 100）、`sortBy`（`cardSetId` / `cardName` / `marketPrice`）、`desc` 分頁排序
+  - `/api/cards/{id}`：卡片詳情
+  - `/api/sets`：系列列表，可用 `category` 篩選
 
 ## 專案架構
 
