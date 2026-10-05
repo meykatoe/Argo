@@ -8,6 +8,7 @@ import { RouterLink, RouterView } from 'vue-router'
       <RouterLink to="/" class="brand">Argo</RouterLink>
       <nav class="nav">
         <RouterLink to="/">首頁</RouterLink>
+        <RouterLink to="/cards">卡片</RouterLink>
       </nav>
     </div>
   </header>
@@ -51,7 +52,7 @@ import { RouterLink, RouterView } from 'vue-router'
   gap: 20px;
 }
 
-.nav a.router-link-exact-active {
+.nav a.router-link-active {
   color: var(--color-primary);
 }
 

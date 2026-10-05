@@ -18,6 +18,7 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
   - `/api/cards`：列表，支援 `keyword`、`setId`、`category`（booster / starter / promo）、`color`、`rarity`、`cardType` 篩選，`page`（從 1 開始）、`size`（上限 100）、`sortBy`（`cardSetId` / `cardName` / `marketPrice`）、`desc` 分頁排序
   - `/api/cards/{id}`：卡片詳情
   - `/api/sets`：系列列表，可用 `category` 篩選
+- 官網頁面：首頁（系列入口與搜尋）、卡片列表（搜尋、類別 / 系列 / 顏色 / 稀有度 / 種類篩選、排序、分頁，條件同步在網址）、卡片詳情
 
 ## 專案架構
 
