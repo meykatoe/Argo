@@ -65,6 +65,17 @@ public class Card {
 	@Column(nullable = false)
 	private BigDecimal inventoryPrice = BigDecimal.ZERO;
 
+	// 實際售價，同步時才重算
+	@Column(nullable = false)
+	private BigDecimal salePrice = BigDecimal.ZERO;
+
+	// 手動定價後同步不覆蓋
+	@Column(nullable = false)
+	private boolean priceOverridden;
+
+	@Column(nullable = false)
+	private int stock;
+
 		private LocalDate dateScraped;
 
 	// 由資料庫填入
@@ -153,6 +164,24 @@ public class Card {
 		return marketPrice;
 	}
 
+	public BigDecimal getSalePrice() {
+		return salePrice;
+	}
+
+	public boolean isPriceOverridden() {
+		return priceOverridden;
+	}
+
+	public int getStock() {
+		return stock;
+	}
+
+	// 手動定價
+	public void overridePrice(BigDecimal price) {
+		this.salePrice = price;
+		this.priceOverridden = true;
+	}
+
 	public BigDecimal getInventoryPrice() {
 		return inventoryPrice;
 	}
@@ -162,7 +191,7 @@ public class Card {
 	}
 
 	// 以來源資料覆蓋
-	public void fill(OptcgCard src) {
+	public void fill(OptcgCard src, BigDecimal saleRate) {
 		this.cardSetId = src.cardSetId();
 		this.cardImageId = src.cardImageId();
 		this.setId = src.setId();
@@ -180,6 +209,9 @@ public class Card {
 		this.imageUrl = src.cardImage();
 		this.marketPrice = BigDecimal.valueOf(src.marketPrice());
 		this.inventoryPrice = BigDecimal.valueOf(src.inventoryPrice());
+		if (!priceOverridden) {
+			this.salePrice = Pricing.salePrice(this.marketPrice, saleRate);
+		}
 		this.dateScraped = src.scrapedDate();
 		this.updatedAt = OffsetDateTime.now();
 	}

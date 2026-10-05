@@ -27,12 +27,13 @@ public class CardController {
 			@RequestParam(required = false) String color,
 			@RequestParam(required = false) String rarity,
 			@RequestParam(required = false) String cardType,
+			@RequestParam(defaultValue = "false") boolean inStock,
 			@RequestParam(defaultValue = "en") String lang,
 			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "20") int size,
 			@RequestParam(defaultValue = "cardSetId") String sortBy,
 			@RequestParam(defaultValue = "false") boolean desc) {
-		CardQuery query = new CardQuery(keyword, setId, category, color, rarity, cardType, lang);
+		CardQuery query = new CardQuery(keyword, setId, category, color, rarity, cardType, inStock, lang);
 		return service.search(query, page, size, sortBy, desc);
 	}
 

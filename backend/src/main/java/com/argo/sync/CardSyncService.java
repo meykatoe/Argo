@@ -5,6 +5,7 @@ import com.argo.card.CardRepository;
 import com.argo.card.CardSet;
 import com.argo.card.CardSetRepository;
 import com.argo.card.OptcgCard;
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +32,11 @@ public class CardSyncService {
 	private final CardRepository cards;
 	private final CardSetRepository sets;
 
-	public CardSyncService(OptcgApiClient api, CardRepository cards, CardSetRepository sets) {
+	private final BigDecimal saleRate;
+
+	public CardSyncService(OptcgApiClient api, CardRepository cards, CardSetRepository sets,
+			@Value("${argo.pricing.sale-rate}") BigDecimal saleRate) {
+		this.saleRate = saleRate;
 		this.api = api;
 		this.cards = cards;
 		this.sets = sets;
@@ -56,7 +62,7 @@ public class CardSyncService {
 				.collect(Collectors.toMap(Card::getSourceKey, Function.identity()));
 		List<Card> toSave = byKey.entrySet().stream().map(e -> {
 			Card card = existing.getOrDefault(e.getKey(), new Card(e.getKey()));
-			card.fill(e.getValue());
+			card.fill(e.getValue(), saleRate);
 			return card;
 		}).toList();
 		cards.saveAll(toSave);

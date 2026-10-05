@@ -54,6 +54,11 @@ public final class CardSpecs {
 			if (has(q.cardType())) {
 				ps.add(cb.equal(root.get("cardType"), q.cardType()));
 			}
+			if (q.inStock()) {
+				// 有庫存且已定價
+				ps.add(cb.greaterThan(root.<Integer>get("stock"), 0));
+				ps.add(cb.greaterThan(root.<java.math.BigDecimal>get("salePrice"), java.math.BigDecimal.ZERO));
+			}
 			return cb.and(ps.toArray(new Predicate[0]));
 		};
 	}

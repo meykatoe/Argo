@@ -44,12 +44,12 @@ class TranslationApiTests {
 		Card c = new Card("TS-09|" + key + "|");
 		c.fill(new OptcgCard("TS09-" + key, "TS09-" + key, "TS-09", "Test Set", name, "effect",
 				"C", "Red", "Character", "1", "1000", null, null, null, "Pirates", null,
-				1.0, 1.0, null));
+				1.0, 1.0, null), new java.math.BigDecimal("0.9"));
 		return c;
 	}
 
 	private CardQuery q(String keyword, String lang) {
-		return new CardQuery(keyword, "TS-09", null, null, null, null, lang);
+		return new CardQuery(keyword, "TS-09", null, null, null, null, false, lang);
 	}
 
 	@Test

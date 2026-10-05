@@ -24,7 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class CardService {
 
 	// 排序欄位白名單
-	private static final Set<String> SORTS = Set.of("cardSetId", "cardName", "marketPrice");
+	private static final Set<String> SORTS = Set.of("cardSetId", "cardName", "marketPrice", "salePrice");
 	private static final int MAX_SIZE = 100;
 
 	private final CardRepository cards;
@@ -81,7 +81,7 @@ public class CardService {
 
 	private CardQuery withLocale(CardQuery q) {
 		return new CardQuery(q.keyword(), q.setId(), q.category(), q.color(), q.rarity(),
-				q.cardType(), Locales.normalize(q.lang()));
+				q.cardType(), q.inStock(), Locales.normalize(q.lang()));
 	}
 
 	// 預設語言不需查翻譯

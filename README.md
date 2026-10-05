@@ -14,6 +14,7 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
 ## 功能概述（實時更新）
 
 - 卡片資料同步：從 optcgapi.com 取得補充包、起始牌組、促銷卡，寫入資料庫。每天凌晨 4 點自動同步，也可用 `--argo.sync.on-startup=true` 在啟動時手動同步一次。
+- 售價與庫存：每張卡有獨立的 `sale_price`（售價，目前幣別為美元）與 `stock`（庫存）欄位。售價在同步卡片資料時以「市價 × 倍率」計算並存入資料庫（倍率為 `argo.pricing.sale-rate`，預設 0.9，改倍率後需重新同步才會生效），不是即時運算。手動改價的卡片（`price_overridden`）同步時不會被覆蓋。新卡庫存為 0；開發時可加 `--argo.dev.seed-stock=5` 啟動，替有定價且庫存為 0 的卡補上庫存。查詢 API 可用 `inStock=true` 只看可購買的卡（有庫存且已定價），`sortBy` 可用 `salePrice`。
 - 多語系卡片資料：卡片查詢 API 加上 `lang` 參數（`en` 預設、`zh-TW`）即回傳該語言的卡名、效果、特徵與系列名稱，找不到翻譯時回退為英文，原文固定放在 `cardNameEn`、`setNameEn`。繁中資料抓取自 Bandai 官方繁中卡表（`asia-tc.onepiece-cardgame.com`），啟動時加 `--argo.translation.on-startup=true` 手動同步，也會每週一凌晨 5 點自動同步。內容版權屬原權利人，正式營運前請自行確認使用條款。
 - 卡片查詢 API（無需登入，皆為 GET）：
   - `/api/cards`：列表，支援 `keyword`、`setId`、`category`（booster / starter / promo）、`color`、`rarity`、`cardType` 篩選，`page`（從 1 開始）、`size`（上限 100）、`sortBy`（`cardSetId` / `cardName` / `marketPrice`）、`desc` 分頁排序
