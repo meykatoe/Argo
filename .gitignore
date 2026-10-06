@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 *.local
+.claude
 
 # 本機設定
 application-local.properties

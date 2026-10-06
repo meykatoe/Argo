@@ -18,6 +18,7 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
 - 額外折扣與後台 API：每張卡有 `extra_discount`（預設 1，範圍 0 到 1），最終售價為「市價 × 倍率 × 額外折扣」，手動改價的卡片不套用。前台在有折扣時以刪除線顯示折前價，並在折後價旁標示紅色 `(SALE!!)`。後台 API 以請求標頭 `X-Admin-Token` 驗證，令牌由環境變數 `ADMIN_TOKEN` 設定，未設定時後台 API 一律回 401：
   - `GET /api/admin/cards`：卡片列表（`keyword`、`setId`、`discounted`、`page`、`size`），回傳折前價、額外折扣與售價。
   - `PATCH /api/admin/cards/{id}/extra-discount`：body 為 `{"extraDiscount": 0.4}`，最多四位小數，改完即時重算售價。
+- 後台（`frontend/admin`）：工作人員輸入後台令牌登入（令牌只存在該分頁的 `sessionStorage`），可依卡號或卡名搜尋、只看有折扣的卡，直接修改每張卡的額外折扣（輸入 0.4 會顯示為 4 折），儲存後立即顯示新售價。手動定價的卡片不可設定折扣。啟動方式：後端以 `ADMIN_TOKEN=自訂令牌` 啟動，再於 `frontend/admin` 執行 `npm install && npm run dev`（連接埠 5174）。正式部署時需把後台網址加入 `argo.cors.origins`，或與後端放在同一網域下反向代理。
 - 多語系卡片資料：卡片查詢 API 加上 `lang` 參數（`en` 預設、`zh-TW`）即回傳該語言的卡名、效果、特徵與系列名稱，找不到翻譯時回退為英文，原文固定放在 `cardNameEn`、`setNameEn`。繁中資料抓取自 Bandai 官方繁中卡表（`asia-tc.onepiece-cardgame.com`），啟動時加 `--argo.translation.on-startup=true` 手動同步，也會每週一凌晨 5 點自動同步。內容版權屬原權利人，正式營運前請自行確認使用條款。
 - 卡片查詢 API（無需登入，皆為 GET）：
   - `/api/cards`：列表，支援 `keyword`、`setId`、`category`（booster / starter / promo）、`color`、`rarity`、`cardType` 篩選，`page`（從 1 開始）、`size`（上限 100）、`sortBy`（`cardSetId` / `cardName` / `marketPrice`）、`desc` 分頁排序
@@ -41,7 +42,8 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
 Argo/
 ├── backend/            後端 API（Spring Boot）
 └── frontend/
-    └── official-site/  官網前端（Vue）
+    ├── official-site/  官網前端（Vue）
+    └── admin/          後台前端（Vue，工作人員使用）
 ```
 
 前端依用途命名放在 `frontend/` 下，未來新增前端時各自獨立一個資料夾。
