@@ -81,7 +81,7 @@ public class StaffAuthService {
 			throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "LOGIN_LOCKED");
 		}
 		boolean ok = encoder.matches(password, staff.getPasswordHash());
-		if (!ok || !staff.isEnabled()) {
+		if (!ok || staff.isDisabled()) {
 			if (!ok) {
 				staff.recordFailure(maxFailures, now.plusMinutes(lockMinutes));
 			}
@@ -113,7 +113,7 @@ public class StaffAuthService {
 		return sessions.findById(hash(token))
 				.filter(s -> s.getExpiresAt().isAfter(OffsetDateTime.now()))
 				.flatMap(s -> accounts.findById(s.getStaffId()))
-				.filter(StaffAccount::isEnabled);
+				.filter(s -> !s.isDisabled());
 	}
 
 	@Transactional

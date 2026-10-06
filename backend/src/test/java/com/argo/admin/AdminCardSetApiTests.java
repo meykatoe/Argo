@@ -138,7 +138,7 @@ class AdminCardSetApiTests {
 		a.applyExtraDiscount(new BigDecimal("0.3"), new BigDecimal("0.9"));
 		cards.saveAndFlush(a);
 		send("/extra-discount", "{\"extraDiscount\":0.5}").andExpect(status().isOk());
-		var row = jdbc.queryForMap("select id, username from staff_audit_log where action = 'CARD_SET_EXTRA_DISCOUNT_UPDATE'");
+		var row = jdbc.queryForMap("select id, username from staff_audit_log where action = 'CARD_SET_EXTRA_DISCOUNT_UPDATE' and target_id = 'TS-70'");
 		assertEquals("gen1", row.get("username"));
 		Object id = row.get("id");
 		assertEquals("3", jdbc.queryForObject("select detail->>'cardCount' from staff_audit_log where id = ?", String.class, id));

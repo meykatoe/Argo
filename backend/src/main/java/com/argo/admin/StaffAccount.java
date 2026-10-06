@@ -32,7 +32,8 @@ public class StaffAccount {
 
 	@Column(nullable = false)
 	@JdbcTypeCode(SqlTypes.SMALLINT)
-	private boolean enabled = true;
+	// 0 正常使用、1 停用
+	private boolean disabled;
 
 	@Column(nullable = false)
 	private int failedAttempts;
@@ -69,12 +70,12 @@ public class StaffAccount {
 		return role;
 	}
 
-	public boolean isEnabled() {
-		return enabled;
+	public boolean isDisabled() {
+		return disabled;
 	}
 
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
+	public void setDisabled(boolean disabled) {
+		this.disabled = disabled;
 	}
 
 	public boolean isLocked(OffsetDateTime now) {

@@ -99,7 +99,7 @@ class StaffAuthTests {
 	@Test
 	void disabledAccountCannotLoginOrUseSession() {
 		var res = auth.login("alice", "password-1234", LoginPortal.ADMIN);
-		accounts.findByUsername("alice").orElseThrow().setEnabled(false);
+		accounts.findByUsername("alice").orElseThrow().setDisabled(true);
 		assertTrue(auth.authenticate(res.token()).isEmpty());
 		assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "password-1234", LoginPortal.ADMIN)));
 	}
@@ -127,5 +127,27 @@ class StaffAuthTests {
 		mvc.perform(post("/api/admin/auth/login").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"username\":\"alice\",\"password\":\"nope-nope-nope\"}"))
 				.andExpect(status().isUnauthorized()).andExpect(jsonPath("$.msg").value("LOGIN_FAILED"));
+	}
+
+	@Test
+	void newAccountsAreNormalAndStoredAsZero() {
+		Long id = accounts.findByUsername("alice").orElseThrow().getId();
+		assertEquals(0, jdbc.queryForObject("select disabled from staff_account where id = ?", Integer.class, id));
+		accounts.findByUsername("alice").orElseThrow().setDisabled(true);
+		accounts.flush();
+		assertEquals(1, jdbc.queryForObject("select disabled from staff_account where id = ?", Integer.class, id));
+	}
+
+	@Test
+	void disabledColumnReplacesEnabled() {
+		assertEquals(0, jdbc.queryForObject(
+				"select count(*) from information_schema.columns where table_name = 'staff_account' and column_name = 'enabled'",
+				Integer.class));
+	}
+
+	@Test
+	void databaseRejectsOtherValues() {
+		assertThrows(org.springframework.dao.DataAccessException.class,
+				() -> jdbc.update("update staff_account set disabled = 2"));
 	}
 }
