@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { ApiError, setExtraDiscount } from '@/api/admin'
 import type { AdminCard } from '@/types'
+import CardImageModal from './CardImageModal.vue'
 import { discountLabel, formatPrice, parseDiscount } from '@/utils/discount'
 import { errorText } from '@/utils/error'
 
@@ -11,6 +12,7 @@ const emit = defineEmits<{ saved: [card: AdminCard]; unauthorized: [] }>()
 const input = ref(String(props.card.extraDiscount))
 const saving = ref(false)
 const error = ref('')
+const showImage = ref(false)
 
 watch(
   () => props.card.extraDiscount,
@@ -43,7 +45,18 @@ async function save() {
 <template>
   <tr>
     <td class="code">{{ card.cardSetId }}</td>
-    <td>{{ card.cardName }}</td>
+    <td>
+      {{ card.cardName }}
+      <div>
+        <button type="button" class="info" @click="showImage = true">卡牌資訊</button>
+      </div>
+      <CardImageModal
+        v-if="showImage"
+        :src="card.imageUrl"
+        :name="card.cardName"
+        @close="showImage = false"
+      />
+    </td>
     <td class="num">{{ formatPrice(card.marketPrice) }}</td>
     <td class="num">{{ formatPrice(card.listPrice) }}</td>
     <td>
@@ -75,6 +88,20 @@ td {
   padding: 8px;
   border-bottom: 1px solid var(--color-border);
   vertical-align: top;
+}
+
+.info {
+  margin-top: 4px;
+  padding: 1px 8px;
+  border-color: transparent;
+  background: #e5e7eb;
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.info:hover {
+  background: #d1d5db;
+  color: var(--color-text);
 }
 
 .code {

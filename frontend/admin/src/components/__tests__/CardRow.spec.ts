@@ -36,7 +36,7 @@ describe('CardRow', () => {
     vi.stubGlobal('fetch', fetchMock)
     const w = render()
     await w.find('input').setValue('0.4')
-    await w.find('button').trigger('click')
+    await w.find('button.primary').trigger('click')
     await flushPromises()
     const [url, init] = fetchMock.mock.calls[0]!
     expect(url).toContain('/admin/cards/7/extra-discount')
@@ -51,7 +51,7 @@ describe('CardRow', () => {
     vi.stubGlobal('fetch', fetchMock)
     const w = render()
     await w.find('input').setValue('2')
-    await w.find('button').trigger('click')
+    await w.find('button.primary').trigger('click')
     expect(fetchMock).not.toHaveBeenCalled()
     expect(w.text()).toContain('請輸入')
   })
@@ -59,7 +59,7 @@ describe('CardRow', () => {
   it('手動定價時停用', () => {
     const w = render({ priceOverridden: true })
     expect(w.find('input').attributes('disabled')).toBeDefined()
-    expect(w.find('button').attributes('disabled')).toBeDefined()
+    expect(w.find('button.primary').attributes('disabled')).toBeDefined()
   })
 
   it('401 通知登出', async () => {
@@ -69,7 +69,7 @@ describe('CardRow', () => {
     )
     const w = render()
     await w.find('input').setValue('0.5')
-    await w.find('button').trigger('click')
+    await w.find('button.primary').trigger('click')
     await flushPromises()
     expect(w.emitted('unauthorized')).toHaveLength(1)
   })
