@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import { getCard } from '@/api/card'
 import AddToCartButton from '@/components/AddToCartButton.vue'
+import PriceTag from '@/components/PriceTag.vue'
 import type { CardDetail } from '@/types/card'
 import { errorText } from '@/utils/error'
 import { colorText, formatPrice, isAvailable, typeText } from '@/utils/format'
@@ -70,7 +71,8 @@ function rows(c: CardDetail): [string, string | number | null][] {
         <h1>{{ card.cardName }}</h1>
         <p v-if="card.cardNameEn !== card.cardName" class="en">{{ card.cardNameEn }}</p>
         <p v-if="card.salePrice > 0" class="price">
-          {{ t('detail.price') }} {{ formatPrice(card.salePrice) }}
+          {{ t('detail.price') }}
+          <PriceTag :sale-price="card.salePrice" :list-price="card.listPrice" />
         </p>
         <p v-else class="price unset">{{ t('detail.unpriced') }}</p>
         <p class="market">{{ t('detail.marketPrice') }} {{ formatPrice(card.marketPrice) }}</p>

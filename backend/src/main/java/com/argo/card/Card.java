@@ -201,6 +201,11 @@ public class Card {
 		}
 	}
 
+	// 折前價，供前台劃線
+	public BigDecimal listPrice(BigDecimal saleRate) {
+		return priceOverridden ? salePrice : Pricing.salePrice(marketPrice, saleRate);
+	}
+
 	public BigDecimal getInventoryPrice() {
 		return inventoryPrice;
 	}

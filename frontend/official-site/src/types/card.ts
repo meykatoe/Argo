@@ -23,6 +23,7 @@ export interface CardSummary {
   imageUrl: string | null
   marketPrice: number
   salePrice: number
+  listPrice: number
   stock: number
 }
 

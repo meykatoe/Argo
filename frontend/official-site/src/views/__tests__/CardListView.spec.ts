@@ -27,6 +27,7 @@ const card = {
   imageUrl: null,
   marketPrice: 1.5,
   salePrice: 1.35,
+  listPrice: 1.35,
   stock: 3,
 }
 

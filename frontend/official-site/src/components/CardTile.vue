@@ -2,8 +2,9 @@
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import type { CardSummary } from '@/types/card'
-import { formatPrice, isAvailable } from '@/utils/format'
+import { isAvailable } from '@/utils/format'
 import AddToCartButton from './AddToCartButton.vue'
+import PriceTag from './PriceTag.vue'
 
 defineProps<{ card: CardSummary }>()
 
@@ -30,7 +31,9 @@ const { t } = useI18n()
       <div v-if="card.cardNameEn !== card.cardName" class="en" :title="card.cardNameEn">
         {{ card.cardNameEn }}
       </div>
-      <div v-if="card.salePrice > 0" class="price">{{ formatPrice(card.salePrice) }}</div>
+      <div v-if="card.salePrice > 0" class="price">
+        <PriceTag :sale-price="card.salePrice" :list-price="card.listPrice" />
+      </div>
       <div v-else class="price unset">{{ t('detail.unpriced') }}</div>
     </div>
     </RouterLink>

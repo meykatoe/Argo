@@ -30,6 +30,7 @@ function card(id: number, extra: Partial<CardSummary> = {}): CardSummary {
     imageUrl: null,
     marketPrice: 2,
     salePrice: 1.5,
+    listPrice: 1.5,
     stock: 5,
     ...extra,
   }

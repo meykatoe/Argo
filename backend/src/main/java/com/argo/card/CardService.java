@@ -6,12 +6,14 @@ import com.argo.i18n.CardSetTranslationRepository;
 import com.argo.i18n.CardTranslation;
 import com.argo.i18n.CardTranslationRepository;
 import com.argo.i18n.Locales;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -32,9 +34,12 @@ public class CardService {
 	private final CardSetRepository sets;
 	private final CardTranslationRepository translations;
 	private final CardSetTranslationRepository setTrs;
+	private final BigDecimal saleRate;
 
 	public CardService(CardRepository cards, CardSetRepository sets,
-			CardTranslationRepository translations, CardSetTranslationRepository setTrs) {
+			CardTranslationRepository translations, CardSetTranslationRepository setTrs,
+			@Value("${argo.pricing.sale-rate}") BigDecimal saleRate) {
+		this.saleRate = saleRate;
 		this.cards = cards;
 		this.sets = sets;
 		this.translations = translations;
@@ -57,7 +62,7 @@ public class CardService {
 		var result = cards.findAll(CardSpecs.of(q), PageRequest.of(page - 1, size, sort));
 		Map<String, CardTranslation> trs = translations(q.lang(),
 				result.getContent().stream().map(Card::getCardSetId).toList());
-		return PageResult.of(result, c -> CardSummary.from(c, trs.get(c.getCardSetId())));
+		return PageResult.of(result, c -> CardSummary.from(c, trs.get(c.getCardSetId()), saleRate));
 	}
 
 	// 依編號批次取卡，保留請求順序
@@ -71,7 +76,7 @@ public class CardService {
 		Map<String, CardTranslation> trs = translations(locale,
 				found.values().stream().map(Card::getCardSetId).distinct().toList());
 		return ids.stream().distinct().map(found::get).filter(java.util.Objects::nonNull)
-				.map(c -> CardSummary.from(c, trs.get(c.getCardSetId()))).toList();
+				.map(c -> CardSummary.from(c, trs.get(c.getCardSetId()), saleRate)).toList();
 	}
 
 	public CardDetail get(Long id, String lang) {
@@ -83,7 +88,7 @@ public class CardService {
 			setName = sets.findById(card.getSetId()).map(CardSet::getSetName).orElse(null);
 		}
 		CardTranslation tr = translations(locale, List.of(card.getCardSetId())).get(card.getCardSetId());
-		return CardDetail.from(card, setName, tr);
+		return CardDetail.from(card, setName, tr, saleRate);
 	}
 
 	public List<CardSetDto> listSets(String category, String lang) {

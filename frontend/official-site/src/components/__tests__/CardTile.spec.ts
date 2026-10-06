@@ -21,6 +21,7 @@ const base: CardSummary = {
   imageUrl: null,
   marketPrice: 10,
   salePrice: 9,
+  listPrice: 9,
   stock: 4,
 }
 

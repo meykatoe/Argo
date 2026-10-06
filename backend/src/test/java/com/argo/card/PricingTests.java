@@ -89,4 +89,20 @@ class PricingTests {
 		assertThrows(IllegalArgumentException.class, () -> c.applyExtraDiscount(BigDecimal.ZERO, RATE));
 		assertThrows(IllegalArgumentException.class, () -> c.applyExtraDiscount(new BigDecimal("1.1"), RATE));
 	}
+
+	@Test
+	void listPriceIgnoresExtraDiscount() {
+		Card c = new Card("k");
+		c.fill(source(10.00), RATE);
+		c.applyExtraDiscount(new BigDecimal("0.4"), RATE);
+		assertEquals(new BigDecimal("9.00"), c.listPrice(RATE));
+	}
+
+	@Test
+	void listPriceFollowsOverride() {
+		Card c = new Card("k");
+		c.fill(source(10.00), RATE);
+		c.overridePrice(new BigDecimal("12.34"));
+		assertEquals(new BigDecimal("12.34"), c.listPrice(RATE));
+	}
 }
