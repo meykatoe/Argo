@@ -3,7 +3,6 @@ package com.argo.admin;
 import com.argo.common.ApiException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.method.HandlerMethod;
@@ -15,8 +14,10 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
 
 	private final StaffAuthService auth;
 	private final AuditLogService audit;
+	private final MenuService menus;
 
-	public AdminAuthInterceptor(StaffAuthService auth, AuditLogService audit) {
+	public AdminAuthInterceptor(StaffAuthService auth, AuditLogService audit, MenuService menus) {
+		this.menus = menus;
 		this.auth = auth;
 		this.audit = audit;
 	}
@@ -35,17 +36,21 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
 		}
 		StaffAccount staff = auth.authenticate(bearer(req))
 				.orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "ADMIN_UNAUTHORIZED"));
-		// 未標註的端點只開放 ADMIN
-		StaffRole[] allowed = { StaffRole.ADMIN };
+		// 未標註的端點一律拒絕
+		boolean ok = false;
+		String need = "(none)";
 		if (handler instanceof HandlerMethod hm) {
-			RequireRole r = hm.getMethodAnnotation(RequireRole.class);
-			if (r != null) {
-				allowed = r.value();
+			RequirePermission p = hm.getMethodAnnotation(RequirePermission.class);
+			if (p != null) {
+				need = p.value();
+				ok = menus.hasPermission(staff.getRole(), need);
+			} else if (hm.hasMethodAnnotation(AnyStaff.class)) {
+				ok = true;
 			}
 		}
-		if (!List.of(allowed).contains(staff.getRole())) {
+		if (!ok) {
 			audit.record(staff, null, AuditAction.ACCESS_DENIED, false, "ENDPOINT", req.getRequestURI(),
-					Map.of("method", req.getMethod(), "allowed", List.of(allowed).toString()));
+					Map.of("method", req.getMethod(), "permission", need));
 			throw new ApiException(HttpStatus.FORBIDDEN, "ADMIN_FORBIDDEN");
 		}
 		req.setAttribute(STAFF_ATTR, staff);

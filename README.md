@@ -16,7 +16,7 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
 - 卡片資料同步：從 optcgapi.com 取得補充包、起始牌組、促銷卡，寫入資料庫。每天凌晨 4 點自動同步，也可用 `--argo.sync.on-startup=true` 在啟動時手動同步一次。
 - 售價與庫存：每張卡有獨立的 `sale_price`（售價，目前幣別為美元）與 `stock`（庫存）欄位。售價在同步卡片資料時以「市價 × 倍率」計算並存入資料庫（倍率為 `argo.pricing.sale-rate`，預設 0.9，改倍率後需重新同步才會生效），不是即時運算。手動改價的卡片（`price_overridden`）同步時不會被覆蓋。新卡庫存為 0；開發時可加 `--argo.dev.seed-stock=5` 啟動，替有定價且庫存為 0 的卡補上庫存。查詢 API 可用 `inStock=true` 只看可購買的卡（有庫存且已定價），`sortBy` 可用 `salePrice`。
 - 額外折扣與後台 API：每張卡有 `extra_discount`（預設 1，範圍 0 到 1），最終售價為「市價 × 倍率 × 額外折扣」，手動改價的卡片不套用。前台在有折扣時以刪除線顯示折前價，並在折後價旁標示紅色 `(SALE!!)`。
-- 後台人員帳號：不開放註冊，帳號只能由人工以指令建立。密碼以 BCrypt 雜湊存放（`staff_account`）；登入後發給隨機令牌，資料庫只存令牌雜湊（`staff_session`），預設 8 小時過期，登出即失效，停用帳號立即生效。連續輸入錯誤密碼 5 次會鎖定 15 分鐘（`argo.admin.max-failures`、`argo.admin.lock-minutes`）。角色分為 `ADMIN`（最高權限）、`GENERAL`（一般管理員）、`SERVICE`（客服）、`OPS`（運維，只能使用運維後台），三者之間沒有隱含的高低繼承，每個後台端點以 `@RequireRole({...})` 明確列出允許的角色；未標註的端點預設只開放 `ADMIN`。目前額外折扣相關端點開放 `ADMIN` 與 `GENERAL`，`SERVICE` 只能登入、登出與查看自己的身分，其餘功能之後再設計。建立帳號：
+- 後台人員帳號：不開放註冊，帳號只能由人工以指令建立。密碼以 BCrypt 雜湊存放（`staff_account`）；登入後發給隨機令牌，資料庫只存令牌雜湊（`staff_session`），預設 8 小時過期，登出即失效，停用帳號立即生效。連續輸入錯誤密碼 5 次會鎖定 15 分鐘（`argo.admin.max-failures`、`argo.admin.lock-minutes`）。角色分為 `ADMIN`（最高權限）、`GENERAL`（一般管理員）、`SERVICE`（客服）、`OPS`（運維，只能使用運維後台），三者之間沒有隱含的高低繼承；各角色能使用什麼功能不寫在程式裡，而是存在資料庫的選單權限表（見下方「後台選單與權限」）。建立帳號：
   ```
   cd backend
   STAFF_PASSWORD='至少十個字元的密碼' ./mvnw spring-boot:run -Dspring-boot.run.arguments="--argo.staff.create=alice --argo.staff.role=general"
@@ -29,6 +29,14 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
 - 後台操作稽核（`staff_audit_log`）：記錄誰（帳號與角色的當下快照）、在何時（`created_at`）、從哪裡（IP、User-Agent）、做了什麼（`action`）、對象是誰（`target_type`、`target_id`）、是否成功，以及變更前後內容（`detail`，JSON）。目前會記錄：登入成功、登入失敗（含帳號不存在、密碼錯誤、帳號停用，失敗原因寫在 `detail`，不記錄密碼）、登入鎖定、登出、越權存取被拒、以指令建立帳號（操作者記為 `cli:系統使用者`）、修改額外折扣（含修改前後的折扣與售價）。修改類操作與稽核紀錄在同一個資料庫交易中寫入，不會出現「改了卻沒紀錄」。資料表以觸發器禁止 `UPDATE` 與 `DELETE`，帳號因此也不能刪除，請改用停用。IP 取自連線位址；若之後放在反向代理後面，需另外設定轉送標頭，否則記到的會是代理的位址。新增後台功能時，請在寫入操作中呼叫 `AuditLogService.record(...)`。
 - 運維後台 API（`/api/ops/**`）：與業務後台（`/api/admin/**`）分開，方便日後在反向代理或網關層限制只有內網或指定 IP 能連線。兩個入口各有登入端點（`/api/admin/auth/login`、`/api/ops/auth/login`），帳號只能從自己的入口登入：`OPS` 帳號不能登入業務後台，其他角色不能登入運維後台，走錯入口一律回 `LOGIN_FAILED`，並在稽核紀錄寫入 `WRONG_PORTAL`。`OPS` 的令牌也不能呼叫業務後台端點。
   - `GET /api/ops/audit-logs`（只有 `OPS`，`ADMIN` 也不可看）：查詢稽核紀錄，依時間新到舊。參數：`username`（不分大小寫、包含比對）、`action`、`success`、`targetType`、`targetId`、`from`、`to`（ISO 8601 時間，含起不含迄）、`page`、`size`（上限 100，預設 50）。每次查詢本身也會寫入稽核紀錄（`AUDIT_LOG_VIEWED`，記下篩選條件）。
+- 後台選單與權限（資料庫驅動）：`admin_menu` 是選單樹，同時也是功能權限的節點（`portal` 區分業務後台 `ADMIN` 或運維後台 `OPS`；`parent_id` 組成「群組 → 子選項」；`code` 是權限代碼；`path` 是前端頁面路徑，群組為空；`sort_order` 數字小的在前；`enabled` 可整個停用）。`role_menu` 記錄哪個角色可使用哪個節點。後端端點只寫權限代碼，例如 `@RequirePermission("card.edit")`；只需登入的端點（登出、取得選單）用 `@AnyStaff`；沒有標註的端點一律拒絕。權限判斷每次都查資料庫，所以調整後立即生效。`GET /api/admin/menu`、`GET /api/ops/menu` 回傳目前登入者可見的選單樹：葉節點需被授權才顯示，群組至少有一個可見子選項才顯示。目前的配置：`card`（卡牌管理）下有 `card.edit`（卡牌編輯，`/cards`）授權給 `ADMIN`、`GENERAL`；`audit`（稽核管理）下有 `audit.logs`（稽核紀錄，`/audit-logs`）授權給 `OPS`。新增選項與授權範例（不需改程式，但該選項對應的前端頁面與後端端點要已存在）：
+  ```
+  insert into admin_menu (parent_id, portal, code, title, path, sort_order)
+  values ((select id from admin_menu where code = 'card'), 'ADMIN', 'card.series', '卡牌系列', '/series', 20);
+  insert into role_menu (role, menu_id)
+  select 'GENERAL', id from admin_menu where code = 'card.series';
+  ```
+  收回授權：`delete from role_menu where role = 'GENERAL' and menu_id = (select id from admin_menu where code = 'card.series');`
 - 後台（`frontend/admin`）：工作人員以帳號密碼登入（登入資料只存在該分頁的 `sessionStorage`，關閉分頁即登出，過期自動失效），右上角顯示帳號與角色。`ADMIN`、`GENERAL` 可依卡號或卡名搜尋、只看有折扣的卡，直接修改每張卡的額外折扣（輸入 0.4 會顯示為 4 折），儲存後立即顯示新售價，手動定價的卡片不可設定折扣；`SERVICE` 目前登入後顯示「目前尚無可用功能」。帳號需先以上述指令建立。啟動方式：後端啟動後，於 `frontend/admin` 執行 `npm install && npm run dev`（連接埠 5174）。正式部署時需把後台網址加入 `argo.cors.origins`，或與後端放在同一網域下反向代理。
 - 運維後台（`frontend/ops`）：`OPS` 帳號以帳號密碼登入（走 `/api/ops/auth/login`），目前提供稽核紀錄頁：依帳號、動作、成功或失敗、時間範圍篩選，每頁 50 筆，新的在前；失敗的紀錄會標紅，點「詳情」可看對象、User-Agent 與完整的變更前後 JSON，折扣修改會直接摘要為「折扣 1 → 0.4，售價 9.00 → 3.60」。啟動方式：於 `frontend/ops` 執行 `npm install && npm run dev`（連接埠 5175）。正式部署時建議只在內網提供此網站與 `/api/ops/**`。
 - 多語系卡片資料：卡片查詢 API 加上 `lang` 參數（`en` 預設、`zh-TW`）即回傳該語言的卡名、效果、特徵與系列名稱，找不到翻譯時回退為英文，原文固定放在 `cardNameEn`、`setNameEn`。繁中資料抓取自 Bandai 官方繁中卡表（`asia-tc.onepiece-cardgame.com`），啟動時加 `--argo.translation.on-startup=true` 手動同步，也會每週一凌晨 5 點自動同步。內容版權屬原權利人，正式營運前請自行確認使用條款。

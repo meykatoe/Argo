@@ -19,9 +19,9 @@ public class OpsAuditController {
 		this.service = service;
 	}
 
-	// 只開放運維，ADMIN 也不可看
+	// 授權由 role_menu 決定
 	@GetMapping
-	@RequireRole({ StaffRole.OPS })
+	@RequirePermission("audit.logs")
 	public PageResult<AuditLogView> list(
 			@RequestParam(required = false) String username,
 			@RequestParam(required = false) AuditAction action,

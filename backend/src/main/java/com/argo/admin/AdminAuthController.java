@@ -34,14 +34,14 @@ public class AdminAuthController {
 	}
 
 	@PostMapping({ "/api/admin/auth/logout", "/api/ops/auth/logout" })
-	@RequireRole({ StaffRole.ADMIN, StaffRole.GENERAL, StaffRole.SERVICE, StaffRole.OPS })
+	@AnyStaff
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void logout(HttpServletRequest req) {
 		auth.logout(AdminAuthInterceptor.bearer(req));
 	}
 
 	@GetMapping({ "/api/admin/auth/me", "/api/ops/auth/me" })
-	@RequireRole({ StaffRole.ADMIN, StaffRole.GENERAL, StaffRole.SERVICE, StaffRole.OPS })
+	@AnyStaff
 	public Me me(HttpServletRequest req) {
 		StaffAccount s = (StaffAccount) req.getAttribute(AdminAuthInterceptor.STAFF_ATTR);
 		return new Me(s.getUsername(), s.getRole());
