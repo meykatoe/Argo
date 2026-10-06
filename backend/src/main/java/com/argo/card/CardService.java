@@ -62,7 +62,9 @@ public class CardService {
 		var result = cards.findAll(CardSpecs.of(q), PageRequest.of(page - 1, size, sort));
 		Map<String, CardTranslation> trs = translations(q.lang(),
 				result.getContent().stream().map(Card::getCardSetId).toList());
-		return PageResult.of(result, c -> CardSummary.from(c, trs.get(c.getCardSetId()), saleRate));
+		Map<String, Boolean> shelf = shelf(result.getContent());
+		return PageResult.of(result, c -> CardSummary.from(c, trs.get(c.getCardSetId()), saleRate,
+				shelf.getOrDefault(c.getSetId(), false)));
 	}
 
 	// 依編號批次取卡，保留請求順序
@@ -75,8 +77,11 @@ public class CardService {
 				.collect(Collectors.toMap(Card::getId, Function.identity()));
 		Map<String, CardTranslation> trs = translations(locale,
 				found.values().stream().map(Card::getCardSetId).distinct().toList());
+		Map<String, Boolean> shelf = shelf(found.values());
 		return ids.stream().distinct().map(found::get).filter(java.util.Objects::nonNull)
-				.map(c -> CardSummary.from(c, trs.get(c.getCardSetId()), saleRate)).toList();
+				.map(c -> CardSummary.from(c, trs.get(c.getCardSetId()), saleRate,
+						shelf.getOrDefault(c.getSetId(), false)))
+				.toList();
 	}
 
 	public CardDetail get(Long id, String lang) {
@@ -88,7 +93,8 @@ public class CardService {
 			setName = sets.findById(card.getSetId()).map(CardSet::getSetName).orElse(null);
 		}
 		CardTranslation tr = translations(locale, List.of(card.getCardSetId())).get(card.getCardSetId());
-		return CardDetail.from(card, setName, tr, saleRate);
+		boolean onSale = sets.findById(card.getSetId()).map(CardSet::isOnSale).orElse(false);
+		return CardDetail.from(card, setName, tr, saleRate, onSale);
 	}
 
 	public List<CardSetDto> listSets(String category, String lang) {
@@ -97,6 +103,13 @@ public class CardService {
 				? sets.findAll(Sort.by("setId"))
 				: sets.findByCategory(category, Sort.by("setId"));
 		return all.stream().map(s -> CardSetDto.from(s, names.get(s.getSetId()))).toList();
+	}
+
+	// 系列是否上架，找不到系列視為未上架
+	private Map<String, Boolean> shelf(Collection<Card> list) {
+		List<String> ids = list.stream().map(Card::getSetId).distinct().toList();
+		return sets.findAllById(ids).stream()
+				.collect(Collectors.toMap(CardSet::getSetId, CardSet::isOnSale));
 	}
 
 	private CardQuery withLocale(CardQuery q) {

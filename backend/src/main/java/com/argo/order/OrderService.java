@@ -2,6 +2,8 @@ package com.argo.order;
 
 import com.argo.card.Card;
 import com.argo.card.CardRepository;
+import com.argo.card.CardSet;
+import com.argo.card.CardSetRepository;
 import com.argo.common.ApiException;
 import com.argo.i18n.CardTranslation;
 import com.argo.i18n.CardTranslationRepository;
@@ -31,6 +33,7 @@ public class OrderService {
 	private final ShopOrderRepository orders;
 	private final PaymentRepository payments;
 	private final CardRepository cards;
+	private final CardSetRepository sets;
 	private final CardTranslationRepository translations;
 	private final OrderNumberGenerator numbers;
 	private final String currency;
@@ -38,13 +41,14 @@ public class OrderService {
 	private final long expireMinutes;
 
 	public OrderService(ShopOrderRepository orders, PaymentRepository payments, CardRepository cards,
-			CardTranslationRepository translations, OrderNumberGenerator numbers,
+			CardSetRepository sets, CardTranslationRepository translations, OrderNumberGenerator numbers,
 			@Value("${argo.order.currency}") String currency,
 			@Value("${argo.order.shipping-fee}") BigDecimal shippingFee,
 			@Value("${argo.order.expire-minutes}") long expireMinutes) {
 		this.orders = orders;
 		this.payments = payments;
 		this.cards = cards;
+		this.sets = sets;
 		this.translations = translations;
 		this.numbers = numbers;
 		this.currency = currency;
@@ -78,7 +82,9 @@ public class OrderService {
 			if (card == null) {
 				throw new ApiException(HttpStatus.BAD_REQUEST, "ITEM_NOT_FOUND", detail);
 			}
-			if (card.getStock() <= 0 || card.getSalePrice().signum() <= 0) {
+			// 系列下架的卡不可購買
+			boolean onSale = sets.findById(card.getSetId()).map(CardSet::isOnSale).orElse(false);
+			if (!onSale || card.getStock() <= 0 || card.getSalePrice().signum() <= 0) {
 				throw new ApiException(HttpStatus.CONFLICT, "ITEM_UNAVAILABLE", detail);
 			}
 			// 單一語句扣庫存，擋住同時下單

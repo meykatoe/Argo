@@ -18,6 +18,10 @@ public class CardSet {
 	@Column(nullable = false)
 	private String category;
 
+	// 下架後仍顯示，但不可購買
+	@Column(nullable = false)
+	private boolean onSale = true;
+
 	protected CardSet() {
 	}
 
@@ -37,6 +41,14 @@ public class CardSet {
 
 	public String getCategory() {
 		return category;
+	}
+
+	public boolean isOnSale() {
+		return onSale;
+	}
+
+	public void setOnSale(boolean onSale) {
+		this.onSale = onSale;
 	}
 
 	public void setSetName(String setName) {

@@ -55,7 +55,11 @@ public final class CardSpecs {
 				ps.add(cb.equal(root.get("cardType"), q.cardType()));
 			}
 			if (q.inStock()) {
-				// 有庫存且已定價
+				// 有庫存、已定價且系列上架
+				Subquery<String> shelf = query.subquery(String.class);
+				var onShelf = shelf.from(CardSet.class);
+				shelf.select(onShelf.get("setId")).where(cb.isTrue(onShelf.get("onSale")));
+				ps.add(root.get("setId").in(shelf));
 				ps.add(cb.greaterThan(root.<Integer>get("stock"), 0));
 				ps.add(cb.greaterThan(root.<java.math.BigDecimal>get("salePrice"), java.math.BigDecimal.ZERO));
 			}
