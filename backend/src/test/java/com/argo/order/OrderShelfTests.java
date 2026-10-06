@@ -48,7 +48,7 @@ class OrderShelfTests {
 	}
 
 	private void shelf(boolean onSale) {
-		jdbc.update("update card_set set on_sale = ? where set_id = 'TS-60'", onSale);
+		jdbc.update("update card_set set on_sale = ? where set_id = 'TS-60'", onSale ? 1 : 0);
 		em.clear();
 	}
 
@@ -59,8 +59,8 @@ class OrderShelfTests {
 	@Test
 	void newSeriesIsOnSale() {
 		var item = service.search(q(false), 1, 20, "cardSetId", false).items().get(0);
-		assertTrue(item.onSale());
-		assertTrue(service.get(a.getId(), "en").onSale());
+		assertEquals(1, item.onSale());
+		assertEquals(1, service.get(a.getId(), "en").onSale());
 	}
 
 	@Test
@@ -68,9 +68,9 @@ class OrderShelfTests {
 		shelf(false);
 		var items = service.search(q(false), 1, 20, "cardSetId", false).items();
 		assertEquals(1, items.size());
-		assertFalse(items.get(0).onSale());
-		assertFalse(service.get(a.getId(), "en").onSale());
-		assertFalse(service.getAll(java.util.List.of(a.getId()), "en").get(0).onSale());
+		assertEquals(0, items.get(0).onSale());
+		assertEquals(0, service.get(a.getId(), "en").onSale());
+		assertEquals(0, service.getAll(java.util.List.of(a.getId()), "en").get(0).onSale());
 	}
 
 	@Test
@@ -108,6 +108,6 @@ class OrderShelfTests {
 	void setListShowsShelfState() {
 		shelf(false);
 		var set = service.listSets(null, "en").stream().filter(s -> s.setId().equals("TS-60")).findFirst().orElseThrow();
-		assertFalse(set.onSale());
+		assertEquals(0, set.onSale());
 	}
 }

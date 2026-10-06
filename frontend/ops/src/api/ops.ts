@@ -31,7 +31,8 @@ async function request<T>(
   for (const [key, value] of Object.entries(params)) {
     // 略過空值參數
     if (value !== undefined && value !== '') {
-      query.set(key, String(value))
+      // 是否類參數一律送 1 或 0
+      query.set(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value))
     }
   }
   const headers: Record<string, string> = {}

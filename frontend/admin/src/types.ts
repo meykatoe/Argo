@@ -1,3 +1,6 @@
+// 是否類欄位一律為 0 或 1
+export type Flag = 0 | 1
+
 export interface AdminCard {
   id: number
   cardSetId: string
@@ -9,7 +12,7 @@ export interface AdminCard {
   listPrice: number
   extraDiscount: number
   salePrice: number
-  priceOverridden: boolean
+  priceOverridden: Flag
   stock: number
 }
 

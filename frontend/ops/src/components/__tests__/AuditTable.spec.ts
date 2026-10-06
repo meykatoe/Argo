@@ -11,7 +11,7 @@ const row = {
   targetType: 'CARD',
   targetId: '7',
   detail: { cardSetId: 'OP01-001', extraDiscountBefore: '1', extraDiscountAfter: '0.4', salePriceBefore: '9.00', salePriceAfter: '3.60' },
-  success: true,
+  success: 1,
   ip: '10.0.0.5',
   userAgent: 'UA',
   createdAt: '2026-10-06T03:00:00Z',
@@ -52,7 +52,7 @@ describe('AuditTable', () => {
     const url = new URL(fetchMock.mock.calls[1]![0], 'http://x')
     expect(url.searchParams.get('username')).toBe('gen')
     expect(url.searchParams.get('action')).toBe('LOGIN_FAILED')
-    expect(url.searchParams.get('success')).toBe('false')
+    expect(url.searchParams.get('success')).toBe('0')
     expect(w.text()).toContain('沒有符合的紀錄')
   })
 
@@ -68,7 +68,7 @@ describe('AuditTable', () => {
   it('失敗列有標示', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(page([{ ...row, action: 'LOGIN_FAILED', success: false, detail: { reason: 'BAD_PASSWORD' } }])),
+      vi.fn().mockResolvedValue(page([{ ...row, action: 'LOGIN_FAILED', success: 0, detail: { reason: 'BAD_PASSWORD' } }])),
     )
     const w = mount(AuditTable, { props: { token: 'tk' } })
     await flushPromises()

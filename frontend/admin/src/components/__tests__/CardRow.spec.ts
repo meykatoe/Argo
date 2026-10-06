@@ -14,7 +14,7 @@ const card: AdminCard = {
   listPrice: 9,
   extraDiscount: 1,
   salePrice: 9,
-  priceOverridden: false,
+  priceOverridden: 0,
   stock: 3,
 }
 
@@ -58,7 +58,7 @@ describe('CardRow', () => {
   })
 
   it('手動定價時停用', () => {
-    const w = render({ priceOverridden: true })
+    const w = render({ priceOverridden: 1 })
     expect(w.find('input').attributes('disabled')).toBeDefined()
     expect(w.find('button.primary').attributes('disabled')).toBeDefined()
   })

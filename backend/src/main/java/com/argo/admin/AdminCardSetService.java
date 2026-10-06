@@ -4,6 +4,7 @@ import com.argo.card.Card;
 import com.argo.card.CardRepository;
 import com.argo.card.CardSet;
 import com.argo.card.CardSetRepository;
+import com.argo.common.Flag;
 import com.argo.i18n.CardSetTranslation;
 import com.argo.i18n.CardSetTranslationRepository;
 import com.argo.i18n.Locales;
@@ -55,7 +56,7 @@ public class AdminCardSetService {
 		// 沒有變動就不記錄
 		if (before != onSale) {
 			audit.record(actor, null, AuditAction.CARD_SET_ON_SALE_UPDATE, true, "CARD_SET", setId,
-					Map.of("onSaleBefore", before, "onSaleAfter", onSale));
+					Map.of("onSaleBefore", Flag.of(before), "onSaleAfter", Flag.of(onSale)));
 		}
 		return view(set, names(), stats());
 	}
@@ -110,6 +111,6 @@ public class AdminCardSetService {
 		BigDecimal max = st == null ? BigDecimal.ONE : (BigDecimal) st[3];
 		String local = names.get(s.getSetId());
 		return new AdminCardSetView(s.getSetId(), local != null ? local : s.getSetName(),
-				s.getSetName(), s.getCategory(), s.isOnSale(), count, min, max);
+				s.getSetName(), s.getCategory(), Flag.of(s.isOnSale()), count, min, max);
 	}
 }

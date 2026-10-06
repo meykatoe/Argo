@@ -14,7 +14,7 @@ const card: AdminCard = {
   listPrice: 9,
   extraDiscount: 1,
   salePrice: 9,
-  priceOverridden: false,
+  priceOverridden: 0,
   stock: 3,
 }
 

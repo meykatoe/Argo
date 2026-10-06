@@ -41,6 +41,7 @@ public class AuditLog {
 	private Map<String, Object> detail;
 
 	@Column(nullable = false)
+	@JdbcTypeCode(SqlTypes.SMALLINT)
 	private boolean success = true;
 
 	private String ip;

@@ -13,6 +13,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "admin_menu")
@@ -40,6 +42,7 @@ public class AdminMenu {
 	private int sortOrder;
 
 	@Column(nullable = false)
+	@JdbcTypeCode(SqlTypes.SMALLINT)
 	private boolean enabled = true;
 
 	@ElementCollection

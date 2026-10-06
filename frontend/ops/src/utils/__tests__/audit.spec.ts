@@ -12,7 +12,7 @@ function log(p: Partial<AuditLog>): AuditLog {
     targetType: null,
     targetId: null,
     detail: null,
-    success: true,
+    success: 1,
     ip: '127.0.0.1',
     userAgent: null,
     createdAt: '2026-10-06T03:00:00Z',

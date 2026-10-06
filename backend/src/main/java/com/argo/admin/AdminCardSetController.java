@@ -32,7 +32,7 @@ public class AdminCardSetController {
 	@RequirePermission("card.series")
 	public Result<AdminCardSetView> setOnSale(@PathVariable String setId,
 			@Valid @RequestBody OnSaleRequest body, HttpServletRequest req) {
-		return Result.ok(service.setOnSale(staff(req), setId, body.onSale()));
+		return Result.ok(service.setOnSale(staff(req), setId, body.onSale() == 1));
 	}
 
 	// 整個系列統一折扣

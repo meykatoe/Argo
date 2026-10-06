@@ -4,6 +4,7 @@ import com.argo.card.Card;
 import com.argo.card.CardQuery;
 import com.argo.card.CardRepository;
 import com.argo.card.CardSpecs;
+import com.argo.common.Flag;
 import com.argo.common.PageResult;
 import com.argo.i18n.CardTranslation;
 import com.argo.i18n.CardTranslationRepository;
@@ -70,7 +71,7 @@ public class AdminCardService {
 						"extraDiscountAfter", card.getExtraDiscount().toPlainString(),
 						"salePriceBefore", priceBefore.toPlainString(),
 						"salePriceAfter", card.getSalePrice().toPlainString(),
-						"priceOverridden", card.isPriceOverridden()));
+						"priceOverridden", Flag.of(card.isPriceOverridden())));
 		return AdminCardView.from(card, names(java.util.List.of(card.getCardSetId())).get(card.getCardSetId()), saleRate);
 	}
 

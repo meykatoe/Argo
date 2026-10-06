@@ -9,7 +9,7 @@ const open = ref(false)
 </script>
 
 <template>
-  <tr :class="{ failed: !log.success }">
+  <tr :class="{ failed: log.success === 0 }">
     <td class="time">{{ formatTime(log.createdAt) }}</td>
     <td>
       {{ log.username }}
@@ -17,7 +17,7 @@ const open = ref(false)
     </td>
     <td>
       {{ actionLabel(log.action) }}
-      <span v-if="!log.success" class="bad">失敗</span>
+      <span v-if="log.success === 0" class="bad">失敗</span>
     </td>
     <td>{{ summarize(log) }}</td>
     <td class="hint">{{ log.ip ?? '-' }}</td>

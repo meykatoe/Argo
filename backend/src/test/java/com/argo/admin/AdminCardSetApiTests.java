@@ -89,7 +89,7 @@ class AdminCardSetApiTests {
 	void listShowsStats() throws Exception {
 		mvc.perform(get("/api/admin/card-sets").header("Authorization", general)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].cardCount").value(3))
-				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].onSale").value(true))
+				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].onSale").value(1))
 				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].minDiscount").value(1.0))
 				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].setNameEn").value("Test Set"));
 	}
@@ -98,20 +98,20 @@ class AdminCardSetApiTests {
 	void permissionComesFromTheDatabase() throws Exception {
 		mvc.perform(get("/api/admin/card-sets").header("Authorization", service)).andExpect(status().isForbidden());
 		mvc.perform(patch("/api/admin/card-sets/TS-70/on-sale").header("Authorization", service)
-				.contentType(MediaType.APPLICATION_JSON).content("{\"onSale\":false}"))
+				.contentType(MediaType.APPLICATION_JSON).content("{\"onSale\":0}"))
 				.andExpect(status().isForbidden());
 		mvc.perform(get("/api/admin/card-sets")).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	void takesSeriesOffShelfAndAudits() throws Exception {
-		send("/on-sale", "{\"onSale\":false}").andExpect(status().isOk()).andExpect(jsonPath("$.data.onSale").value(false));
+		send("/on-sale", "{\"onSale\":0}").andExpect(status().isOk()).andExpect(jsonPath("$.data.onSale").value(0));
 		assertEquals(false, sets.findById("TS-70").orElseThrow().isOnSale());
 		assertEquals(1, audits("CARD_SET_ON_SALE_UPDATE"));
 		// 重複送出同樣的值不再記錄
-		send("/on-sale", "{\"onSale\":false}").andExpect(status().isOk());
+		send("/on-sale", "{\"onSale\":0}").andExpect(status().isOk());
 		assertEquals(1, audits("CARD_SET_ON_SALE_UPDATE"));
-		send("/on-sale", "{\"onSale\":true}").andExpect(jsonPath("$.data.onSale").value(true));
+		send("/on-sale", "{\"onSale\":1}").andExpect(jsonPath("$.data.onSale").value(1));
 		assertEquals(2, audits("CARD_SET_ON_SALE_UPDATE"));
 	}
 
@@ -119,6 +119,10 @@ class AdminCardSetApiTests {
 	void rejectsBadOnSaleBody() throws Exception {
 		send("/on-sale", "{}").andExpect(status().isBadRequest());
 		send("/on-sale", "{\"onSale\":null}").andExpect(status().isBadRequest());
+		// 只接受 0 與 1，不接受布林與其他數字
+		send("/on-sale", "{\"onSale\":true}").andExpect(status().isBadRequest());
+		send("/on-sale", "{\"onSale\":2}").andExpect(status().isBadRequest());
+		send("/on-sale", "{\"onSale\":-1}").andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -170,7 +174,7 @@ class AdminCardSetApiTests {
 			send("/extra-discount", "{\"extraDiscount\":" + v + "}").andExpect(status().isBadRequest());
 		}
 		mvc.perform(patch("/api/admin/card-sets/NOPE/on-sale").header("Authorization", general)
-				.contentType(MediaType.APPLICATION_JSON).content("{\"onSale\":false}")).andExpect(status().isNotFound());
+				.contentType(MediaType.APPLICATION_JSON).content("{\"onSale\":0}")).andExpect(status().isNotFound());
 		mvc.perform(patch("/api/admin/card-sets/NOPE/extra-discount").header("Authorization", general)
 				.contentType(MediaType.APPLICATION_JSON).content("{\"extraDiscount\":0.5}")).andExpect(status().isNotFound());
 	}

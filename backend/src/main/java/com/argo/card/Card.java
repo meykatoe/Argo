@@ -9,6 +9,8 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "card")
@@ -75,6 +77,7 @@ public class Card {
 
 	// 手動定價後同步不覆蓋
 	@Column(nullable = false)
+	@JdbcTypeCode(SqlTypes.SMALLINT)
 	private boolean priceOverridden;
 
 	@Column(nullable = false)

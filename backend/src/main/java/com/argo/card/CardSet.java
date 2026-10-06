@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "card_set")
@@ -20,6 +22,7 @@ public class CardSet {
 
 	// 下架後仍顯示，但不可購買
 	@Column(nullable = false)
+	@JdbcTypeCode(SqlTypes.SMALLINT)
 	private boolean onSale = true;
 
 	protected CardSet() {

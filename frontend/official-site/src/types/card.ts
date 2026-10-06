@@ -25,6 +25,8 @@ export interface CardSummary {
   salePrice: number
   listPrice: number
   stock: number
+  // 所屬系列是否上架
+  onSale: Flag
 }
 
 export interface CardDetail extends CardSummary {
@@ -36,11 +38,15 @@ export interface CardDetail extends CardSummary {
   subTypes: string | null
 }
 
+// 是否類欄位一律為 0 或 1
+export type Flag = 0 | 1
+
 export interface CardSet {
   setId: string
   setName: string
   setNameEn: string
   category: CardCategory
+  onSale: Flag
 }
 
 export type CardCategory = 'booster' | 'starter' | 'promo'

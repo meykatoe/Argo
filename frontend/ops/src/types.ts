@@ -7,6 +7,9 @@ export interface Session {
   expiresAt: string
 }
 
+// 是否類欄位一律為 0 或 1
+export type Flag = 0 | 1
+
 export type AuditAction =
   | 'LOGIN_SUCCESS'
   | 'LOGIN_FAILED'
@@ -26,7 +29,7 @@ export interface AuditLog {
   targetType: string | null
   targetId: string | null
   detail: Record<string, unknown> | null
-  success: boolean
+  success: Flag
   ip: string | null
   userAgent: string | null
   createdAt: string

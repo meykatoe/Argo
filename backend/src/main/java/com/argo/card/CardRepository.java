@@ -23,7 +23,7 @@ public interface CardRepository extends JpaRepository<Card, Long>, JpaSpecificat
 	@Transactional
 	@Modifying(flushAutomatically = true)
 	@Query("update Card c set c.stock = c.stock - :q where c.id = :id and c.stock >= :q and c.salePrice > 0"
-			+ " and exists (select 1 from CardSet s where s.setId = c.setId and s.onSale = true)")
+			+ " and exists (select 1 from CardSet s where s.setId = c.setId and s.onSale = :#{true})")
 	int decrementStock(@Param("id") Long id, @Param("q") int quantity);
 
 	@Transactional

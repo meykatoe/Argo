@@ -77,3 +77,18 @@ describe('http', () => {
     expect(err.status).toBe(500)
   })
 })
+
+describe('是否類參數', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('布林參數一律送 1 或 0', async () => {
+    const fn = vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 200, msg: 'OK', data: [] })))
+    vi.stubGlobal('fetch', fn)
+    await get('/cards', { inStock: true, desc: false })
+    const url = new URL(fn.mock.calls[0]![0], 'http://x')
+    expect(url.searchParams.get('inStock')).toBe('1')
+    expect(url.searchParams.get('desc')).toBe('0')
+  })
+})

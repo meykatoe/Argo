@@ -31,6 +31,7 @@ function card(id: number, extra: Partial<CardSummary> = {}): CardSummary {
     marketPrice: 2,
     salePrice: 1.5,
     listPrice: 1.5,
+    onSale: 1 as const,
     stock: 5,
     ...extra,
   }

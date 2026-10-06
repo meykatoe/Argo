@@ -28,6 +28,7 @@ const card = {
   marketPrice: 1.5,
   salePrice: 1.35,
   listPrice: 1.35,
+  onSale: 1 as const,
   stock: 3,
 }
 

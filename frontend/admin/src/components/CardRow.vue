@@ -65,19 +65,19 @@ async function save() {
         v-model="input"
         class="discount"
         inputmode="decimal"
-        :disabled="card.priceOverridden || saving"
+        :disabled="card.priceOverridden === 1 || saving"
         :aria-label="`${card.cardSetId} 額外折扣`"
         @keyup.enter="save"
       />
       <span v-if="parseDiscount(input) !== null" class="hint">
         {{ discountLabel(parseDiscount(input)!) }}
       </span>
-      <div v-if="card.priceOverridden" class="hint">手動定價，不套用折扣</div>
+      <div v-if="card.priceOverridden === 1" class="hint">手動定價，不套用折扣</div>
       <div v-if="error" class="error">{{ error }}</div>
     </td>
     <td class="num" :class="{ sale: card.extraDiscount < 1 }">{{ formatPrice(card.salePrice) }}</td>
     <td>
-      <button type="button" class="primary" :disabled="card.priceOverridden || saving" @click="save">
+      <button type="button" class="primary" :disabled="card.priceOverridden === 1 || saving" @click="save">
         儲存
       </button>
     </td>

@@ -89,7 +89,7 @@ class MenuTests {
 
 	@Test
 	void disabledNodeIsHiddenAndDenied() {
-		jdbc.update("update admin_menu set enabled = false where code = 'card.edit'");
+		jdbc.update("update admin_menu set enabled = 0 where code = 'card.edit'");
 		assertEquals(List.of(), codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
 		assertFalse(menus.hasPermission(StaffRole.GENERAL, "card.edit"));
 	}

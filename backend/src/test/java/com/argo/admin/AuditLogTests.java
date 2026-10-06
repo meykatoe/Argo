@@ -73,7 +73,7 @@ class AuditLogTests {
 		assertEquals("GENERAL", rows.get(0).get("role"));
 		assertEquals("127.0.0.1", rows.get(0).get("ip"));
 		assertEquals("JUnit", rows.get(0).get("user_agent"));
-		assertEquals(true, rows.get(0).get("success"));
+		assertEquals(1, ((Number) rows.get(0).get("success")).intValue());
 	}
 
 	@Test
@@ -82,7 +82,7 @@ class AuditLogTests {
 		assertThrows(ApiException.class, () -> auth.login("ghost", "wrong-password-xyz", LoginPortal.ADMIN));
 		var bad = logs("action = 'LOGIN_FAILED' and username = 'gen1'");
 		assertEquals(1, bad.size());
-		assertEquals(false, bad.get(0).get("success"));
+		assertEquals(0, ((Number) bad.get(0).get("success")).intValue());
 		assertEquals("BAD_PASSWORD", jdbc.queryForObject(
 				"select detail->>'reason' from staff_audit_log where id = ?", String.class, bad.get(0).get("id")));
 		var ghost = logs("action = 'LOGIN_FAILED' and username = 'ghost'");

@@ -22,6 +22,7 @@ const base: CardSummary = {
   marketPrice: 10,
   salePrice: 9,
   listPrice: 9,
+  onSale: 1 as const,
   stock: 4,
 }
 
