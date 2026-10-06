@@ -14,8 +14,8 @@ public class CorsConfig {
 		return new WebMvcConfigurer() {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
-				// 開放讀取、送出與改折扣
-				registry.addMapping("/api/**").allowedOrigins(origins).allowedMethods("GET", "POST", "PATCH");
+				// 開放讀取、送出、修改與刪除
+				registry.addMapping("/api/**").allowedOrigins(origins).allowedMethods("GET", "POST", "PATCH", "DELETE");
 			}
 		};
 	}

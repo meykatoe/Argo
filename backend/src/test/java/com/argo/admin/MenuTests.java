@@ -50,7 +50,8 @@ class MenuTests {
 		assertEquals(List.of("card", "card.series", "card.edit"), codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
 		assertEquals(List.of("card", "card.series", "card.edit"), codes(menus.menuFor(StaffRole.ADMIN, LoginPortal.ADMIN)));
 		assertEquals(List.of(), codes(menus.menuFor(StaffRole.SERVICE, LoginPortal.ADMIN)));
-		assertEquals(List.of("audit", "audit.logs"), codes(menus.menuFor(StaffRole.OPS, LoginPortal.OPS)));
+		assertEquals(List.of("audit", "audit.logs", "security", "security.ips", "security.ips.block"),
+				codes(menus.menuFor(StaffRole.OPS, LoginPortal.OPS)));
 		assertEquals(List.of(), codes(menus.menuFor(StaffRole.ADMIN, LoginPortal.OPS)));
 		assertEquals(List.of(), codes(menus.menuFor(StaffRole.OPS, LoginPortal.ADMIN)));
 	}

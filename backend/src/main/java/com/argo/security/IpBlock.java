@@ -1,0 +1,64 @@
+package com.argo.security;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
+
+@Entity
+@Table(name = "ip_block")
+public class IpBlock {
+
+	@Id
+	private String ip;
+
+	@Column(nullable = false)
+	private String reason;
+
+	@Column(nullable = false)
+	private String blockedBy;
+
+	private Long staffId;
+
+	@Column(nullable = false)
+	private OffsetDateTime createdAt = OffsetDateTime.now();
+
+	// 為空代表永久
+	private OffsetDateTime expiresAt;
+
+	protected IpBlock() {
+	}
+
+	public IpBlock(String ip, String reason, String blockedBy, Long staffId, OffsetDateTime expiresAt) {
+		this.ip = ip;
+		this.reason = reason;
+		this.blockedBy = blockedBy;
+		this.staffId = staffId;
+		this.expiresAt = expiresAt;
+	}
+
+	public String getIp() {
+		return ip;
+	}
+
+	public String getReason() {
+		return reason;
+	}
+
+	public String getBlockedBy() {
+		return blockedBy;
+	}
+
+	public OffsetDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public OffsetDateTime getExpiresAt() {
+		return expiresAt;
+	}
+
+	public boolean isActive(OffsetDateTime now) {
+		return expiresAt == null || expiresAt.isAfter(now);
+	}
+}
