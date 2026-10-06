@@ -37,10 +37,12 @@ async function request<T>(
     headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   })
-  if (!res.ok) {
-    throw await readError(res)
+  const result = await readResult<T>(res)
+  // 成功代碼固定為 200
+  if (!res.ok || result?.code !== 200) {
+    throw new ApiError(res.status, result?.msg ?? 'ERROR', toDetails(result?.data))
   }
-  return (await res.json()) as T
+  return result.data
 }
 
 export function get<T>(path: string, params: Params = {}): Promise<T> {
@@ -51,11 +53,22 @@ export function post<T>(path: string, body: unknown, params: Params = {}): Promi
   return request<T>('POST', path, params, body)
 }
 
-async function readError(res: Response): Promise<ApiError> {
+// 後端統一回傳格式，失敗時 msg 為錯誤代碼、data 為欄位細節
+export interface Result<T> {
+  code: number
+  msg: string
+  data: T
+}
+
+async function readResult<T>(res: Response): Promise<Result<T> | null> {
   try {
     const body = await res.json()
-    return new ApiError(res.status, body.code ?? 'ERROR', body.details ?? {})
+    return body && typeof body === 'object' && typeof body.code === 'number' ? body : null
   } catch {
-    return new ApiError(res.status, 'ERROR')
+    return null
   }
+}
+
+function toDetails(data: unknown): Record<string, string> {
+  return data && typeof data === 'object' ? (data as Record<string, string>) : {}
 }

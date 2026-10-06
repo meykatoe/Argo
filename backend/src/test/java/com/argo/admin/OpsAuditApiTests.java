@@ -53,7 +53,7 @@ class OpsAuditApiTests {
 	void everyOtherRoleIsForbidden() throws Exception {
 		for (String u : new String[] { "adm1", "gen1", "svc1" }) {
 			mvc.perform(get("/api/ops/audit-logs").header("Authorization", bearer(u)))
-					.andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ADMIN_FORBIDDEN"));
+					.andExpect(status().isForbidden()).andExpect(jsonPath("$.msg").value("ADMIN_FORBIDDEN"));
 		}
 	}
 
@@ -65,8 +65,8 @@ class OpsAuditApiTests {
 	@Test
 	void opsSeesLogsNewestFirst() throws Exception {
 		mvc.perform(get("/api/ops/audit-logs").header("Authorization", "Bearer " + ops))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.items[0].username").value("ops1"))
-				.andExpect(jsonPath("$.items[0].action").value("LOGIN_SUCCESS"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.data.items[0].username").value("ops1"))
+				.andExpect(jsonPath("$.data.items[0].action").value("LOGIN_SUCCESS"));
 	}
 
 	@Test
@@ -74,10 +74,10 @@ class OpsAuditApiTests {
 		assertThrows(ApiException.class, () -> auth.login("gen1", "bad-password-1", LoginPortal.ADMIN));
 		mvc.perform(get("/api/ops/audit-logs").header("Authorization", "Bearer " + ops)
 				.param("username", "GEN").param("action", "LOGIN_FAILED").param("success", "false"))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1))
-				.andExpect(jsonPath("$.items[0].detail.reason").value("BAD_PASSWORD"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(1))
+				.andExpect(jsonPath("$.data.items[0].detail.reason").value("BAD_PASSWORD"));
 		mvc.perform(get("/api/ops/audit-logs").header("Authorization", "Bearer " + ops)
-				.param("username", "%")).andExpect(jsonPath("$.total").value(0));
+				.param("username", "%")).andExpect(jsonPath("$.data.total").value(0));
 	}
 
 	@Test
@@ -89,7 +89,7 @@ class OpsAuditApiTests {
 				.andExpect(status().isBadRequest());
 		mvc.perform(get("/api/ops/audit-logs").header("Authorization", h)
 				.param("from", "2026-02-01T00:00:00Z").param("to", "2026-01-01T00:00:00Z"))
-				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_RANGE"));
+				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.msg").value("INVALID_RANGE"));
 	}
 
 	@Test
@@ -114,7 +114,7 @@ class OpsAuditApiTests {
 				.andExpect(status().isUnauthorized());
 		mvc.perform(post("/api/ops/auth/login").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"username\":\"ops1\",\"password\":\"" + PW + "\"}"))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.role").value("OPS"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.data.role").value("OPS"));
 	}
 
 	@Test
@@ -122,6 +122,6 @@ class OpsAuditApiTests {
 		mvc.perform(get("/api/admin/cards").header("Authorization", "Bearer " + ops))
 				.andExpect(status().isForbidden());
 		mvc.perform(get("/api/ops/auth/me").header("Authorization", "Bearer " + ops))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.role").value("OPS"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.data.role").value("OPS"));
 	}
 }

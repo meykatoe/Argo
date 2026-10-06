@@ -32,7 +32,7 @@ describe('CardRow', () => {
   it('送出折扣並帶令牌', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ ...card, extraDiscount: 0.4, salePrice: 3.6 }),
+      json: async () => ({ code: 200, msg: 'OK', data: { ...card, extraDiscount: 0.4, salePrice: 3.6 } }),
     })
     vi.stubGlobal('fetch', fetchMock)
     const w = render()
@@ -66,7 +66,7 @@ describe('CardRow', () => {
   it('401 通知登出', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({ code: 'ADMIN_UNAUTHORIZED' }) }),
+      vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({ code: 401, msg: 'ADMIN_UNAUTHORIZED', data: null }) }),
     )
     const w = render()
     await w.find('input').setValue('0.5')

@@ -112,12 +112,12 @@ class MenuTests {
 		String svc = "Bearer " + auth.login("svc1", PW, LoginPortal.ADMIN).token();
 		String ops = "Bearer " + auth.login("ops1", PW, LoginPortal.OPS).token();
 		mvc.perform(get("/api/admin/menu").header("Authorization", gen)).andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].title").value("卡牌管理"))
-				.andExpect(jsonPath("$[0].children[0].path").value("/cards"));
+				.andExpect(jsonPath("$.data[0].title").value("卡牌管理"))
+				.andExpect(jsonPath("$.data[0].children[0].path").value("/cards"));
 		mvc.perform(get("/api/admin/menu").header("Authorization", svc)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.length()").value(0));
+				.andExpect(jsonPath("$.data.length()").value(0));
 		mvc.perform(get("/api/ops/menu").header("Authorization", ops)).andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].children[0].code").value("audit.logs"));
+				.andExpect(jsonPath("$.data[0].children[0].code").value("audit.logs"));
 		mvc.perform(get("/api/ops/menu")).andExpect(status().isUnauthorized());
 	}
 

@@ -1,5 +1,6 @@
 package com.argo.order;
 
+import com.argo.common.Result;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,23 +26,23 @@ public class OrderController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public OrderView create(@Valid @RequestBody CreateOrderRequest req,
+	public Result<OrderView> create(@Valid @RequestBody CreateOrderRequest req,
 			@RequestParam(defaultValue = "en") String lang) {
-		return orders.create(req, lang);
+		return Result.ok(orders.create(req, lang));
 	}
 
 	@GetMapping("/{orderNo}")
-	public OrderView get(@PathVariable String orderNo, @RequestParam String email) {
-		return orders.get(orderNo, email);
+	public Result<OrderView> get(@PathVariable String orderNo, @RequestParam String email) {
+		return Result.ok(orders.get(orderNo, email));
 	}
 
 	@PostMapping("/{orderNo}/pay")
-	public OrderView pay(@PathVariable String orderNo, @Valid @RequestBody PayRequest req) {
-		return payments.pay(orderNo, req);
+	public Result<OrderView> pay(@PathVariable String orderNo, @Valid @RequestBody PayRequest req) {
+		return Result.ok(payments.pay(orderNo, req));
 	}
 
 	@PostMapping("/{orderNo}/cancel")
-	public OrderView cancel(@PathVariable String orderNo, @Valid @RequestBody EmailRequest req) {
-		return orders.cancel(orderNo, req.email());
+	public Result<OrderView> cancel(@PathVariable String orderNo, @Valid @RequestBody EmailRequest req) {
+		return Result.ok(orders.cancel(orderNo, req.email()));
 	}
 }

@@ -1,6 +1,7 @@
 package com.argo.admin;
 
 import com.argo.common.PageResult;
+import com.argo.common.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -22,7 +23,7 @@ public class OpsAuditController {
 	// 授權由 role_menu 決定
 	@GetMapping
 	@RequirePermission("audit.logs")
-	public PageResult<AuditLogView> list(
+	public Result<PageResult<AuditLogView>> list(
 			@RequestParam(required = false) String username,
 			@RequestParam(required = false) AuditAction action,
 			@RequestParam(required = false) Boolean success,
@@ -34,7 +35,7 @@ public class OpsAuditController {
 			@RequestParam(defaultValue = "50") int size,
 			HttpServletRequest req) {
 		StaffAccount viewer = (StaffAccount) req.getAttribute(AdminAuthInterceptor.STAFF_ATTR);
-		return service.search(viewer, new AuditLogQuery(username, action, success, targetType,
-				targetId, from, to), page, size);
+		return Result.ok(service.search(viewer, new AuditLogQuery(username, action, success, targetType,
+				targetId, from, to), page, size));
 	}
 }

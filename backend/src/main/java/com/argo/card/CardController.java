@@ -1,6 +1,7 @@
 package com.argo.card;
 
 import com.argo.common.PageResult;
+import com.argo.common.Result;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,7 +21,7 @@ public class CardController {
 
 	// 列表
 	@GetMapping("/cards") 
-	public PageResult<CardSummary> list(
+	public Result<PageResult<CardSummary>> list(
 			@RequestParam(required = false) String keyword,
 			@RequestParam(required = false) String setId,
 			@RequestParam(required = false) String category,
@@ -34,26 +35,26 @@ public class CardController {
 			@RequestParam(defaultValue = "cardSetId") String sortBy,
 			@RequestParam(defaultValue = "false") boolean desc) {
 		CardQuery query = new CardQuery(keyword, setId, category, color, rarity, cardType, inStock, lang);
-		return service.search(query, page, size, sortBy, desc);
+		return Result.ok(service.search(query, page, size, sortBy, desc));
 	}
 
 	// 卡片詳情
 	@GetMapping("/cards/batch")
-	public List<CardSummary> batch(@RequestParam List<Long> ids,
+	public Result<List<CardSummary>> batch(@RequestParam List<Long> ids,
 			@RequestParam(defaultValue = "en") String lang) {
-		return service.getAll(ids, lang);
+		return Result.ok(service.getAll(ids, lang));
 	}
 
 	@GetMapping("/cards/{id}")
-	public CardDetail detail(@PathVariable Long id,
+	public Result<CardDetail> detail(@PathVariable Long id,
 			@RequestParam(defaultValue = "en") String lang) {
-		return service.get(id, lang);
+		return Result.ok(service.get(id, lang));
 	}
 
 	// 系列列表
 	@GetMapping("/sets")
-	public List<CardSetDto> sets(@RequestParam(required = false) String category,
+	public Result<List<CardSetDto>> sets(@RequestParam(required = false) String category,
 			@RequestParam(defaultValue = "en") String lang) {
-		return service.listSets(category, lang);
+		return Result.ok(service.listSets(category, lang));
 	}
 }

@@ -88,10 +88,10 @@ class AdminCardSetApiTests {
 	@Test
 	void listShowsStats() throws Exception {
 		mvc.perform(get("/api/admin/card-sets").header("Authorization", general)).andExpect(status().isOk())
-				.andExpect(jsonPath("$[?(@.setId=='TS-70')].cardCount").value(3))
-				.andExpect(jsonPath("$[?(@.setId=='TS-70')].onSale").value(true))
-				.andExpect(jsonPath("$[?(@.setId=='TS-70')].minDiscount").value(1.0))
-				.andExpect(jsonPath("$[?(@.setId=='TS-70')].setNameEn").value("Test Set"));
+				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].cardCount").value(3))
+				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].onSale").value(true))
+				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].minDiscount").value(1.0))
+				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].setNameEn").value("Test Set"));
 	}
 
 	@Test
@@ -105,13 +105,13 @@ class AdminCardSetApiTests {
 
 	@Test
 	void takesSeriesOffShelfAndAudits() throws Exception {
-		send("/on-sale", "{\"onSale\":false}").andExpect(status().isOk()).andExpect(jsonPath("$.onSale").value(false));
+		send("/on-sale", "{\"onSale\":false}").andExpect(status().isOk()).andExpect(jsonPath("$.data.onSale").value(false));
 		assertEquals(false, sets.findById("TS-70").orElseThrow().isOnSale());
 		assertEquals(1, audits("CARD_SET_ON_SALE_UPDATE"));
 		// 重複送出同樣的值不再記錄
 		send("/on-sale", "{\"onSale\":false}").andExpect(status().isOk());
 		assertEquals(1, audits("CARD_SET_ON_SALE_UPDATE"));
-		send("/on-sale", "{\"onSale\":true}").andExpect(jsonPath("$.onSale").value(true));
+		send("/on-sale", "{\"onSale\":true}").andExpect(jsonPath("$.data.onSale").value(true));
 		assertEquals(2, audits("CARD_SET_ON_SALE_UPDATE"));
 	}
 
@@ -124,7 +124,7 @@ class AdminCardSetApiTests {
 	@Test
 	void appliesDiscountToWholeSeries() throws Exception {
 		send("/extra-discount", "{\"extraDiscount\":0.5}").andExpect(status().isOk())
-				.andExpect(jsonPath("$.minDiscount").value(0.5)).andExpect(jsonPath("$.maxDiscount").value(0.5));
+				.andExpect(jsonPath("$.data.minDiscount").value(0.5)).andExpect(jsonPath("$.data.maxDiscount").value(0.5));
 		assertEquals(0, new BigDecimal("4.50").compareTo(cards.findById(a.getId()).orElseThrow().getSalePrice()));
 		assertEquals(0, new BigDecimal("9.00").compareTo(cards.findById(b.getId()).orElseThrow().getSalePrice()));
 		// 手動定價的卡折扣有記下，但價格不動
@@ -153,8 +153,8 @@ class AdminCardSetApiTests {
 		a.applyExtraDiscount(new BigDecimal("0.3"), new BigDecimal("0.9"));
 		cards.saveAndFlush(a);
 		mvc.perform(get("/api/admin/card-sets").header("Authorization", general))
-				.andExpect(jsonPath("$[?(@.setId=='TS-70')].minDiscount").value(0.3))
-				.andExpect(jsonPath("$[?(@.setId=='TS-70')].maxDiscount").value(1.0));
+				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].minDiscount").value(0.3))
+				.andExpect(jsonPath("$.data[?(@.setId=='TS-70')].maxDiscount").value(1.0));
 	}
 
 	@Test

@@ -22,7 +22,7 @@ function menuOf(...paths: [string, string, string | null][]) {
 }
 
 async function render(path: string, menu: unknown, status = 200) {
-  const fetchMock = vi.fn().mockResolvedValue({ ok: status === 200, status, json: async () => menu })
+  const fetchMock = vi.fn().mockResolvedValue({ ok: status === 200, status, json: async () => (status === 200 ? { code: 200, msg: 'OK', data: menu } : { code: status, msg: 'ADMIN_UNAUTHORIZED', data: null }) })
   vi.stubGlobal('fetch', fetchMock)
   const router = createRouter({
     history: createMemoryHistory(),

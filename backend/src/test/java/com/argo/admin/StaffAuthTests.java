@@ -119,13 +119,13 @@ class StaffAuthTests {
 				.andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 		String token = body.replaceAll(".*\"token\":\"([^\"]+)\".*", "$1");
 		mvc.perform(get("/api/admin/auth/me").header("Authorization", "Bearer " + token))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.role").value("GENERAL"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.data.role").value("GENERAL"));
 	}
 
 	@Test
 	void badLoginReturns401() throws Exception {
 		mvc.perform(post("/api/admin/auth/login").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"username\":\"alice\",\"password\":\"nope-nope-nope\"}"))
-				.andExpect(status().isUnauthorized()).andExpect(jsonPath("$.code").value("LOGIN_FAILED"));
+				.andExpect(status().isUnauthorized()).andExpect(jsonPath("$.msg").value("LOGIN_FAILED"));
 	}
 }

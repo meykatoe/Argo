@@ -1,5 +1,6 @@
 package com.argo.admin;
 
+import com.argo.common.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,14 +18,14 @@ public class MenuController {
 
 	@GetMapping("/api/admin/menu")
 	@AnyStaff
-	public List<MenuNode> adminMenu(HttpServletRequest req) {
-		return menus.menuFor(staff(req).getRole(), LoginPortal.ADMIN);
+	public Result<List<MenuNode>> adminMenu(HttpServletRequest req) {
+		return Result.ok(menus.menuFor(staff(req).getRole(), LoginPortal.ADMIN));
 	}
 
 	@GetMapping("/api/ops/menu")
 	@AnyStaff
-	public List<MenuNode> opsMenu(HttpServletRequest req) {
-		return menus.menuFor(staff(req).getRole(), LoginPortal.OPS);
+	public Result<List<MenuNode>> opsMenu(HttpServletRequest req) {
+		return Result.ok(menus.menuFor(staff(req).getRole(), LoginPortal.OPS));
 	}
 
 	private static StaffAccount staff(HttpServletRequest req) {

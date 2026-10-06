@@ -35,7 +35,7 @@ describe('i18n', () => {
   })
 
   it('請求帶目前語言', async () => {
-    const fn = vi.fn().mockResolvedValue(new Response('[]'))
+    const fn = vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 200, msg: 'OK', data: [] })))
     vi.stubGlobal('fetch', fn)
     setLocale('en')
     await get('/sets')

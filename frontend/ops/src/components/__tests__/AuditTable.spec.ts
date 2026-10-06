@@ -18,7 +18,7 @@ const row = {
 }
 
 function page(items: unknown[]) {
-  return { ok: true, status: 200, json: async () => ({ items, page: 1, size: 50, total: items.length, totalPages: 1 }) }
+  return { ok: true, status: 200, json: async () => ({ code: 200, msg: 'OK', data: { items, page: 1, size: 50, total: items.length, totalPages: 1 } }) }
 }
 
 afterEach(() => vi.unstubAllGlobals())
@@ -77,7 +77,7 @@ describe('AuditTable', () => {
   })
 
   it('401 通知登出', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({ code: 'ADMIN_UNAUTHORIZED' }) }))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({ code: 401, msg: 'ADMIN_UNAUTHORIZED', data: null }) }))
     const w = mount(AuditTable, { props: { token: 'tk' } })
     await flushPromises()
     expect(w.emitted('unauthorized')).toHaveLength(1)

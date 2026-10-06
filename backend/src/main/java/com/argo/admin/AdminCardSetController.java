@@ -1,5 +1,6 @@
 package com.argo.admin;
 
+import com.argo.common.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -22,24 +23,24 @@ public class AdminCardSetController {
 
 	@GetMapping
 	@RequirePermission("card.series")
-	public List<AdminCardSetView> list() {
-		return service.list();
+	public Result<List<AdminCardSetView>> list() {
+		return Result.ok(service.list());
 	}
 
 	// 上下架
 	@PatchMapping("/{setId}/on-sale")
 	@RequirePermission("card.series")
-	public AdminCardSetView setOnSale(@PathVariable String setId,
+	public Result<AdminCardSetView> setOnSale(@PathVariable String setId,
 			@Valid @RequestBody OnSaleRequest body, HttpServletRequest req) {
-		return service.setOnSale(staff(req), setId, body.onSale());
+		return Result.ok(service.setOnSale(staff(req), setId, body.onSale()));
 	}
 
 	// 整個系列統一折扣
 	@PatchMapping("/{setId}/extra-discount")
 	@RequirePermission("card.series")
-	public AdminCardSetView setExtraDiscount(@PathVariable String setId,
+	public Result<AdminCardSetView> setExtraDiscount(@PathVariable String setId,
 			@Valid @RequestBody ExtraDiscountRequest body, HttpServletRequest req) {
-		return service.setExtraDiscount(staff(req), setId, body.extraDiscount());
+		return Result.ok(service.setExtraDiscount(staff(req), setId, body.extraDiscount()));
 	}
 
 	private static StaffAccount staff(HttpServletRequest req) {

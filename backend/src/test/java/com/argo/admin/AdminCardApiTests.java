@@ -59,7 +59,7 @@ class AdminCardApiTests {
 	@Test
 	void rejectsMissingToken() throws Exception {
 		mvc.perform(get("/api/admin/cards")).andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.code").value("ADMIN_UNAUTHORIZED"));
+				.andExpect(jsonPath("$.msg").value("ADMIN_UNAUTHORIZED"));
 	}
 
 	@Test
@@ -76,13 +76,13 @@ class AdminCardApiTests {
 		mvc.perform(patch("/api/admin/cards/" + id + "/extra-discount")
 				.header("Authorization", "Bearer " + service).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"extraDiscount\":0.4}")).andExpect(status().isForbidden())
-				.andExpect(jsonPath("$.code").value("ADMIN_FORBIDDEN"));
+				.andExpect(jsonPath("$.msg").value("ADMIN_FORBIDDEN"));
 	}
 
 	@Test
 	void serviceRoleCanStillCheckIdentity() throws Exception {
 		mvc.perform(get("/api/admin/auth/me").header("Authorization", "Bearer " + service))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.role").value("SERVICE"));
+				.andExpect(status().isOk()).andExpect(jsonPath("$.data.role").value("SERVICE"));
 	}
 
 	@Test
@@ -90,9 +90,9 @@ class AdminCardApiTests {
 		mvc.perform(patch("/api/admin/cards/" + id + "/extra-discount")
 				.header("Authorization", "Bearer " + general).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"extraDiscount\":0.4}")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.listPrice").value(9.0))
-				.andExpect(jsonPath("$.extraDiscount").value(0.4))
-				.andExpect(jsonPath("$.salePrice").value(3.6));
+				.andExpect(jsonPath("$.data.listPrice").value(9.0))
+				.andExpect(jsonPath("$.data.extraDiscount").value(0.4))
+				.andExpect(jsonPath("$.data.salePrice").value(3.6));
 	}
 
 	@Test
@@ -110,20 +110,20 @@ class AdminCardApiTests {
 				+ "values ('TS08-A', 'zh-TW', '測試卡', now())");
 		mvc.perform(get("/api/admin/cards").param("setId", "TS-08")
 				.header("Authorization", "Bearer " + general)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.items[0].cardName").value("測試卡"))
-				.andExpect(jsonPath("$.items[0].cardNameEn").value("Card A"));
+				.andExpect(jsonPath("$.data.items[0].cardName").value("測試卡"))
+				.andExpect(jsonPath("$.data.items[0].cardNameEn").value("Card A"));
 		mvc.perform(get("/api/admin/cards").param("keyword", "測試")
-				.header("Authorization", "Bearer " + general)).andExpect(jsonPath("$.total").value(1));
+				.header("Authorization", "Bearer " + general)).andExpect(jsonPath("$.data.total").value(1));
 		mvc.perform(patch("/api/admin/cards/" + id + "/extra-discount")
 				.header("Authorization", "Bearer " + general).contentType(MediaType.APPLICATION_JSON)
-				.content("{\"extraDiscount\":0.5}")).andExpect(jsonPath("$.cardName").value("測試卡"));
+				.content("{\"extraDiscount\":0.5}")).andExpect(jsonPath("$.data.cardName").value("測試卡"));
 	}
 
 	@Test
 	void fallsBackToEnglishWithoutTranslation() throws Exception {
 		mvc.perform(get("/api/admin/cards").param("setId", "TS-08")
 				.header("Authorization", "Bearer " + general))
-				.andExpect(jsonPath("$.items[0].cardName").value("Card A"));
+				.andExpect(jsonPath("$.data.items[0].cardName").value("Card A"));
 	}
 
 	@Test
@@ -137,12 +137,12 @@ class AdminCardApiTests {
 	void listsAndFiltersDiscounted() throws Exception {
 		mvc.perform(get("/api/admin/cards").param("setId", "TS-08").param("discounted", "true")
 				.header("Authorization", "Bearer " + general)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.total").value(0));
+				.andExpect(jsonPath("$.data.total").value(0));
 		mvc.perform(patch("/api/admin/cards/" + id + "/extra-discount")
 				.header("Authorization", "Bearer " + general).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"extraDiscount\":0.5}")).andExpect(status().isOk());
 		mvc.perform(get("/api/admin/cards").param("setId", "TS-08").param("discounted", "true")
-				.header("Authorization", "Bearer " + general)).andExpect(jsonPath("$.total").value(1))
-				.andExpect(jsonPath("$.items[0].extraDiscount").value(0.5));
+				.header("Authorization", "Bearer " + general)).andExpect(jsonPath("$.data.total").value(1))
+				.andExpect(jsonPath("$.data.items[0].extraDiscount").value(0.5));
 	}
 }
