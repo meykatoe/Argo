@@ -69,6 +69,10 @@ public class Card {
 	@Column(nullable = false)
 	private BigDecimal salePrice = BigDecimal.ZERO;
 
+	// 額外折扣，預設 1
+	@Column(nullable = false)
+	private BigDecimal extraDiscount = BigDecimal.ONE;
+
 	// 手動定價後同步不覆蓋
 	@Column(nullable = false)
 	private boolean priceOverridden;
@@ -168,6 +172,10 @@ public class Card {
 		return salePrice;
 	}
 
+	public BigDecimal getExtraDiscount() {
+		return extraDiscount;
+	}
+
 	public boolean isPriceOverridden() {
 		return priceOverridden;
 	}
@@ -180,6 +188,17 @@ public class Card {
 	public void overridePrice(BigDecimal price) {
 		this.salePrice = price;
 		this.priceOverridden = true;
+	}
+
+	// 設定額外折扣
+	public void applyExtraDiscount(BigDecimal extra, BigDecimal saleRate) {
+		if (extra.signum() <= 0 || extra.compareTo(BigDecimal.ONE) > 0) {
+			throw new IllegalArgumentException("extraDiscount must be in (0, 1]");
+		}
+		this.extraDiscount = extra;
+		if (!priceOverridden) {
+			this.salePrice = Pricing.salePrice(marketPrice, saleRate, extra);
+		}
 	}
 
 	public BigDecimal getInventoryPrice() {
@@ -210,7 +229,7 @@ public class Card {
 		this.marketPrice = BigDecimal.valueOf(src.marketPrice());
 		this.inventoryPrice = BigDecimal.valueOf(src.inventoryPrice());
 		if (!priceOverridden) {
-			this.salePrice = Pricing.salePrice(this.marketPrice, saleRate);
+			this.salePrice = Pricing.salePrice(this.marketPrice, saleRate, extraDiscount);
 		}
 		this.dateScraped = src.scrapedDate();
 		this.updatedAt = OffsetDateTime.now();

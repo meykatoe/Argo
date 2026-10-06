@@ -2,6 +2,7 @@ package com.argo.card;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
@@ -49,5 +50,43 @@ class PricingTests {
 		assertEquals(new BigDecimal("12.34"), c.getSalePrice());
 		assertEquals(0, new BigDecimal("20.00").compareTo(c.getMarketPrice()));
 		assertTrue(c.isPriceOverridden());
+	}
+
+	@Test
+	void extraDiscountDefaultsToOne() {
+		Card c = new Card("k");
+		assertEquals(0, BigDecimal.ONE.compareTo(c.getExtraDiscount()));
+	}
+
+	@Test
+	void extraDiscountStacks() {
+		Card c = new Card("k");
+		c.fill(source(10.00), RATE);
+		c.applyExtraDiscount(new BigDecimal("0.4"), RATE);
+		assertEquals(new BigDecimal("3.60"), c.getSalePrice());
+	}
+
+	@Test
+	void extraDiscountSurvivesSync() {
+		Card c = new Card("k");
+		c.applyExtraDiscount(new BigDecimal("0.4"), RATE);
+		c.fill(source(20.00), RATE);
+		assertEquals(new BigDecimal("7.20"), c.getSalePrice());
+	}
+
+	@Test
+	void extraDiscountSkipsOverridden() {
+		Card c = new Card("k");
+		c.fill(source(10.00), RATE);
+		c.overridePrice(new BigDecimal("12.34"));
+		c.applyExtraDiscount(new BigDecimal("0.4"), RATE);
+		assertEquals(new BigDecimal("12.34"), c.getSalePrice());
+	}
+
+	@Test
+	void extraDiscountRejectsInvalid() {
+		Card c = new Card("k");
+		assertThrows(IllegalArgumentException.class, () -> c.applyExtraDiscount(BigDecimal.ZERO, RATE));
+		assertThrows(IllegalArgumentException.class, () -> c.applyExtraDiscount(new BigDecimal("1.1"), RATE));
 	}
 }
