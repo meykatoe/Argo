@@ -58,7 +58,7 @@ class OrderConcurrencyTests {
 			results.add(pool.submit(() -> {
 				start.await();
 				try {
-					orders.create(request(c.getId(), 1L), "en");
+					orders.create(request(c.getId(), 1L), "en", null);
 					return true;
 				} catch (ApiException e) {
 					return false;
@@ -82,7 +82,7 @@ class OrderConcurrencyTests {
 	void failedOrderRollsBackEarlierDeductions() {
 		Card ok = card(cards, sets, jdbc, "TS-CC", "OK", 5.0, 3);
 		Card empty = card(cards, sets, jdbc, "TS-CC", "EMPTY", 5.0, 0);
-		assertThrows(ApiException.class, () -> orders.create(request(ok.getId(), 1L, empty.getId(), 1L), "en"));
+		assertThrows(ApiException.class, () -> orders.create(request(ok.getId(), 1L, empty.getId(), 1L), "en", null));
 		assertEquals(3, stock(ok));
 		assertEquals(0, jdbc.queryForObject(
 				"select count(*) from shop_order where customer_email = 'buyer@test.local'", Integer.class));

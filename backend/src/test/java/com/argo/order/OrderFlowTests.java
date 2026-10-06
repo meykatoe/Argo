@@ -65,7 +65,7 @@ class OrderFlowTests {
 
 	@Test
 	void createDeductsStockAndSnapshots() {
-		OrderView o = orders.create(request(a.getId(), 2L), "en");
+		OrderView o = orders.create(request(a.getId(), 2L), "en", null);
 		assertTrue(o.orderNo().matches("^AR\\d{6}-[A-Z2-9]{6}$"));
 		assertEquals(OrderStatus.PENDING_PAYMENT, o.status());
 		assertEquals(3, stock(a));
@@ -79,7 +79,7 @@ class OrderFlowTests {
 
 	@Test
 	void duplicateLinesMerge() {
-		OrderView o = orders.create(request(a.getId(), 1L, a.getId(), 2L), "en");
+		OrderView o = orders.create(request(a.getId(), 1L, a.getId(), 2L), "en", null);
 		assertEquals(1, o.items().size());
 		assertEquals(3, o.items().get(0).quantity());
 		assertEquals(2, stock(a));
@@ -87,11 +87,11 @@ class OrderFlowTests {
 
 	@Test
 	void rejectsBadItems() {
-		assertEquals("ITEM_UNAVAILABLE", code(() -> orders.create(request(b.getId(), 1L), "en")));
-		assertEquals("INSUFFICIENT_STOCK", code(() -> orders.create(request(a.getId(), 6L), "en")));
-		assertEquals("ITEM_NOT_FOUND", code(() -> orders.create(request(999999999L, 1L), "en")));
+		assertEquals("ITEM_UNAVAILABLE", code(() -> orders.create(request(b.getId(), 1L), "en", null)));
+		assertEquals("INSUFFICIENT_STOCK", code(() -> orders.create(request(a.getId(), 6L), "en", null)));
+		assertEquals("ITEM_NOT_FOUND", code(() -> orders.create(request(999999999L, 1L), "en", null)));
 		assertEquals("INVALID_QUANTITY",
-				code(() -> orders.create(request(a.getId(), 60L, a.getId(), 60L), "en")));
+				code(() -> orders.create(request(a.getId(), 60L, a.getId(), 60L), "en", null)));
 		assertEquals(5, stock(a));
 	}
 
@@ -99,14 +99,14 @@ class OrderFlowTests {
 	void usesTranslatedNameWhenAvailable() {
 		translationSync.saveCards(java.util.List.of(
 				new TcPageParser.Card("TS50-A", "測試卡A", null, null)));
-		OrderView o = orders.create(request(a.getId(), 1L), "zh-TW");
+		OrderView o = orders.create(request(a.getId(), 1L), "zh-TW", null);
 		assertEquals("測試卡A", o.items().get(0).cardName());
 		assertEquals("Card A", o.items().get(0).cardNameEn());
 	}
 
 	@Test
 	void lookupNeedsMatchingEmail() {
-		OrderView o = orders.create(request(a.getId(), 1L), "en");
+		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
 		assertEquals(o.orderNo(), orders.get(o.orderNo(), "BUYER@test.local").orderNo());
 		assertEquals("ORDER_NOT_FOUND", code(() -> orders.get(o.orderNo(), "other@test.local")));
 		assertEquals("ORDER_NOT_FOUND", code(() -> orders.get("AR000000-AAAAAA", EMAIL)));
@@ -114,7 +114,7 @@ class OrderFlowTests {
 
 	@Test
 	void payWithGoodCard() {
-		OrderView o = orders.create(request(a.getId(), 1L), "en");
+		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
 		OrderView paid = payments.pay(o.orderNo(), pay("4242 4242 4242 4242"));
 		assertEquals(OrderStatus.PAID, paid.status());
 		assertNotNull(paid.paidAt());
@@ -130,7 +130,7 @@ class OrderFlowTests {
 
 	@Test
 	void declinedCardKeepsOrderPendingAndAllowsRetry() {
-		OrderView o = orders.create(request(a.getId(), 1L), "en");
+		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
 		assertEquals("CARD_DECLINED", code(() -> payments.pay(o.orderNo(), pay("4000000000000002"))));
 		OrderView after = orders.get(o.orderNo(), EMAIL);
 		assertEquals(OrderStatus.PENDING_PAYMENT, after.status());
@@ -141,14 +141,14 @@ class OrderFlowTests {
 
 	@Test
 	void otherFailureCodes() {
-		OrderView o = orders.create(request(a.getId(), 1L), "en");
+		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
 		assertEquals("INSUFFICIENT_FUNDS", code(() -> payments.pay(o.orderNo(), pay("4000000000009995"))));
 		assertEquals("PROCESSING_ERROR", code(() -> payments.pay(o.orderNo(), pay("4000000000000119"))));
 	}
 
 	@Test
 	void rejectsBadCards() {
-		OrderView o = orders.create(request(a.getId(), 1L), "en");
+		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
 		assertEquals("INVALID_CARD", code(() -> payments.pay(o.orderNo(), pay("4242424242424241"))));
 		assertEquals("INVALID_CARD", code(() -> payments.pay(o.orderNo(), pay("1234"))));
 		var expired = new PayRequest(EMAIL, new PayRequest.Card("4242424242424242", 1, 2020, "123", "W"));
@@ -160,7 +160,7 @@ class OrderFlowTests {
 
 	@Test
 	void cannotPayTwice() {
-		OrderView o = orders.create(request(a.getId(), 1L), "en");
+		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
 		payments.pay(o.orderNo(), pay("4242424242424242"));
 		assertEquals("ORDER_NOT_PAYABLE", code(() -> payments.pay(o.orderNo(), pay("4242424242424242"))));
 		assertEquals("ORDER_NOT_CANCELLABLE", code(() -> orders.cancel(o.orderNo(), EMAIL)));
@@ -168,7 +168,7 @@ class OrderFlowTests {
 
 	@Test
 	void cancelRestoresStock() {
-		OrderView o = orders.create(request(a.getId(), 3L), "en");
+		OrderView o = orders.create(request(a.getId(), 3L), "en", null);
 		assertEquals(2, stock(a));
 		OrderView c = orders.cancel(o.orderNo(), EMAIL);
 		assertEquals(OrderStatus.CANCELLED, c.status());
@@ -180,7 +180,7 @@ class OrderFlowTests {
 
 	@Test
 	void expireOverdueRestoresStock() {
-		OrderView o = orders.create(request(a.getId(), 2L), "en");
+		OrderView o = orders.create(request(a.getId(), 2L), "en", null);
 		jdbc.update("update shop_order set created_at = now() - interval '2 hours' where order_no = ?", o.orderNo());
 		em.clear();
 		assertTrue(orders.expireOverdue() >= 1);
@@ -192,7 +192,7 @@ class OrderFlowTests {
 
 	@Test
 	void payingExpiredOrderCancelsIt() {
-		OrderView o = orders.create(request(a.getId(), 2L), "en");
+		OrderView o = orders.create(request(a.getId(), 2L), "en", null);
 		jdbc.update("update shop_order set created_at = now() - interval '2 hours' where order_no = ?", o.orderNo());
 		em.clear();
 		assertEquals("ORDER_EXPIRED", code(() -> payments.pay(o.orderNo(), pay("4242424242424242"))));

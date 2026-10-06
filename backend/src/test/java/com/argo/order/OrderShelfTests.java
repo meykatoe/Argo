@@ -83,7 +83,7 @@ class OrderShelfTests {
 	@Test
 	void orderIsRejectedAndStockUntouched() {
 		shelf(false);
-		ApiException e = assertThrows(ApiException.class, () -> orders.create(request(a.getId(), 1L), "en"));
+		ApiException e = assertThrows(ApiException.class, () -> orders.create(request(a.getId(), 1L), "en", null));
 		assertEquals("ITEM_UNAVAILABLE", e.getCode());
 		assertEquals(5, jdbc.queryForObject("select stock from card where id = ?", Integer.class, a.getId()));
 	}
@@ -99,9 +99,9 @@ class OrderShelfTests {
 	@Test
 	void backOnShelfCanBeBoughtAgain() {
 		shelf(false);
-		assertThrows(ApiException.class, () -> orders.create(request(a.getId(), 1L), "en"));
+		assertThrows(ApiException.class, () -> orders.create(request(a.getId(), 1L), "en", null));
 		shelf(true);
-		assertEquals(1, orders.create(request(a.getId(), 1L), "en").items().size());
+		assertEquals(1, orders.create(request(a.getId(), 1L), "en", null).items().size());
 	}
 
 	@Test

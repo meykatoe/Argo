@@ -5,6 +5,7 @@ import com.argo.card.CardRepository;
 import com.argo.card.CardSet;
 import com.argo.card.CardSetRepository;
 import com.argo.common.ApiException;
+import com.argo.common.PageResult;
 import com.argo.i18n.CardTranslation;
 import com.argo.i18n.CardTranslationRepository;
 import com.argo.i18n.Locales;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +32,7 @@ public class OrderService {
 
 	private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 	private static final int MAX_LINE_QTY = 99;
+	private static final int MAX_PAGE_SIZE = 50;
 
 	private final ShopOrderRepository orders;
 	private final PaymentRepository payments;
@@ -57,7 +61,7 @@ public class OrderService {
 	}
 
 	@Transactional
-	public OrderView create(CreateOrderRequest req, String lang) {
+	public OrderView create(CreateOrderRequest req, String lang, Long customerId) {
 		String locale = Locales.normalize(lang);
 		// 同一張卡重複的列合併
 		Map<Long, Integer> wanted = new TreeMap<>();
@@ -74,6 +78,7 @@ public class OrderService {
 		Map<String, CardTranslation> trs = translationsFor(locale, found.values());
 
 		ShopOrder order = new ShopOrder(newOrderNo(), currency, locale);
+		order.assignCustomer(customerId);
 		BigDecimal subtotal = BigDecimal.ZERO;
 		// 依編號排序處理，避免死鎖
 		for (Map.Entry<Long, Integer> e : wanted.entrySet()) {
@@ -107,6 +112,17 @@ public class OrderService {
 				s.city().trim(), s.address().trim());
 		orders.save(order);
 		return view(order);
+	}
+
+	// 顧客自己的訂單，新的在前
+	@Transactional(readOnly = true)
+	public PageResult<OrderView> listMine(Long customerId, int page, int size) {
+		if (page < 1 || size < 1 || size > MAX_PAGE_SIZE) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_PAGING");
+		}
+		var result = orders.findByCustomerId(customerId, PageRequest.of(page - 1, size,
+				Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id"))));
+		return PageResult.of(result, this::view);
 	}
 
 	@Transactional(readOnly = true)

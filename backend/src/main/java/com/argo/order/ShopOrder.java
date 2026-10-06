@@ -71,6 +71,9 @@ public class ShopOrder {
 	@Column(nullable = false)
 	private String lang;
 
+	// 訪客訂單為空
+	private Long customerId;
+
 	private String cancelReason;
 
 	@Column(nullable = false)
@@ -100,6 +103,14 @@ public class ShopOrder {
 		this.subtotal = subtotal;
 		this.shippingFee = shippingFee;
 		this.total = subtotal.add(shippingFee);
+	}
+
+	public void assignCustomer(Long customerId) {
+		this.customerId = customerId;
+	}
+
+	public Long getCustomerId() {
+		return customerId;
 	}
 
 	public void setCustomer(String name, String email, String phone) {
