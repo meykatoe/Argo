@@ -88,6 +88,36 @@ public final class Ips {
 		return true;
 	}
 
+	// 白名單規則：單一 IP 或 CIDR，回傳統一寫法，不合法或範圍大到離譜回傳 null
+	public static String normalizeRule(String raw) {
+		if (raw == null) {
+			return null;
+		}
+		String r = raw.trim();
+		int slash = r.indexOf('/');
+		if (slash < 0) {
+			return normalize(r);
+		}
+		InetAddress base = parse(r.substring(0, slash));
+		if (base == null) {
+			return null;
+		}
+		int bits;
+		try {
+			bits = Integer.parseInt(r.substring(slash + 1));
+		} catch (NumberFormatException e) {
+			return null;
+		}
+		boolean v4 = base instanceof Inet4Address;
+		// 網段太大等於整個網際網路都免檢查，擋掉
+		int min = v4 ? 8 : 32;
+		int max = v4 ? 32 : 128;
+		if (bits < min || bits > max) {
+			return null;
+		}
+		return base.getHostAddress() + "/" + bits;
+	}
+
 	public static boolean isV4(String ip) {
 		return parse(ip) instanceof Inet4Address;
 	}

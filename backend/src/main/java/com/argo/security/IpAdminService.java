@@ -66,7 +66,8 @@ public class IpAdminService {
 			IpBlock b = active.get(ip);
 			return new IpActivityView(ip, rs.getLong("rl"), rs.getLong("lf"), rs.getLong("bh"),
 					rs.getObject("fs", OffsetDateTime.class), rs.getObject("ls", OffsetDateTime.class),
-					Flag.of(b != null), b == null ? null : b.getExpiresAt(), b == null ? null : b.getReason());
+					Flag.of(b != null), b == null ? null : b.getExpiresAt(), b == null ? null : b.getReason(),
+					Flag.of(b != null && b.isAuto()));
 		}, args.toArray());
 		int pages = (int) Math.ceil(total / (double) size);
 		return new PageResult<>(items, page, size, total, pages);

@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class IpBlockService {
 
+	public static final String AUTO_ACTOR = "system:auto-block";
+
 	private final IpBlockRepository repo;
 	private final AuditLogService audit;
 	private final ClientIpResolver resolver;
@@ -96,7 +98,7 @@ public class IpBlockService {
 			throw new ApiException(HttpStatus.BAD_REQUEST, "CANNOT_BLOCK_SELF");
 		}
 		OffsetDateTime expires = hours == null ? null : OffsetDateTime.now().plusHours(hours);
-		IpBlock b = repo.save(new IpBlock(ip, reason.trim(), actor.getUsername(), actor.getId(), expires));
+		IpBlock b = repo.save(new IpBlock(ip, reason.trim(), actor.getUsername(), actor.getId(), expires, false));
 		Map<String, Object> detail = new LinkedHashMap<>();
 		detail.put("reason", b.getReason());
 		detail.put("hours", hours == null ? "permanent" : String.valueOf(hours));
@@ -104,6 +106,23 @@ public class IpBlockService {
 		repo.flush();
 		refreshNow();
 		return b;
+	}
+
+	// 系統自動封鎖：已經被封鎖的不重複處理，也不會蓋掉人工設定的封鎖
+	@Transactional
+	public synchronized boolean autoBlock(String ip, String reason, int hours, Map<String, Object> detail) {
+		if (isBlocked(ip)) {
+			return false;
+		}
+		repo.save(new IpBlock(ip, reason, AUTO_ACTOR, null, OffsetDateTime.now().plusHours(hours), true));
+		Map<String, Object> d = new LinkedHashMap<>(detail);
+		d.put("auto", 1);
+		d.put("hours", String.valueOf(hours));
+		d.put("reason", reason);
+		audit.record(null, AUTO_ACTOR, AuditAction.IP_BLOCKED, true, "IP", ip, d);
+		repo.flush();
+		refreshNow();
+		return true;
 	}
 
 	@Transactional

@@ -58,7 +58,8 @@ class FlagStorageTests {
 	@Test
 	void columnsAreSmallint() {
 		for (String[] col : new String[][] { { "card", "price_overridden" }, { "card_set", "on_sale" },
-				{ "staff_account", "disabled" }, { "admin_menu", "enabled" }, { "staff_audit_log", "success" } }) {
+				{ "staff_account", "disabled" }, { "admin_menu", "enabled" }, { "staff_audit_log", "success" },
+				{ "ip_block", "auto" }, { "ip_auto_block_rule", "enabled" } }) {
 			assertEquals("smallint", jdbc.queryForObject(
 					"select data_type from information_schema.columns where table_name = ? and column_name = ?",
 					String.class, col[0], col[1]), col[0] + "." + col[1]);

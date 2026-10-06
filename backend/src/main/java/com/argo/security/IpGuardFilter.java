@@ -23,16 +23,18 @@ public class IpGuardFilter extends OncePerRequestFilter {
 	private final IpBlockService blocks;
 	private final RateLimiter limiter;
 	private final IpActivityRecorder recorder;
+	private final AutoBlocker autoBlocker;
 	private final boolean limitEnabled;
 	private final List<String> allowedOrigins;
 
 	public IpGuardFilter(ClientIpResolver resolver, IpBlockService blocks, RateLimiter limiter,
-			IpActivityRecorder recorder, @Value("${argo.ratelimit.enabled:true}") boolean limitEnabled,
+			IpActivityRecorder recorder, AutoBlocker autoBlocker, @Value("${argo.ratelimit.enabled:true}") boolean limitEnabled,
 			@Value("${argo.cors.origins:}") String origins) {
 		this.resolver = resolver;
 		this.blocks = blocks;
 		this.limiter = limiter;
 		this.recorder = recorder;
+		this.autoBlocker = autoBlocker;
 		this.limitEnabled = limitEnabled;
 		this.allowedOrigins = Arrays.stream(origins.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
 	}
@@ -58,6 +60,7 @@ public class IpGuardFilter extends OncePerRequestFilter {
 			RateLimiter.Decision d = limiter.check(ip, kinds);
 			if (!d.allowed()) {
 				recorder.rateLimited(ip);
+				autoBlocker.record(ip, AutoBlockMetric.RATE_LIMITED);
 				res.setHeader("Retry-After", String.valueOf(d.retryAfterSeconds()));
 				reject(req, res, 429, "RATE_LIMITED", d.retryAfterSeconds());
 				return;
@@ -67,6 +70,7 @@ public class IpGuardFilter extends OncePerRequestFilter {
 		// 登入類端點回 401 或 429 代表失敗，記在來源 IP 上
 		if (kinds.contains(RateLimiter.Kind.AUTH) && (res.getStatus() == 401 || res.getStatus() == 429)) {
 			recorder.loginFailed(ip);
+			autoBlocker.record(ip, AutoBlockMetric.LOGIN_FAILED);
 		}
 	}
 

@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "ip_block")
@@ -27,10 +29,16 @@ public class IpBlock {
 	// 為空代表永久
 	private OffsetDateTime expiresAt;
 
+	// 0 人工、1 系統自動
+	@JdbcTypeCode(SqlTypes.SMALLINT)
+	private boolean auto;
+
 	protected IpBlock() {
 	}
 
-	public IpBlock(String ip, String reason, String blockedBy, Long staffId, OffsetDateTime expiresAt) {
+	public IpBlock(String ip, String reason, String blockedBy, Long staffId, OffsetDateTime expiresAt,
+			boolean auto) {
+		this.auto = auto;
 		this.ip = ip;
 		this.reason = reason;
 		this.blockedBy = blockedBy;
@@ -56,6 +64,10 @@ public class IpBlock {
 
 	public OffsetDateTime getExpiresAt() {
 		return expiresAt;
+	}
+
+	public boolean isAuto() {
+		return auto;
 	}
 
 	public boolean isActive(OffsetDateTime now) {
