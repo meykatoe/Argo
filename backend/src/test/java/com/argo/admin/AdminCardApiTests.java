@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
 @Transactional
-@TestPropertySource(properties = "argo.admin.token=secret")
 class AdminCardApiTests {
 
 	@Autowired
@@ -33,9 +31,13 @@ class AdminCardApiTests {
 	CardRepository cards;
 	@Autowired
 	CardSetRepository sets;
+	@Autowired
+	StaffAuthService auth;
 
 	MockMvc mvc;
 	Long id;
+	String general;
+	String service;
 
 	@BeforeEach
 	void setUp() {
@@ -46,6 +48,10 @@ class AdminCardApiTests {
 				"Character", "1", "1000", null, null, null, null, null, 10.0, 1.0, null),
 				new BigDecimal("0.9"));
 		id = cards.saveAndFlush(c).getId();
+		auth.create("gen1", "password-1234", StaffRole.GENERAL);
+		auth.create("svc1", "password-1234", StaffRole.SERVICE);
+		general = auth.login("gen1", "password-1234").token();
+		service = auth.login("svc1", "password-1234").token();
 	}
 
 	@Test
@@ -57,14 +63,30 @@ class AdminCardApiTests {
 	@Test
 	void rejectsWrongToken() throws Exception {
 		mvc.perform(patch("/api/admin/cards/" + id + "/extra-discount")
-				.header("X-Admin-Token", "nope").contentType(MediaType.APPLICATION_JSON)
+				.header("Authorization", "Bearer nope").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"extraDiscount\":0.4}")).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void serviceRoleIsForbidden() throws Exception {
+		mvc.perform(get("/api/admin/cards").header("Authorization", "Bearer " + service))
+				.andExpect(status().isForbidden());
+		mvc.perform(patch("/api/admin/cards/" + id + "/extra-discount")
+				.header("Authorization", "Bearer " + service).contentType(MediaType.APPLICATION_JSON)
+				.content("{\"extraDiscount\":0.4}")).andExpect(status().isForbidden())
+				.andExpect(jsonPath("$.code").value("ADMIN_FORBIDDEN"));
+	}
+
+	@Test
+	void serviceRoleCanStillCheckIdentity() throws Exception {
+		mvc.perform(get("/api/admin/auth/me").header("Authorization", "Bearer " + service))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.role").value("SERVICE"));
 	}
 
 	@Test
 	void setsExtraDiscount() throws Exception {
 		mvc.perform(patch("/api/admin/cards/" + id + "/extra-discount")
-				.header("X-Admin-Token", "secret").contentType(MediaType.APPLICATION_JSON)
+				.header("Authorization", "Bearer " + general).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"extraDiscount\":0.4}")).andExpect(status().isOk())
 				.andExpect(jsonPath("$.listPrice").value(9.0))
 				.andExpect(jsonPath("$.extraDiscount").value(0.4))
@@ -75,7 +97,7 @@ class AdminCardApiTests {
 	void rejectsOutOfRange() throws Exception {
 		for (String v : new String[] { "0", "1.5", "-1", "0.00001", "null" }) {
 			mvc.perform(patch("/api/admin/cards/" + id + "/extra-discount")
-					.header("X-Admin-Token", "secret").contentType(MediaType.APPLICATION_JSON)
+					.header("Authorization", "Bearer " + general).contentType(MediaType.APPLICATION_JSON)
 					.content("{\"extraDiscount\":" + v + "}")).andExpect(status().isBadRequest());
 		}
 	}
@@ -83,20 +105,20 @@ class AdminCardApiTests {
 	@Test
 	void unknownCardIs404() throws Exception {
 		mvc.perform(patch("/api/admin/cards/999999999/extra-discount")
-				.header("X-Admin-Token", "secret").contentType(MediaType.APPLICATION_JSON)
+				.header("Authorization", "Bearer " + general).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"extraDiscount\":0.5}")).andExpect(status().isNotFound());
 	}
 
 	@Test
 	void listsAndFiltersDiscounted() throws Exception {
 		mvc.perform(get("/api/admin/cards").param("setId", "TS-08").param("discounted", "true")
-				.header("X-Admin-Token", "secret")).andExpect(status().isOk())
+				.header("Authorization", "Bearer " + general)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.total").value(0));
 		mvc.perform(patch("/api/admin/cards/" + id + "/extra-discount")
-				.header("X-Admin-Token", "secret").contentType(MediaType.APPLICATION_JSON)
+				.header("Authorization", "Bearer " + general).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"extraDiscount\":0.5}")).andExpect(status().isOk());
 		mvc.perform(get("/api/admin/cards").param("setId", "TS-08").param("discounted", "true")
-				.header("X-Admin-Token", "secret")).andExpect(jsonPath("$.total").value(1))
+				.header("Authorization", "Bearer " + general)).andExpect(jsonPath("$.total").value(1))
 				.andExpect(jsonPath("$.items[0].extraDiscount").value(0.5));
 	}
 }

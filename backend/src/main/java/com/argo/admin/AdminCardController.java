@@ -21,6 +21,7 @@ public class AdminCardController {
 	}
 
 	@GetMapping
+	@RequireRole({ StaffRole.ADMIN, StaffRole.GENERAL })
 	public PageResult<AdminCardView> list(
 			@RequestParam(required = false) String keyword,
 			@RequestParam(required = false) String setId,
@@ -32,6 +33,7 @@ public class AdminCardController {
 
 	// 設定額外折扣
 	@PatchMapping("/{id}/extra-discount")
+	@RequireRole({ StaffRole.ADMIN, StaffRole.GENERAL })
 	public AdminCardView setExtraDiscount(@PathVariable Long id,
 			@Valid @RequestBody ExtraDiscountRequest body) {
 		return service.setExtraDiscount(id, body.extraDiscount());

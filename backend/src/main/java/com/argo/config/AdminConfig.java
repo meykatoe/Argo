@@ -1,7 +1,7 @@
 package com.argo.config;
 
 import com.argo.admin.AdminAuthInterceptor;
-import org.springframework.beans.factory.annotation.Value;
+import com.argo.admin.StaffAuthService;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -9,14 +9,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class AdminConfig implements WebMvcConfigurer {
 
-	private final String token;
+	private final StaffAuthService auth;
 
-	public AdminConfig(@Value("${argo.admin.token:}") String token) {
-		this.token = token;
+	public AdminConfig(StaffAuthService auth) {
+		this.auth = auth;
 	}
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(new AdminAuthInterceptor(token)).addPathPatterns("/api/admin/**");
+		registry.addInterceptor(new AdminAuthInterceptor(auth))
+				.addPathPatterns("/api/admin/**")
+				.excludePathPatterns("/api/admin/auth/login");
 	}
 }
