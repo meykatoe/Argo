@@ -54,7 +54,8 @@ const zhTW = {
     items: '共 {n} 件',
     checkout: '前往結帳',
     unavailable: '目前無法購買',
-    gone: '此商品已下架',
+    gone: '此商品已不存在',
+    offShelf: '此商品所屬系列已下架，暫停販售',
     adjusted: '庫存只剩 {n} 件，已調整數量',
     loading: '正在確認最新價格與庫存…',
   },
@@ -149,6 +150,7 @@ const zhTW = {
     inStock: '有貨',
     stockLeft: '庫存 {n} 件',
     outOfStock: '缺貨',
+    offShelf: '已下架',
     text: '效果',
     rows: {
       number: '編號',

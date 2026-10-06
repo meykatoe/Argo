@@ -6,7 +6,7 @@ import { getCardsByIds } from '@/api/card'
 import { useCartStore } from '@/stores/cart'
 import type { CardSummary } from '@/types/card'
 import { errorText } from '@/utils/error'
-import { formatPrice, isAvailable } from '@/utils/format'
+import { formatPrice, isAvailable, isOffShelf } from '@/utils/format'
 
 const { t, locale } = useI18n()
 const cart = useCartStore()
@@ -17,13 +17,14 @@ const loaded = ref(false)
 const loading = ref(false)
 const error = ref('')
 
-type Status = 'ok' | 'soldOut' | 'gone'
+type Status = 'ok' | 'soldOut' | 'offShelf' | 'gone'
 
 const lines = computed(() =>
   cart.items.map((item) => {
     const card = details.value.get(item.id)
     let status: Status = 'ok'
     if (loaded.value && !card) status = 'gone'
+    else if (card && isOffShelf(card)) status = 'offShelf'
     else if (card && !isAvailable(card)) status = 'soldOut'
     return { item, card, status }
   }),
@@ -107,6 +108,7 @@ onMounted(load)
             </RouterLink>
             <div v-if="l.card" class="code">{{ l.card.cardSetId }} · {{ l.card.rarity }}</div>
             <div v-if="l.status === 'gone'" class="warn">{{ t('cart.gone') }}</div>
+            <div v-else-if="l.status === 'offShelf'" class="warn">{{ t('cart.offShelf') }}</div>
             <div v-else-if="l.status === 'soldOut'" class="warn">{{ t('cart.unavailable') }}</div>
             <div v-if="notices[l.item.id]" class="warn">{{ notices[l.item.id] }}</div>
           </div>

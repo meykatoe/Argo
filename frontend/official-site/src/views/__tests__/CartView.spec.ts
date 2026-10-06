@@ -77,8 +77,16 @@ describe('CartView', () => {
     vi.mocked(getCardsByIds).mockResolvedValue([card(1), card(2, { stock: 0 })])
     const { w } = await mountCart([[1, 1], [2, 2], [3, 1]])
     expect(w.text()).toContain('目前無法購買')
-    expect(w.text()).toContain('此商品已下架')
+    expect(w.text()).toContain('此商品已不存在')
     expect(w.text()).toContain('合計 US$ 1.10')
+  })
+
+  it('系列下架的商品顯示原因且不計入合計', async () => {
+    vi.mocked(getCardsByIds).mockResolvedValue([card(1), card(2, { onSale: 0 })])
+    const { w } = await mountCart([[1, 1], [2, 2]])
+    expect(w.text()).toContain('此商品所屬系列已下架，暫停販售')
+    expect(w.text()).toContain('合計 US$ 1.10')
+    expect(w.text()).toContain('卡片2')
   })
 
   it('增減與移除數量', async () => {

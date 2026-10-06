@@ -56,7 +56,8 @@ const en: MessageSchema = {
     items: '{n} items',
     checkout: 'Checkout',
     unavailable: 'Currently unavailable',
-    gone: 'This item is no longer sold',
+    gone: 'This item no longer exists',
+    offShelf: 'This series is off shelf and not for sale',
     adjusted: 'Only {n} left in stock. Quantity adjusted.',
     loading: 'Checking latest prices and stock…',
   },
@@ -151,6 +152,7 @@ const en: MessageSchema = {
     inStock: 'In stock',
     stockLeft: '{n} left',
     outOfStock: 'Out of stock',
+    offShelf: 'Off shelf',
     text: 'Effect',
     rows: {
       number: 'Number',

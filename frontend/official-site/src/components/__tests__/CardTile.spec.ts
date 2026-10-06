@@ -47,6 +47,16 @@ describe('CardTile', () => {
     expect(w.find('.badge').text()).toBe('缺貨')
   })
 
+  it('系列下架顯示已下架但仍顯示價格', () => {
+    const w = render({ onSale: 0 })
+    expect(w.find('.badge').text()).toBe('已下架')
+    expect(w.text()).toContain('US$ 9.00')
+  })
+
+  it('系列下架時缺貨也以已下架為準', () => {
+    expect(render({ onSale: 0, stock: 0 }).find('.badge').text()).toBe('已下架')
+  })
+
   it('未定價顯示提示', () => {
     const w = render({ salePrice: 0 })
     expect(w.text()).toContain('尚未定價')

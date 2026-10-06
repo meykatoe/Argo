@@ -5,10 +5,10 @@ import { i18n } from '@/i18n'
 import { useCartStore } from '@/stores/cart'
 import AddToCartButton from '../AddToCartButton.vue'
 
-function render(card: { id: number; stock: number; salePrice: number }) {
+function render(card: { id: number; stock: number; salePrice: number; onSale?: 0 | 1 }) {
   const pinia = createPinia()
   setActivePinia(pinia)
-  return { w: mount(AddToCartButton, { props: { card }, global: { plugins: [pinia, i18n] } }), cart: useCartStore() }
+  return { w: mount(AddToCartButton, { props: { card: { onSale: 1, ...card } }, global: { plugins: [pinia, i18n] } }), cart: useCartStore() }
 }
 
 describe('AddToCartButton', () => {
@@ -26,6 +26,12 @@ describe('AddToCartButton', () => {
     const { w } = render({ id: 1, stock: 0, salePrice: 1 })
     expect(w.attributes('disabled')).toBeDefined()
     expect(w.text()).toBe('缺貨')
+  })
+
+  it('系列下架時不可點並顯示已下架', () => {
+    const { w } = render({ id: 1, stock: 5, salePrice: 1, onSale: 0 })
+    expect(w.attributes('disabled')).toBeDefined()
+    expect(w.text()).toBe('已下架')
   })
 
   it('未定價時不可點', () => {

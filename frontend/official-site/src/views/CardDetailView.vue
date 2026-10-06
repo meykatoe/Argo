@@ -7,7 +7,7 @@ import AddToCartButton from '@/components/AddToCartButton.vue'
 import PriceTag from '@/components/PriceTag.vue'
 import type { CardDetail } from '@/types/card'
 import { errorText } from '@/utils/error'
-import { colorText, formatPrice, isAvailable, typeText } from '@/utils/format'
+import { colorText, formatPrice, isAvailable, isOffShelf, typeText } from '@/utils/format'
 
 const route = useRoute()
 const { t, locale } = useI18n()
@@ -80,7 +80,9 @@ function rows(c: CardDetail): [string, string | number | null][] {
           {{
             isAvailable(card)
               ? `${t('detail.inStock')} · ${t('detail.stockLeft', { n: card.stock })}`
-              : t('detail.outOfStock')
+              : isOffShelf(card)
+                ? t('detail.offShelf')
+                : t('detail.outOfStock')
           }}
         </p>
         <AddToCartButton :card="card" class="buy" />

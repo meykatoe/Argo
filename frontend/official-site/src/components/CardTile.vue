@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import type { CardSummary } from '@/types/card'
-import { isAvailable } from '@/utils/format'
+import { isAvailable, isOffShelf } from '@/utils/format'
 import AddToCartButton from './AddToCartButton.vue'
 import PriceTag from './PriceTag.vue'
 
@@ -23,7 +23,9 @@ const { t } = useI18n()
         referrerpolicy="no-referrer"
       />
       <span v-else class="empty">{{ t('cards.noImage') }}</span>
-      <span v-if="!isAvailable(card)" class="badge">{{ t('detail.outOfStock') }}</span>
+      <span v-if="!isAvailable(card)" class="badge">
+        {{ isOffShelf(card) ? t('detail.offShelf') : t('detail.outOfStock') }}
+      </span>
     </div>
     <div class="info">
       <div class="code">{{ card.cardSetId }} · {{ card.rarity }}</div>

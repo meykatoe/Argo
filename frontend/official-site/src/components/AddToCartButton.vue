@@ -2,9 +2,10 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCartStore } from '@/stores/cart'
-import { isAvailable } from '@/utils/format'
+import type { Flag } from '@/types/card'
+import { isAvailable, isOffShelf } from '@/utils/format'
 
-const props = defineProps<{ card: { id: number; stock: number; salePrice: number } }>()
+const props = defineProps<{ card: { id: number; stock: number; salePrice: number; onSale: Flag } }>()
 
 const { t } = useI18n()
 const cart = useCartStore()
@@ -16,6 +17,7 @@ const soldOut = computed(() => !isAvailable(props.card))
 const atLimit = computed(() => inCart.value >= props.card.stock)
 
 const label = computed(() => {
+  if (isOffShelf(props.card)) return t('detail.offShelf')
   if (soldOut.value) return t('detail.outOfStock')
   if (justAdded.value) return t('cart.added')
   if (atLimit.value) return t('cart.limitReached')

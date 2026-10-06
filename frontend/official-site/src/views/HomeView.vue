@@ -57,6 +57,7 @@ onMounted(loadSets)
         <li v-for="s in g.sets" :key="s.setId">
           <RouterLink :to="{ path: '/cards', query: { setId: s.setId } }">
             <strong>{{ s.setId }}</strong> {{ s.setName }}
+            <span v-if="s.onSale === 0" class="off">{{ t('detail.offShelf') }}</span>
           </RouterLink>
         </li>
       </ul>
@@ -95,6 +96,15 @@ button {
   border-color: var(--color-primary);
   color: #fff;
   cursor: pointer;
+}
+
+.off {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #e5e7eb;
+  color: var(--color-muted);
+  font-size: 12px;
 }
 
 ul {

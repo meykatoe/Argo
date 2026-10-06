@@ -1,12 +1,18 @@
 import { i18n } from '@/i18n'
+import type { Flag } from '@/types/card'
 
 export function formatPrice(value: number): string {
   return `US$ ${value.toFixed(2)}`
 }
 
-// 有庫存且已定價才可買
-export function isAvailable(card: { stock: number; salePrice: number }): boolean {
-  return card.stock > 0 && card.salePrice > 0
+// 有庫存、已定價且所屬系列上架才可買
+export function isAvailable(card: { stock: number; salePrice: number; onSale: Flag }): boolean {
+  return card.stock > 0 && card.salePrice > 0 && card.onSale === 1
+}
+
+// 系列下架，仍顯示但不販售
+export function isOffShelf(card: { onSale: Flag }): boolean {
+  return card.onSale === 0
 }
 
 // 多色卡以空白分隔

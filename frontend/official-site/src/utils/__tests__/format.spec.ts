@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { ApiError } from '@/api/http'
 import { setLocale } from '@/i18n'
 import { errorText } from '../error'
-import { colorText, isAvailable, typeText } from '../format'
+import { colorText, isAvailable, isOffShelf, typeText } from '../format'
 
 describe('format', () => {
   afterEach(() => setLocale('zh-TW'))
@@ -27,8 +27,14 @@ describe('format', () => {
     expect(errorText(new ApiError(404, 'CARD_NOT_FOUND'))).toBe('Card not found')
   })
   it('有庫存且已定價才可買', () => {
-    expect(isAvailable({ stock: 2, salePrice: 1.5 })).toBe(true)
-    expect(isAvailable({ stock: 0, salePrice: 1.5 })).toBe(false)
-    expect(isAvailable({ stock: 2, salePrice: 0 })).toBe(false)
+    expect(isAvailable({ stock: 2, salePrice: 1.5, onSale: 1 })).toBe(true)
+    expect(isAvailable({ stock: 0, salePrice: 1.5, onSale: 1 })).toBe(false)
+    expect(isAvailable({ stock: 2, salePrice: 0, onSale: 1 })).toBe(false)
+  })
+
+  it('系列下架時不可買，但仍可判斷為下架', () => {
+    expect(isAvailable({ stock: 2, salePrice: 1.5, onSale: 0 })).toBe(false)
+    expect(isOffShelf({ onSale: 0 })).toBe(true)
+    expect(isOffShelf({ onSale: 1 })).toBe(false)
   })
 })
