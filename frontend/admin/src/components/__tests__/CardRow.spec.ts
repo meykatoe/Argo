@@ -41,7 +41,7 @@ describe('CardRow', () => {
     const [url, init] = fetchMock.mock.calls[0]!
     expect(url).toContain('/admin/cards/7/extra-discount')
     expect(init.method).toBe('PATCH')
-    expect(init.headers['X-Admin-Token']).toBe('tk')
+    expect(init.headers['Authorization']).toBe('Bearer tk')
     expect(JSON.parse(init.body)).toEqual({ extraDiscount: 0.4 })
     expect(w.emitted('saved')![0]![0]).toMatchObject({ salePrice: 3.6 })
   })

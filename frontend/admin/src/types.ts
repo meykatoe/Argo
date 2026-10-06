@@ -19,3 +19,12 @@ export interface PageResult<T> {
   total: number
   totalPages: number
 }
+
+export type StaffRole = 'ADMIN' | 'GENERAL' | 'SERVICE'
+
+export interface Session {
+  token: string
+  username: string
+  role: StaffRole
+  expiresAt: string
+}

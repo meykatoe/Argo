@@ -1,4 +1,4 @@
-import type { AdminCard, PageResult } from '@/types'
+import type { AdminCard, PageResult, Session } from '@/types'
 
 const BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
@@ -14,8 +14,8 @@ export class ApiError extends Error {
 }
 
 async function request<T>(
-  token: string,
-  method: 'GET' | 'PATCH',
+  token: string | null,
+  method: 'GET' | 'POST' | 'PATCH',
   path: string,
   params: Record<string, string | number | boolean | undefined> = {},
   body?: unknown,
@@ -27,7 +27,10 @@ async function request<T>(
       query.set(key, String(value))
     }
   }
-  const headers: Record<string, string> = { 'X-Admin-Token': token }
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
   }
@@ -45,7 +48,19 @@ async function request<T>(
     }
     throw new ApiError(res.status, code)
   }
+  // 無內容的回應
+  if (res.status === 204) {
+    return undefined as T
+  }
   return (await res.json()) as T
+}
+
+export function login(username: string, password: string): Promise<Session> {
+  return request(null, 'POST', '/admin/auth/login', {}, { username, password })
+}
+
+export function logout(token: string): Promise<void> {
+  return request(token, 'POST', '/admin/auth/logout', {}, {})
 }
 
 export interface CardSearch {
