@@ -1,4 +1,5 @@
 import type { AuditAction, AuditLog } from '@/types'
+import { roleName } from './role'
 
 export const ACTION_LABELS: Record<AuditAction, string> = {
   LOGIN_SUCCESS: '登入成功',
@@ -9,13 +10,6 @@ export const ACTION_LABELS: Record<AuditAction, string> = {
   ACCOUNT_CREATED: '建立帳號',
   CARD_EXTRA_DISCOUNT_UPDATE: '修改額外折扣',
   AUDIT_LOG_VIEWED: '查看稽核紀錄',
-}
-
-export const ROLE_LABELS: Record<string, string> = {
-  ADMIN: '最高權限',
-  GENERAL: '一般管理員',
-  SERVICE: '客服',
-  OPS: '運維',
 }
 
 const REASONS: Record<string, string> = {
@@ -30,7 +24,7 @@ export function actionLabel(action: string): string {
 }
 
 export function roleLabel(role: string | null): string {
-  return role ? (ROLE_LABELS[role] ?? role) : '-'
+  return role ? roleName(role) : '-'
 }
 
 // 本地時間顯示

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { logout as logoutApi } from './api/ops'
-import AuditTable from './components/AuditTable.vue'
+import AppShell from './components/AppShell.vue'
 import LoginForm from './components/LoginForm.vue'
 import type { Session } from './types'
-import { roleLabel } from './utils/audit'
 
 const KEY = 'argo-ops-session'
 
@@ -33,20 +32,6 @@ function login(s: Session) {
   }
 }
 
-// 本地先登出，伺服器端失敗也無妨
-function logout() {
-  const token = session.value?.token
-  session.value = null
-  try {
-    sessionStorage.removeItem(KEY)
-  } catch {
-    // 忽略
-  }
-  if (token) {
-    logoutApi(token).catch(() => undefined)
-  }
-}
-
 // 令牌已失效，只清本地
 function expired() {
   session.value = null
@@ -56,49 +41,18 @@ function expired() {
     // 忽略
   }
 }
+
+// 本地先登出，伺服器端失敗也無妨
+function logout() {
+  const token = session.value?.token
+  expired()
+  if (token) {
+    logoutApi(token).catch(() => undefined)
+  }
+}
 </script>
 
 <template>
   <LoginForm v-if="!session" @login="login" />
-  <main v-else class="page">
-    <header>
-      <h1>Argo 運維後台 · 稽核紀錄</h1>
-      <div class="who">
-        <span>{{ session.username }}（{{ roleLabel(session.role) }}）</span>
-        <button type="button" @click="logout">登出</button>
-      </div>
-    </header>
-    <AuditTable v-if="session.role === 'OPS'" :token="session.token" @unauthorized="expired" />
-    <p v-else class="hint">此帳號沒有運維後台的使用權限</p>
-  </main>
+  <AppShell v-else brand="運維後台" :session="session" @logout="logout" @expired="expired" />
 </template>
-
-<style scoped>
-.page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px;
-}
-
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-h1 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.who {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.hint {
-  color: var(--color-muted);
-}
-</style>

@@ -1,4 +1,4 @@
-import type { AdminCard, PageResult, Session } from '@/types'
+import type { AdminCard, MenuNode, PageResult, Session } from '@/types'
 
 const BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
@@ -77,4 +77,8 @@ export function searchCards(token: string, q: CardSearch): Promise<PageResult<Ad
 
 export function setExtraDiscount(token: string, id: number, extraDiscount: number): Promise<AdminCard> {
   return request(token, 'PATCH', `/admin/cards/${id}/extra-discount`, {}, { extraDiscount })
+}
+
+export function getMenu(token: string): Promise<MenuNode[]> {
+  return request(token, 'GET', '/admin/menu')
 }

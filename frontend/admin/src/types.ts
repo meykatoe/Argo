@@ -28,3 +28,10 @@ export interface Session {
   role: StaffRole
   expiresAt: string
 }
+
+export interface MenuNode {
+  code: string
+  title: string
+  path: string | null
+  children: MenuNode[]
+}

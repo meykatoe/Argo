@@ -39,3 +39,10 @@ export interface PageResult<T> {
   total: number
   totalPages: number
 }
+
+export interface MenuNode {
+  code: string
+  title: string
+  path: string | null
+  children: MenuNode[]
+}

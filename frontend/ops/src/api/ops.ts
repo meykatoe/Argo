@@ -1,4 +1,4 @@
-import type { AuditAction, AuditLog, PageResult, Session } from '@/types'
+import type { AuditAction, AuditLog, MenuNode, PageResult, Session } from '@/types'
 
 const BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
@@ -75,4 +75,8 @@ export interface AuditSearch {
 
 export function searchAuditLogs(token: string, q: AuditSearch): Promise<PageResult<AuditLog>> {
   return request(token, 'GET', '/ops/audit-logs', { ...q })
+}
+
+export function getMenu(token: string): Promise<MenuNode[]> {
+  return request(token, 'GET', '/ops/menu')
 }
