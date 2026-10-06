@@ -30,6 +30,7 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
 - 運維後台 API（`/api/ops/**`）：與業務後台（`/api/admin/**`）分開，方便日後在反向代理或網關層限制只有內網或指定 IP 能連線。兩個入口各有登入端點（`/api/admin/auth/login`、`/api/ops/auth/login`），帳號只能從自己的入口登入：`OPS` 帳號不能登入業務後台，其他角色不能登入運維後台，走錯入口一律回 `LOGIN_FAILED`，並在稽核紀錄寫入 `WRONG_PORTAL`。`OPS` 的令牌也不能呼叫業務後台端點。
   - `GET /api/ops/audit-logs`（只有 `OPS`，`ADMIN` 也不可看）：查詢稽核紀錄，依時間新到舊。參數：`username`（不分大小寫、包含比對）、`action`、`success`、`targetType`、`targetId`、`from`、`to`（ISO 8601 時間，含起不含迄）、`page`、`size`（上限 100，預設 50）。每次查詢本身也會寫入稽核紀錄（`AUDIT_LOG_VIEWED`，記下篩選條件）。
 - 後台（`frontend/admin`）：工作人員以帳號密碼登入（登入資料只存在該分頁的 `sessionStorage`，關閉分頁即登出，過期自動失效），右上角顯示帳號與角色。`ADMIN`、`GENERAL` 可依卡號或卡名搜尋、只看有折扣的卡，直接修改每張卡的額外折扣（輸入 0.4 會顯示為 4 折），儲存後立即顯示新售價，手動定價的卡片不可設定折扣；`SERVICE` 目前登入後顯示「目前尚無可用功能」。帳號需先以上述指令建立。啟動方式：後端啟動後，於 `frontend/admin` 執行 `npm install && npm run dev`（連接埠 5174）。正式部署時需把後台網址加入 `argo.cors.origins`，或與後端放在同一網域下反向代理。
+- 運維後台（`frontend/ops`）：`OPS` 帳號以帳號密碼登入（走 `/api/ops/auth/login`），目前提供稽核紀錄頁：依帳號、動作、成功或失敗、時間範圍篩選，每頁 50 筆，新的在前；失敗的紀錄會標紅，點「詳情」可看對象、User-Agent 與完整的變更前後 JSON，折扣修改會直接摘要為「折扣 1 → 0.4，售價 9.00 → 3.60」。啟動方式：於 `frontend/ops` 執行 `npm install && npm run dev`（連接埠 5175）。正式部署時建議只在內網提供此網站與 `/api/ops/**`。
 - 多語系卡片資料：卡片查詢 API 加上 `lang` 參數（`en` 預設、`zh-TW`）即回傳該語言的卡名、效果、特徵與系列名稱，找不到翻譯時回退為英文，原文固定放在 `cardNameEn`、`setNameEn`。繁中資料抓取自 Bandai 官方繁中卡表（`asia-tc.onepiece-cardgame.com`），啟動時加 `--argo.translation.on-startup=true` 手動同步，也會每週一凌晨 5 點自動同步。內容版權屬原權利人，正式營運前請自行確認使用條款。
 - 卡片查詢 API（無需登入，皆為 GET）：
   - `/api/cards`：列表，支援 `keyword`、`setId`、`category`（booster / starter / promo）、`color`、`rarity`、`cardType` 篩選，`page`（從 1 開始）、`size`（上限 100）、`sortBy`（`cardSetId` / `cardName` / `marketPrice`）、`desc` 分頁排序
@@ -54,7 +55,8 @@ Argo/
 ├── backend/            後端 API（Spring Boot）
 └── frontend/
     ├── official-site/  官網前端（Vue）
-    └── admin/          後台前端（Vue，工作人員使用）
+    ├── admin/          業務後台前端（Vue，ADMIN、GENERAL、SERVICE 使用）
+    └── ops/            運維後台前端（Vue，只有 OPS 使用）
 ```
 
 前端依用途命名放在 `frontend/` 下，未來新增前端時各自獨立一個資料夾。
