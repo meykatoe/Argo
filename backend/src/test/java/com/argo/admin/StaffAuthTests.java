@@ -34,6 +34,8 @@ class StaffAuthTests {
 	@Autowired
 	StaffSessionRepository sessions;
 	@Autowired
+	org.springframework.jdbc.core.JdbcTemplate jdbc;
+	@Autowired
 	WebApplicationContext wac;
 
 	MockMvc mvc;
@@ -75,7 +77,9 @@ class StaffAuthTests {
 	void tokenIsStoredHashedOnly() {
 		var res = auth.login("alice", "password-1234", LoginPortal.ADMIN);
 		assertFalse(sessions.existsById(res.token()));
-		assertEquals(1, sessions.count());
+		Long staffId = accounts.findByUsername("alice").orElseThrow().getId();
+		assertEquals(1, jdbc.queryForObject(
+				"select count(*) from staff_session where staff_id = ?", Integer.class, staffId));
 	}
 
 	@Test

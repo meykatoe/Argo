@@ -7,6 +7,7 @@ const card: AdminCard = {
   id: 7,
   cardSetId: 'OP01-001',
   cardName: 'Luffy',
+  cardNameEn: 'Luffy',
   rarity: 'L',
   imageUrl: null,
   marketPrice: 10,
@@ -72,5 +73,18 @@ describe('CardRow', () => {
     await w.find('button.primary').trigger('click')
     await flushPromises()
     expect(w.emitted('unauthorized')).toHaveLength(1)
+  })
+})
+
+describe('CardRow 卡名', () => {
+  it('有中文名時一併顯示英文原名', () => {
+    const w = render({ cardName: '魯夫', cardNameEn: 'Luffy' })
+    expect(w.text()).toContain('魯夫')
+    expect(w.find('.en').text()).toBe('Luffy')
+  })
+
+  it('沒有翻譯時不重複顯示', () => {
+    const w = render()
+    expect(w.find('.en').exists()).toBe(false)
   })
 })

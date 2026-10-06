@@ -33,6 +33,8 @@ class AdminCardApiTests {
 	CardSetRepository sets;
 	@Autowired
 	StaffAuthService auth;
+	@Autowired
+	org.springframework.jdbc.core.JdbcTemplate jdbc;
 
 	MockMvc mvc;
 	Long id;
@@ -100,6 +102,28 @@ class AdminCardApiTests {
 					.header("Authorization", "Bearer " + general).contentType(MediaType.APPLICATION_JSON)
 					.content("{\"extraDiscount\":" + v + "}")).andExpect(status().isBadRequest());
 		}
+	}
+
+	@Test
+	void showsChineseNameAndKeepsEnglish() throws Exception {
+		jdbc.update("insert into card_translation (card_set_id, locale, card_name, updated_at) "
+				+ "values ('TS08-A', 'zh-TW', '測試卡', now())");
+		mvc.perform(get("/api/admin/cards").param("setId", "TS-08")
+				.header("Authorization", "Bearer " + general)).andExpect(status().isOk())
+				.andExpect(jsonPath("$.items[0].cardName").value("測試卡"))
+				.andExpect(jsonPath("$.items[0].cardNameEn").value("Card A"));
+		mvc.perform(get("/api/admin/cards").param("keyword", "測試")
+				.header("Authorization", "Bearer " + general)).andExpect(jsonPath("$.total").value(1));
+		mvc.perform(patch("/api/admin/cards/" + id + "/extra-discount")
+				.header("Authorization", "Bearer " + general).contentType(MediaType.APPLICATION_JSON)
+				.content("{\"extraDiscount\":0.5}")).andExpect(jsonPath("$.cardName").value("測試卡"));
+	}
+
+	@Test
+	void fallsBackToEnglishWithoutTranslation() throws Exception {
+		mvc.perform(get("/api/admin/cards").param("setId", "TS-08")
+				.header("Authorization", "Bearer " + general))
+				.andExpect(jsonPath("$.items[0].cardName").value("Card A"));
 	}
 
 	@Test

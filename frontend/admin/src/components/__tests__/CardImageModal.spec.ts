@@ -7,6 +7,7 @@ const card: AdminCard = {
   id: 7,
   cardSetId: 'OP01-001',
   cardName: 'Luffy',
+  cardNameEn: 'Luffy',
   rarity: 'L',
   imageUrl: 'https://img.example/op01-001.png',
   marketPrice: 10,

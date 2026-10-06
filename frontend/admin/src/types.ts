@@ -2,6 +2,7 @@ export interface AdminCard {
   id: number
   cardSetId: string
   cardName: string
+  cardNameEn: string
   rarity: string
   imageUrl: string | null
   marketPrice: number

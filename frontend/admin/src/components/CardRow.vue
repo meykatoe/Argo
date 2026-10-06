@@ -47,6 +47,7 @@ async function save() {
     <td class="code">{{ card.cardSetId }}</td>
     <td>
       {{ card.cardName }}
+      <div v-if="card.cardNameEn !== card.cardName" class="en">{{ card.cardNameEn }}</div>
       <div>
         <button type="button" class="info" @click="showImage = true">卡牌資訊</button>
       </div>
@@ -88,6 +89,11 @@ td {
   padding: 8px;
   border-bottom: 1px solid var(--color-border);
   vertical-align: top;
+}
+
+.en {
+  font-size: 12px;
+  color: var(--color-muted);
 }
 
 .info {
