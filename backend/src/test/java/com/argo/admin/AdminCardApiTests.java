@@ -50,8 +50,8 @@ class AdminCardApiTests {
 		id = cards.saveAndFlush(c).getId();
 		auth.create("gen1", "password-1234", StaffRole.GENERAL);
 		auth.create("svc1", "password-1234", StaffRole.SERVICE);
-		general = auth.login("gen1", "password-1234").token();
-		service = auth.login("svc1", "password-1234").token();
+		general = auth.login("gen1", "password-1234", LoginPortal.ADMIN).token();
+		service = auth.login("svc1", "password-1234", LoginPortal.ADMIN).token();
 	}
 
 	@Test

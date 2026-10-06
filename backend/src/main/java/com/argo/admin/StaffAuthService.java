@@ -66,7 +66,7 @@ public class StaffAuthService {
 
 	// 失敗要記錄，不可隨例外回滾
 	@Transactional(noRollbackFor = ApiException.class)
-	public LoginResponse login(String username, String password) {
+	public LoginResponse login(String username, String password, LoginPortal portal) {
 		OffsetDateTime now = OffsetDateTime.now();
 		Optional<StaffAccount> found = accounts.findByUsername(normalize(username));
 		if (found.isEmpty()) {
@@ -87,6 +87,12 @@ public class StaffAuthService {
 			}
 			audit.record(staff, null, AuditAction.LOGIN_FAILED, false, null, null,
 					Map.of("reason", ok ? "DISABLED" : "BAD_PASSWORD"));
+			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
+		}
+		// 密碼正確但走錯入口，不累計失敗次數
+		if (!portal.accepts(staff.getRole())) {
+			audit.record(staff, null, AuditAction.LOGIN_FAILED, false, null, null,
+					Map.of("reason", "WRONG_PORTAL", "portal", portal.name()));
 			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
 		}
 		staff.recordSuccess(now);

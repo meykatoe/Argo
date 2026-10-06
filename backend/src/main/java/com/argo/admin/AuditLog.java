@@ -108,6 +108,10 @@ public class AuditLog {
 		return ip;
 	}
 
+	public String getUserAgent() {
+		return userAgent;
+	}
+
 	public OffsetDateTime getCreatedAt() {
 		return createdAt;
 	}

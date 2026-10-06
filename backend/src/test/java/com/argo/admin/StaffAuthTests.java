@@ -65,7 +65,7 @@ class StaffAuthTests {
 
 	@Test
 	void loginIsCaseInsensitiveOnUsername() {
-		var res = auth.login(" ALICE ", "password-1234");
+		var res = auth.login(" ALICE ", "password-1234", LoginPortal.ADMIN);
 		assertEquals("alice", res.username());
 		assertEquals(StaffRole.GENERAL, res.role());
 		assertTrue(auth.authenticate(res.token()).isPresent());
@@ -73,36 +73,36 @@ class StaffAuthTests {
 
 	@Test
 	void tokenIsStoredHashedOnly() {
-		var res = auth.login("alice", "password-1234");
+		var res = auth.login("alice", "password-1234", LoginPortal.ADMIN);
 		assertFalse(sessions.existsById(res.token()));
 		assertEquals(1, sessions.count());
 	}
 
 	@Test
 	void wrongPasswordAndUnknownUserLookAlike() {
-		assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "wrong-password")));
-		assertEquals("LOGIN_FAILED", code(() -> auth.login("nobody", "password-1234")));
+		assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN)));
+		assertEquals("LOGIN_FAILED", code(() -> auth.login("nobody", "password-1234", LoginPortal.ADMIN)));
 	}
 
 	@Test
 	void locksAfterRepeatedFailures() {
 		for (int i = 0; i < 3; i++) {
-			assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "wrong-password")));
+			assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN)));
 		}
-		assertEquals("LOGIN_LOCKED", code(() -> auth.login("alice", "password-1234")));
+		assertEquals("LOGIN_LOCKED", code(() -> auth.login("alice", "password-1234", LoginPortal.ADMIN)));
 	}
 
 	@Test
 	void disabledAccountCannotLoginOrUseSession() {
-		var res = auth.login("alice", "password-1234");
+		var res = auth.login("alice", "password-1234", LoginPortal.ADMIN);
 		accounts.findByUsername("alice").orElseThrow().setEnabled(false);
 		assertTrue(auth.authenticate(res.token()).isEmpty());
-		assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "password-1234")));
+		assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "password-1234", LoginPortal.ADMIN)));
 	}
 
 	@Test
 	void logoutInvalidatesToken() {
-		var res = auth.login("alice", "password-1234");
+		var res = auth.login("alice", "password-1234", LoginPortal.ADMIN);
 		auth.logout(res.token());
 		assertTrue(auth.authenticate(res.token()).isEmpty());
 	}

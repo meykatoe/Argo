@@ -78,8 +78,8 @@ class AuditLogTests {
 
 	@Test
 	void failedLoginsAreRecordedWithoutPasswords() {
-		assertThrows(ApiException.class, () -> auth.login("gen1", "wrong-password-xyz"));
-		assertThrows(ApiException.class, () -> auth.login("ghost", "wrong-password-xyz"));
+		assertThrows(ApiException.class, () -> auth.login("gen1", "wrong-password-xyz", LoginPortal.ADMIN));
+		assertThrows(ApiException.class, () -> auth.login("ghost", "wrong-password-xyz", LoginPortal.ADMIN));
 		var bad = logs("action = 'LOGIN_FAILED' and username = 'gen1'");
 		assertEquals(1, bad.size());
 		assertEquals(false, bad.get(0).get("success"));
@@ -93,14 +93,14 @@ class AuditLogTests {
 
 	@Test
 	void logoutIsRecorded() {
-		String token = auth.login("gen1", "password-1234").token();
+		String token = auth.login("gen1", "password-1234", LoginPortal.ADMIN).token();
 		auth.logout(token);
 		assertEquals(1, logs("action = 'LOGOUT' and username = 'gen1'").size());
 	}
 
 	@Test
 	void discountChangeRecordsActorAndBeforeAfter() throws Exception {
-		String token = auth.login("gen1", "password-1234").token();
+		String token = auth.login("gen1", "password-1234", LoginPortal.ADMIN).token();
 		mvc.perform(patch("/api/admin/cards/" + cardId + "/extra-discount")
 				.header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"extraDiscount\":0.4}"));
@@ -119,7 +119,7 @@ class AuditLogTests {
 
 	@Test
 	void forbiddenAccessIsRecorded() throws Exception {
-		String token = auth.login("svc1", "password-1234").token();
+		String token = auth.login("svc1", "password-1234", LoginPortal.ADMIN).token();
 		mvc.perform(get("/api/admin/cards").header("Authorization", "Bearer " + token));
 		var rows = logs("action = 'ACCESS_DENIED' and username = 'svc1'");
 		assertEquals(1, rows.size());
@@ -129,7 +129,7 @@ class AuditLogTests {
 
 	@Test
 	void logsCannotBeUpdatedOrDeleted() {
-		auth.login("gen1", "password-1234");
+		auth.login("gen1", "password-1234", LoginPortal.ADMIN);
 		assertThrows(DataAccessException.class, () -> jdbc.update("update staff_audit_log set username = 'x'"));
 	}
 }

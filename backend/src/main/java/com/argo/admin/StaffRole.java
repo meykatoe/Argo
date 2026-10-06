@@ -4,5 +4,7 @@ package com.argo.admin;
 public enum StaffRole {
 	ADMIN,
 	GENERAL,
-	SERVICE
+	SERVICE,
+	// 運維，只能使用運維後台
+	OPS
 }

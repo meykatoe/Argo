@@ -16,17 +16,19 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
 - 卡片資料同步：從 optcgapi.com 取得補充包、起始牌組、促銷卡，寫入資料庫。每天凌晨 4 點自動同步，也可用 `--argo.sync.on-startup=true` 在啟動時手動同步一次。
 - 售價與庫存：每張卡有獨立的 `sale_price`（售價，目前幣別為美元）與 `stock`（庫存）欄位。售價在同步卡片資料時以「市價 × 倍率」計算並存入資料庫（倍率為 `argo.pricing.sale-rate`，預設 0.9，改倍率後需重新同步才會生效），不是即時運算。手動改價的卡片（`price_overridden`）同步時不會被覆蓋。新卡庫存為 0；開發時可加 `--argo.dev.seed-stock=5` 啟動，替有定價且庫存為 0 的卡補上庫存。查詢 API 可用 `inStock=true` 只看可購買的卡（有庫存且已定價），`sortBy` 可用 `salePrice`。
 - 額外折扣與後台 API：每張卡有 `extra_discount`（預設 1，範圍 0 到 1），最終售價為「市價 × 倍率 × 額外折扣」，手動改價的卡片不套用。前台在有折扣時以刪除線顯示折前價，並在折後價旁標示紅色 `(SALE!!)`。
-- 後台人員帳號：不開放註冊，帳號只能由人工以指令建立。密碼以 BCrypt 雜湊存放（`staff_account`）；登入後發給隨機令牌，資料庫只存令牌雜湊（`staff_session`），預設 8 小時過期，登出即失效，停用帳號立即生效。連續輸入錯誤密碼 5 次會鎖定 15 分鐘（`argo.admin.max-failures`、`argo.admin.lock-minutes`）。角色分為 `ADMIN`（最高權限）、`GENERAL`（一般管理員）、`SERVICE`（客服），三者之間沒有隱含的高低繼承，每個後台端點以 `@RequireRole({...})` 明確列出允許的角色；未標註的端點預設只開放 `ADMIN`。目前額外折扣相關端點開放 `ADMIN` 與 `GENERAL`，`SERVICE` 只能登入、登出與查看自己的身分，其餘功能之後再設計。建立帳號：
+- 後台人員帳號：不開放註冊，帳號只能由人工以指令建立。密碼以 BCrypt 雜湊存放（`staff_account`）；登入後發給隨機令牌，資料庫只存令牌雜湊（`staff_session`），預設 8 小時過期，登出即失效，停用帳號立即生效。連續輸入錯誤密碼 5 次會鎖定 15 分鐘（`argo.admin.max-failures`、`argo.admin.lock-minutes`）。角色分為 `ADMIN`（最高權限）、`GENERAL`（一般管理員）、`SERVICE`（客服）、`OPS`（運維，只能使用運維後台），三者之間沒有隱含的高低繼承，每個後台端點以 `@RequireRole({...})` 明確列出允許的角色；未標註的端點預設只開放 `ADMIN`。目前額外折扣相關端點開放 `ADMIN` 與 `GENERAL`，`SERVICE` 只能登入、登出與查看自己的身分，其餘功能之後再設計。建立帳號：
   ```
   cd backend
   STAFF_PASSWORD='至少十個字元的密碼' ./mvnw spring-boot:run -Dspring-boot.run.arguments="--argo.staff.create=alice --argo.staff.role=general"
   ```
-  `--argo.staff.role` 必填（`admin` / `general` / `service`）。建立完成後程式會自動結束；未設定 `STAFF_PASSWORD` 時會在終端機提示輸入。帳號名稱為 3 到 50 字元的小寫英數與 `. _ -`。停用帳號：`update staff_account set enabled = false where username = 'alice';`
+  `--argo.staff.role` 必填（`admin` / `general` / `service` / `ops`）。建立完成後程式會自動結束；未設定 `STAFF_PASSWORD` 時會在終端機提示輸入。帳號名稱為 3 到 50 字元的小寫英數與 `. _ -`。停用帳號：`update staff_account set enabled = false where username = 'alice';`
   - `POST /api/admin/auth/login`：`{"username": ..., "password": ...}`，回傳 `token`、`role`、`expiresAt`；帳號或密碼錯誤一律回 `LOGIN_FAILED`，鎖定中回 429 `LOGIN_LOCKED`。其餘後台 API 需帶標頭 `Authorization: Bearer <token>`。
   - `POST /api/admin/auth/logout`、`GET /api/admin/auth/me`。
   - `GET /api/admin/cards`（`ADMIN`、`GENERAL`）：卡片列表（`keyword`、`setId`、`discounted`、`page`、`size`），回傳折前價、額外折扣與售價。
   - `PATCH /api/admin/cards/{id}/extra-discount`（`ADMIN`、`GENERAL`）：body 為 `{"extraDiscount": 0.4}`，最多四位小數，改完即時重算售價。
 - 後台操作稽核（`staff_audit_log`）：記錄誰（帳號與角色的當下快照）、在何時（`created_at`）、從哪裡（IP、User-Agent）、做了什麼（`action`）、對象是誰（`target_type`、`target_id`）、是否成功，以及變更前後內容（`detail`，JSON）。目前會記錄：登入成功、登入失敗（含帳號不存在、密碼錯誤、帳號停用，失敗原因寫在 `detail`，不記錄密碼）、登入鎖定、登出、越權存取被拒、以指令建立帳號（操作者記為 `cli:系統使用者`）、修改額外折扣（含修改前後的折扣與售價）。修改類操作與稽核紀錄在同一個資料庫交易中寫入，不會出現「改了卻沒紀錄」。資料表以觸發器禁止 `UPDATE` 與 `DELETE`，帳號因此也不能刪除，請改用停用。IP 取自連線位址；若之後放在反向代理後面，需另外設定轉送標頭，否則記到的會是代理的位址。新增後台功能時，請在寫入操作中呼叫 `AuditLogService.record(...)`。
+- 運維後台 API（`/api/ops/**`）：與業務後台（`/api/admin/**`）分開，方便日後在反向代理或網關層限制只有內網或指定 IP 能連線。兩個入口各有登入端點（`/api/admin/auth/login`、`/api/ops/auth/login`），帳號只能從自己的入口登入：`OPS` 帳號不能登入業務後台，其他角色不能登入運維後台，走錯入口一律回 `LOGIN_FAILED`，並在稽核紀錄寫入 `WRONG_PORTAL`。`OPS` 的令牌也不能呼叫業務後台端點。
+  - `GET /api/ops/audit-logs`（只有 `OPS`，`ADMIN` 也不可看）：查詢稽核紀錄，依時間新到舊。參數：`username`（不分大小寫、包含比對）、`action`、`success`、`targetType`、`targetId`、`from`、`to`（ISO 8601 時間，含起不含迄）、`page`、`size`（上限 100，預設 50）。每次查詢本身也會寫入稽核紀錄（`AUDIT_LOG_VIEWED`，記下篩選條件）。
 - 後台（`frontend/admin`）：工作人員以帳號密碼登入（登入資料只存在該分頁的 `sessionStorage`，關閉分頁即登出，過期自動失效），右上角顯示帳號與角色。`ADMIN`、`GENERAL` 可依卡號或卡名搜尋、只看有折扣的卡，直接修改每張卡的額外折扣（輸入 0.4 會顯示為 4 折），儲存後立即顯示新售價，手動定價的卡片不可設定折扣；`SERVICE` 目前登入後顯示「目前尚無可用功能」。帳號需先以上述指令建立。啟動方式：後端啟動後，於 `frontend/admin` 執行 `npm install && npm run dev`（連接埠 5174）。正式部署時需把後台網址加入 `argo.cors.origins`，或與後端放在同一網域下反向代理。
 - 多語系卡片資料：卡片查詢 API 加上 `lang` 參數（`en` 預設、`zh-TW`）即回傳該語言的卡名、效果、特徵與系列名稱，找不到翻譯時回退為英文，原文固定放在 `cardNameEn`、`setNameEn`。繁中資料抓取自 Bandai 官方繁中卡表（`asia-tc.onepiece-cardgame.com`），啟動時加 `--argo.translation.on-startup=true` 手動同步，也會每週一凌晨 5 點自動同步。內容版權屬原權利人，正式營運前請自行確認使用條款。
 - 卡片查詢 API（無需登入，皆為 GET）：
