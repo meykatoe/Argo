@@ -51,8 +51,8 @@ public class IpActivityRecorder {
 		return c;
 	}
 
-	// 取走目前的累計值寫入資料庫，同一天同一個 IP 的次數會加總
-	@Scheduled(fixedDelayString = "${argo.security.flush-millis:30000}", initialDelayString = "${argo.security.flush-millis:30000}")
+	// 每 10 秒取走累計值寫入資料庫，同一天同一個 IP 的次數會加總
+	@Scheduled(fixedDelayString = "${argo.security.flush-millis:10000}", initialDelayString = "${argo.security.flush-millis:10000}")
 	public void flushScheduled() {
 		flush();
 	}

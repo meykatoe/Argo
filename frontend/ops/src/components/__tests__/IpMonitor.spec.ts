@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { computed } from 'vue'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MENU_CODES } from '@/utils/menu'
 import IpMonitor from '../IpMonitor.vue'
 
@@ -203,5 +203,65 @@ describe('IpMonitor', () => {
     await w.findAll('.pager button')[1]!.trigger('click')
     await flushPromises()
     expect(new URL(lastOf(calls(fetchMock, 'GET', '/ops/ips'))[0], 'http://x').searchParams.get('page')).toBe('2')
+  })
+})
+
+describe('IpMonitor 自動更新', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('每 10 秒同時更新異常 IP 與封鎖名單', async () => {
+    const { fetchMock } = setup()
+    await flushPromises()
+    const first = fetchMock.mock.calls.length
+    vi.advanceTimersByTime(10_000)
+    await flushPromises()
+    expect(fetchMock.mock.calls.length).toBe(first * 2)
+  })
+
+  it('新的異常 IP 會自己出現', async () => {
+    let n = 0
+    const { w } = setup((url) => {
+      if (url.includes('/ops/ips')) {
+        n++
+        return pageOf(n === 1 ? [rows[0]] : rows)
+      }
+      return undefined
+    })
+    await flushPromises()
+    const activityRows = () => w.findAll('table')[0]!.findAll('tbody tr')
+    expect(activityRows()).toHaveLength(1)
+    vi.advanceTimersByTime(10_000)
+    await flushPromises()
+    expect(activityRows()).toHaveLength(2)
+    expect(w.text()).toContain('上次更新')
+  })
+
+  it('封鎖視窗開著時不更新，關閉後恢復', async () => {
+    const { w, fetchMock } = setup()
+    await flushPromises()
+    await w.findAll('button.danger-text')[0]!.trigger('click')
+    const before = fetchMock.mock.calls.length
+    vi.advanceTimersByTime(30_000)
+    await flushPromises()
+    expect(fetchMock.mock.calls.length).toBe(before)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await flushPromises()
+    vi.advanceTimersByTime(10_000)
+    await flushPromises()
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(before)
+  })
+
+  it('關掉開關就不更新', async () => {
+    const { w, fetchMock } = setup()
+    await flushPromises()
+    await w.find('.live input[type=checkbox]').setValue(false)
+    const before = fetchMock.mock.calls.length
+    vi.advanceTimersByTime(60_000)
+    await flushPromises()
+    expect(fetchMock.mock.calls.length).toBe(before)
   })
 })

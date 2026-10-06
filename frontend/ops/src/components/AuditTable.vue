@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { ApiError, searchAuditLogs } from '@/api/ops'
 import type { AuditAction, AuditLog, PageResult } from '@/types'
 import { ACTION_LABELS, toIso } from '@/utils/audit'
+import { REFRESH_MS, useAutoRefresh } from '@/utils/autoRefresh'
 import { errorText } from '@/utils/error'
 import AuditRow from './AuditRow.vue'
 
@@ -19,8 +20,11 @@ const data = ref<PageResult<AuditLog> | null>(null)
 const loading = ref(false)
 const error = ref('')
 
-async function load() {
-  loading.value = true
+const updatedAt = ref<Date | null>(null)
+
+// auto 為真代表背景自動更新：不閃載入中，後端也不逐次記錄查看
+async function load(auto = false) {
+  if (!auto) loading.value = true
   error.value = ''
   try {
     data.value = await searchAuditLogs(props.token, {
@@ -31,7 +35,9 @@ async function load() {
       to: toIso(to.value),
       page: page.value,
       size: 50,
+      refresh: auto || undefined,
     })
+    updatedAt.value = new Date()
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) {
       emit('unauthorized')
@@ -52,7 +58,16 @@ function go(p: number) {
   load()
 }
 
-onMounted(load)
+// 只在第一頁自動更新，翻到後面幾頁時列表會一直位移，反而看不清楚
+const { enabled } = useAutoRefresh(
+  () => load(true),
+  () => page.value === 1 && !loading.value,
+  REFRESH_MS,
+)
+
+const clock = (d: Date) => d.toLocaleTimeString('zh-TW', { hour12: false })
+
+onMounted(() => load())
 </script>
 
 <template>
@@ -72,6 +87,16 @@ onMounted(load)
       <label>到 <input v-model="to" type="datetime-local" /></label>
       <button type="submit" class="primary" :disabled="loading">查詢</button>
     </form>
+
+    <div class="live">
+      <label>
+        <input v-model="enabled" type="checkbox" />
+        自動更新（每 {{ REFRESH_MS / 1000 }} 秒）
+      </label>
+      <span v-if="enabled && page > 1" class="hint">翻到其他頁時暫停自動更新</span>
+      <span v-if="updatedAt" class="hint">上次更新 {{ clock(updatedAt) }}</span>
+      <button type="button" :disabled="loading" @click="load()">重新整理</button>
+    </div>
 
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-else-if="loading" class="hint">載入中</p>
@@ -132,6 +157,15 @@ th {
   border-bottom: 2px solid var(--color-border);
   font-size: 13px;
   color: var(--color-muted);
+}
+
+.live {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
 }
 
 .pager {

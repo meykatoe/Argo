@@ -33,9 +33,10 @@ public class OpsAuditController {
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
 			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "50") int size,
+			@RequestParam(defaultValue = "false") boolean refresh,
 			HttpServletRequest req) {
 		StaffAccount viewer = (StaffAccount) req.getAttribute(AdminAuthInterceptor.STAFF_ATTR);
 		return Result.ok(service.search(viewer, new AuditLogQuery(username, action, success, targetType,
-				targetId, from, to), page, size));
+				targetId, from, to), page, size, refresh));
 	}
 }

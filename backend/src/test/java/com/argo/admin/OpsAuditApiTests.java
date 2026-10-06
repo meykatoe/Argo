@@ -124,4 +124,52 @@ class OpsAuditApiTests {
 		mvc.perform(get("/api/ops/auth/me").header("Authorization", "Bearer " + ops))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.data.role").value("OPS"));
 	}
+
+	private int views() {
+		return jdbc.queryForObject("select count(*) from staff_audit_log where action = 'AUDIT_LOG_VIEWED' and username = 'ops1'", Integer.class);
+	}
+
+	@Test
+	void autoRefreshDoesNotFloodTheAuditTrail() throws Exception {
+		String h = "Bearer " + ops;
+		mvc.perform(get("/api/ops/audit-logs").header("Authorization", h)).andExpect(status().isOk());
+		assertEquals(1, views());
+		for (int i = 0; i < 5; i++) {
+			mvc.perform(get("/api/ops/audit-logs").param("refresh", "1").header("Authorization", h)).andExpect(status().isOk());
+		}
+		assertEquals(1, views());
+	}
+
+	@Test
+	void autoRefreshWithoutARecentViewIsStillRecorded() throws Exception {
+		// 沒有先正常查看就直接帶 refresh，不能因此免記
+		mvc.perform(get("/api/ops/audit-logs").param("refresh", "1").header("Authorization", "Bearer " + ops)).andExpect(status().isOk());
+		assertEquals(1, views());
+	}
+
+	@Test
+	void autoRefreshStopsBeingFreeOnceTheLastViewIsOld() throws Exception {
+		mvc.perform(get("/api/ops/audit-logs").header("Authorization", "Bearer " + ops)).andExpect(status().isOk());
+		jdbc.execute("alter table staff_audit_log disable trigger trg_staff_audit_log_immutable");
+		jdbc.update("update staff_audit_log set created_at = now() - interval '11 minutes' where action = 'AUDIT_LOG_VIEWED' and username = 'ops1'");
+		jdbc.execute("alter table staff_audit_log enable trigger trg_staff_audit_log_immutable");
+		mvc.perform(get("/api/ops/audit-logs").param("refresh", "1").header("Authorization", "Bearer " + ops)).andExpect(status().isOk());
+		assertEquals(2, views());
+	}
+
+	@Test
+	void manualRefreshIsAlwaysRecorded() throws Exception {
+		for (int i = 0; i < 3; i++) {
+			mvc.perform(get("/api/ops/audit-logs").header("Authorization", "Bearer " + ops)).andExpect(status().isOk());
+		}
+		assertEquals(3, views());
+	}
+
+	@Test
+	void autoRefreshStillReturnsTheLatestRows() throws Exception {
+		mvc.perform(get("/api/ops/audit-logs").header("Authorization", "Bearer " + ops)).andExpect(status().isOk());
+		auth.create("late1", PW, StaffRole.GENERAL);
+		mvc.perform(get("/api/ops/audit-logs").param("refresh", "1").param("size", "5").header("Authorization", "Bearer " + ops))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.data.items[0].id").exists());
+	}
 }

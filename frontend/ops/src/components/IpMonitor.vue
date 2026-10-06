@@ -3,6 +3,7 @@ import { computed, inject, onMounted, ref, type ComputedRef } from 'vue'
 import { ApiError, blockIp, listIpBlocks, listIps, unblockIp } from '@/api/ops'
 import type { IpActivity, IpBlock, PageResult } from '@/types'
 import { formatTime } from '@/utils/audit'
+import { REFRESH_MS, useAutoRefresh } from '@/utils/autoRefresh'
 import { errorText } from '@/utils/error'
 import { MENU_CODES } from '@/utils/menu'
 import IpBlockDialog from './IpBlockDialog.vue'
@@ -31,8 +32,11 @@ function failed(e: unknown): string {
   return errorText(e)
 }
 
-async function load() {
-  loading.value = true
+const updatedAt = ref<Date | null>(null)
+
+// auto 為真代表背景自動更新：不閃載入中
+async function load(auto = false) {
+  if (!auto) loading.value = true
   error.value = ''
   try {
     const [activity, active] = await Promise.all([
@@ -41,6 +45,7 @@ async function load() {
     ])
     data.value = activity
     blocks.value = active
+    updatedAt.value = new Date()
   } catch (e) {
     error.value = failed(e)
   } finally {
@@ -90,7 +95,16 @@ function openBlock(ip: string, lock: boolean) {
 
 const expiry = (iso: string | null) => (iso ? `到 ${formatTime(iso)}` : '永久')
 
-onMounted(load)
+// 正在填封鎖視窗時不更新，避免干擾操作
+const { enabled } = useAutoRefresh(
+  () => load(true),
+  () => !dialog.value && !loading.value,
+  REFRESH_MS,
+)
+
+const clock = (d: Date) => d.toLocaleTimeString('zh-TW', { hour12: false })
+
+onMounted(() => load())
 </script>
 
 <template>
@@ -109,6 +123,15 @@ onMounted(load)
       <button type="submit" class="primary" :disabled="loading">搜尋</button>
       <button v-if="canBlock" type="button" class="spaced" @click="openBlock('', false)">封鎖指定 IP</button>
     </form>
+
+    <div class="live">
+      <label>
+        <input v-model="enabled" type="checkbox" />
+        自動更新（每 {{ REFRESH_MS / 1000 }} 秒）
+      </label>
+      <span v-if="updatedAt" class="hint">上次更新 {{ clock(updatedAt) }}</span>
+      <button type="button" :disabled="loading" @click="load()">重新整理</button>
+    </div>
 
     <p v-if="error" class="error" role="alert">{{ error }}</p>
 
@@ -211,6 +234,15 @@ h2 {
   align-items: center;
   gap: 6px;
   color: var(--color-muted);
+  font-size: 14px;
+}
+
+.live {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
   font-size: 14px;
 }
 

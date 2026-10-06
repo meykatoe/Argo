@@ -1,6 +1,8 @@
 package com.argo.admin;
 
 import com.argo.common.PageResult;
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.data.domain.PageRequest;
@@ -24,8 +26,12 @@ public class OpsAuditService {
 		this.audit = audit;
 	}
 
-	// 查看紀錄本身也會被記錄
-	public PageResult<AuditLogView> search(StaffAccount viewer, AuditLogQuery q, int page, int size) {
+	// 自動更新只在最近已有一筆查看紀錄時才免記，避免用它繞過稽核
+	private static final Duration REFRESH_GRACE = Duration.ofMinutes(10);
+
+	// 查看紀錄本身也會被記錄；自動更新是同一個畫面重複同樣的查詢，不再逐次記錄
+	public PageResult<AuditLogView> search(StaffAccount viewer, AuditLogQuery q, int page, int size,
+			boolean refresh) {
 		if (page < 1 || size < 1 || size > MAX_SIZE) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_PAGING");
 		}
@@ -34,6 +40,10 @@ public class OpsAuditService {
 		}
 		var result = logs.findAll(AuditLogSpecs.of(q), PageRequest.of(page - 1, size,
 				Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id"))));
+		if (refresh && logs.existsByStaffIdAndActionAndCreatedAtAfter(viewer.getId(),
+				AuditAction.AUDIT_LOG_VIEWED, OffsetDateTime.now().minus(REFRESH_GRACE))) {
+			return PageResult.of(result, AuditLogView::from);
+		}
 		Map<String, Object> detail = new LinkedHashMap<>();
 		put(detail, "username", q.username());
 		put(detail, "action", q.action());

@@ -84,6 +84,8 @@ export interface AuditSearch {
   to?: string
   page: number
   size: number
+  // 自動更新，後端不再逐次記錄查看
+  refresh?: boolean
 }
 
 export function searchAuditLogs(token: string, q: AuditSearch): Promise<PageResult<AuditLog>> {
