@@ -19,3 +19,11 @@ export function discountLabel(value: number): string {
 export function formatPrice(value: number): string {
   return `US$ ${value.toFixed(2)}`
 }
+
+// 最低與最高折扣相同代表整個系列一致
+export function discountRangeLabel(min: number, max: number): string {
+  if (min === max) {
+    return discountLabel(min)
+  }
+  return `不一致（${discountLabel(min)} ～ ${discountLabel(max)}）`
+}

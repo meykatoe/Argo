@@ -8,6 +8,7 @@ const TEXT: Record<string, string> = {
   CARD_NOT_FOUND: '找不到這張卡片',
   VALIDATION_ERROR: '折扣必須大於 0 且不超過 1，最多四位小數',
   INVALID_PAGING: '分頁參數錯誤',
+  SET_NOT_FOUND: '找不到這個系列',
 }
 
 export function errorText(e: unknown): string {

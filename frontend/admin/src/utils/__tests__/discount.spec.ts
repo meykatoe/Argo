@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { discountLabel, parseDiscount } from '../discount'
+import { discountLabel, discountRangeLabel, parseDiscount } from '../discount'
 
 describe('parseDiscount', () => {
   it('接受合法折扣', () => {
@@ -20,5 +20,13 @@ describe('discountLabel', () => {
     expect(discountLabel(0.4)).toBe('4 折')
     expect(discountLabel(0.85)).toBe('8.5 折')
     expect(discountLabel(1)).toBe('無折扣')
+  })
+})
+
+describe('discountRangeLabel', () => {
+  it('相同顯示單一折扣，不同顯示範圍', () => {
+    expect(discountRangeLabel(0.4, 0.4)).toBe('4 折')
+    expect(discountRangeLabel(1, 1)).toBe('無折扣')
+    expect(discountRangeLabel(0.4, 1)).toBe('不一致（4 折 ～ 無折扣）')
   })
 })

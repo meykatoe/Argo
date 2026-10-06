@@ -39,3 +39,22 @@ export interface MenuNode {
   path: string | null
   children: MenuNode[]
 }
+
+export interface AdminCardSet {
+  setId: string
+  setName: string
+  setNameEn: string
+  category: string
+  onSale: Flag
+  cardCount: number
+  minDiscount: number
+  maxDiscount: number
+}
+
+// 公開的系列清單，用於下拉選單
+export interface SetOption {
+  setId: string
+  setName: string
+  category: string
+  onSale: Flag
+}

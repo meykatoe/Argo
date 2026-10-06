@@ -65,10 +65,6 @@ class AdminCardSetApiTests {
 		c = card("C", 30.0);
 		c.overridePrice(new BigDecimal("12.34"));
 		cards.saveAndFlush(c);
-		// 權限來自資料庫，測試自行建立選單與授權
-		jdbc.update("insert into admin_menu (parent_id, portal, code, title, path, sort_order) "
-				+ "values ((select id from admin_menu where code = 'card'), 'ADMIN', 'card.series', '卡牌系列', '/series', 5)");
-		jdbc.update("insert into role_menu (role, menu_id) select 'GENERAL', id from admin_menu where code = 'card.series'");
 		auth.create("gen1", PW, StaffRole.GENERAL);
 		auth.create("svc1", PW, StaffRole.SERVICE);
 		general = "Bearer " + auth.login("gen1", PW, LoginPortal.ADMIN).token();

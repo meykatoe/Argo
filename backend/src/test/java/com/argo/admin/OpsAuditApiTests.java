@@ -73,7 +73,7 @@ class OpsAuditApiTests {
 	void filtersByUsernameActionAndSuccess() throws Exception {
 		assertThrows(ApiException.class, () -> auth.login("gen1", "bad-password-1", LoginPortal.ADMIN));
 		mvc.perform(get("/api/ops/audit-logs").header("Authorization", "Bearer " + ops)
-				.param("username", "GEN").param("action", "LOGIN_FAILED").param("success", "0"))
+				.param("username", "GEN1").param("action", "LOGIN_FAILED").param("success", "0"))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(1))
 				.andExpect(jsonPath("$.data.items[0].detail.reason").value("BAD_PASSWORD"));
 		mvc.perform(get("/api/ops/audit-logs").header("Authorization", "Bearer " + ops)

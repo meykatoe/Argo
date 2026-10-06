@@ -1,4 +1,4 @@
-import type { AdminCard, MenuNode, PageResult, Session } from '@/types'
+import type { AdminCard, AdminCardSet, Flag, MenuNode, PageResult, Session, SetOption } from '@/types'
 
 const BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
@@ -87,4 +87,23 @@ export function setExtraDiscount(token: string, id: number, extraDiscount: numbe
 
 export function getMenu(token: string): Promise<MenuNode[]> {
   return request(token, 'GET', '/admin/menu')
+}
+
+export function listCardSets(token: string): Promise<AdminCardSet[]> {
+  return request(token, 'GET', '/admin/card-sets')
+}
+
+// 1 上架、0 下架
+export function setCardSetOnSale(token: string, setId: string, onSale: Flag): Promise<AdminCardSet> {
+  return request(token, 'PATCH', `/admin/card-sets/${encodeURIComponent(setId)}/on-sale`, {}, { onSale })
+}
+
+// 整個系列統一折扣
+export function setCardSetDiscount(token: string, setId: string, extraDiscount: number): Promise<AdminCardSet> {
+  return request(token, 'PATCH', `/admin/card-sets/${encodeURIComponent(setId)}/extra-discount`, {}, { extraDiscount })
+}
+
+// 公開 API，不需要令牌，取繁中系列名稱
+export function listSetOptions(): Promise<SetOption[]> {
+  return request(null, 'GET', '/sets', { lang: 'zh-TW' })
 }

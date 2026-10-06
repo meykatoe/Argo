@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { ApiError, searchCards } from '@/api/admin'
-import type { AdminCard, PageResult } from '@/types'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ApiError, listSetOptions, searchCards } from '@/api/admin'
+import type { AdminCard, PageResult, SetOption } from '@/types'
 import { errorText } from '@/utils/error'
 import CardRow from './CardRow.vue'
 
 const props = defineProps<{ token: string }>()
 const emit = defineEmits<{ unauthorized: [] }>()
 
+const route = useRoute()
+const router = useRouter()
+
+// 系列來自網址，可從系列頁直接跳轉
+const setId = ref(typeof route.query.setId === 'string' ? route.query.setId : '')
+const setOptions = ref<SetOption[]>([])
 const keyword = ref('')
 const discounted = ref(false)
 const page = ref(1)
@@ -21,6 +28,7 @@ async function load() {
   try {
     data.value = await searchCards(props.token, {
       keyword: keyword.value.trim(),
+      setId: setId.value || undefined,
       discounted: discounted.value || undefined,
       page: page.value,
       size: 20,
@@ -40,6 +48,33 @@ function search() {
   load()
 }
 
+// 選了系列就寫回網址，重新整理仍保留
+function pickSet() {
+  router.replace({ path: route.path, query: setId.value ? { setId: setId.value } : {} })
+  search()
+}
+
+// 從別處跳轉過來時同步系列
+watch(
+  () => route.query.setId,
+  (v) => {
+    const next = typeof v === 'string' ? v : ''
+    if (next !== setId.value) {
+      setId.value = next
+      search()
+    }
+  },
+)
+
+// 下拉選單失敗不影響列表
+async function loadOptions() {
+  try {
+    setOptions.value = await listSetOptions()
+  } catch {
+    setOptions.value = []
+  }
+}
+
 function go(p: number) {
   page.value = p
   load()
@@ -53,12 +88,21 @@ function replace(card: AdminCard) {
   data.value.items = data.value.items.map((c) => (c.id === card.id ? card : c))
 }
 
-onMounted(load)
+onMounted(() => {
+  loadOptions()
+  load()
+})
 </script>
 
 <template>
   <section>
     <form class="bar" @submit.prevent="search">
+      <select v-model="setId" aria-label="系列" @change="pickSet">
+        <option value="">全部系列</option>
+        <option v-for="s in setOptions" :key="s.setId" :value="s.setId">
+          {{ s.setId }} {{ s.setName }}{{ s.onSale === 0 ? '（已下架）' : '' }}
+        </option>
+      </select>
       <input v-model="keyword" placeholder="卡號或卡名" />
       <label><input v-model="discounted" type="checkbox" @change="search" /> 只看有折扣</label>
       <button type="submit" class="primary">搜尋</button>
@@ -103,6 +147,15 @@ onMounted(load)
 </template>
 
 <style scoped>
+select {
+  max-width: 280px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font: inherit;
+  background: #fff;
+}
+
 .bar {
   display: flex;
   flex-wrap: wrap;

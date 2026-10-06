@@ -47,8 +47,8 @@ class MenuTests {
 
 	@Test
 	void seededMenuMatchesTheCurrentPermissions() {
-		assertEquals(List.of("card", "card.edit"), codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
-		assertEquals(List.of("card", "card.edit"), codes(menus.menuFor(StaffRole.ADMIN, LoginPortal.ADMIN)));
+		assertEquals(List.of("card", "card.series", "card.edit"), codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
+		assertEquals(List.of("card", "card.series", "card.edit"), codes(menus.menuFor(StaffRole.ADMIN, LoginPortal.ADMIN)));
 		assertEquals(List.of(), codes(menus.menuFor(StaffRole.SERVICE, LoginPortal.ADMIN)));
 		assertEquals(List.of("audit", "audit.logs"), codes(menus.menuFor(StaffRole.OPS, LoginPortal.OPS)));
 		assertEquals(List.of(), codes(menus.menuFor(StaffRole.ADMIN, LoginPortal.OPS)));
@@ -60,38 +60,41 @@ class MenuTests {
 		MenuNode group = menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN).get(0);
 		assertEquals("卡牌管理", group.title());
 		assertEquals(null, group.path());
-		assertEquals("卡牌編輯", group.children().get(0).title());
-		assertEquals("/cards", group.children().get(0).path());
+		assertEquals("卡牌系列", group.children().get(0).title());
+		assertEquals("/series", group.children().get(0).path());
+		assertEquals("卡牌編輯", group.children().get(1).title());
+		assertEquals("/cards", group.children().get(1).path());
 	}
 
 	@Test
 	void newMenuAndGrantWorkWithoutCodeChanges() {
 		jdbc.update("insert into admin_menu (parent_id, portal, code, title, path, sort_order) "
-				+ "values ((select id from admin_menu where code = 'card'), 'ADMIN', 'card.series', '卡牌系列', '/series', 5)");
-		jdbc.update("insert into role_menu (role, menu_id) select 'SERVICE', id from admin_menu where code = 'card.series'");
+				+ "values ((select id from admin_menu where code = 'card'), 'ADMIN', 'card.extra', '額外功能', '/extra', 3)");
+		jdbc.update("insert into role_menu (role, menu_id) select 'SERVICE', id from admin_menu where code = 'card.extra'");
 		List<MenuNode> svc = menus.menuFor(StaffRole.SERVICE, LoginPortal.ADMIN);
-		assertEquals(List.of("card", "card.series"), codes(svc));
+		assertEquals(List.of("card", "card.extra"), codes(svc));
 		// 排序小的在前
 		List<MenuNode> gen = menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN);
-		assertEquals(List.of("card", "card.edit"), codes(gen));
-		assertTrue(menus.hasPermission(StaffRole.SERVICE, "card.series"));
-		assertFalse(menus.hasPermission(StaffRole.GENERAL, "card.series"));
+		assertEquals(List.of("card", "card.series", "card.edit"), codes(gen));
+		assertTrue(menus.hasPermission(StaffRole.SERVICE, "card.extra"));
+		assertFalse(menus.hasPermission(StaffRole.GENERAL, "card.extra"));
 	}
 
 	@Test
 	void sortOrderControlsPosition() {
 		jdbc.update("insert into admin_menu (parent_id, portal, code, title, path, sort_order) "
-				+ "values ((select id from admin_menu where code = 'card'), 'ADMIN', 'card.series', '卡牌系列', '/series', 5)");
-		jdbc.update("insert into role_menu (role, menu_id) select 'GENERAL', id from admin_menu where code = 'card.series'");
+				+ "values ((select id from admin_menu where code = 'card'), 'ADMIN', 'card.extra', '額外功能', '/extra', 1)");
+		jdbc.update("insert into role_menu (role, menu_id) select 'GENERAL', id from admin_menu where code = 'card.extra'");
 		var kids = menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN).get(0).children();
-		assertEquals(List.of("card.series", "card.edit"), kids.stream().map(MenuNode::code).toList());
+		assertEquals(List.of("card.extra", "card.series", "card.edit"), kids.stream().map(MenuNode::code).toList());
 	}
 
 	@Test
 	void disabledNodeIsHiddenAndDenied() {
 		jdbc.update("update admin_menu set enabled = 0 where code = 'card.edit'");
-		assertEquals(List.of(), codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
+		assertEquals(List.of("card", "card.series"), codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
 		assertFalse(menus.hasPermission(StaffRole.GENERAL, "card.edit"));
+		assertTrue(menus.hasPermission(StaffRole.GENERAL, "card.series"));
 	}
 
 	@Test
@@ -113,7 +116,7 @@ class MenuTests {
 		String ops = "Bearer " + auth.login("ops1", PW, LoginPortal.OPS).token();
 		mvc.perform(get("/api/admin/menu").header("Authorization", gen)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.data[0].title").value("卡牌管理"))
-				.andExpect(jsonPath("$.data[0].children[0].path").value("/cards"));
+				.andExpect(jsonPath("$.data[0].children[1].path").value("/cards"));
 		mvc.perform(get("/api/admin/menu").header("Authorization", svc)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.length()").value(0));
 		mvc.perform(get("/api/ops/menu").header("Authorization", ops)).andExpect(status().isOk())
