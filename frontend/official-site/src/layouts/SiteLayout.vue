@@ -3,10 +3,16 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, RouterView } from 'vue-router'
 import logo from '@/assets/logo.svg'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import { onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 
 const { t } = useI18n()
 const cart = useCartStore()
+const auth = useAuthStore()
+
+// 啟動時確認登入是否仍有效
+onMounted(() => auth.refresh())
 </script>
 
 <template>
@@ -21,6 +27,10 @@ const cart = useCartStore()
         <RouterLink to="/orders">{{ t('nav.orders') }}</RouterLink>
       </nav>
       <div class="right">
+        <template v-if="auth.isLoggedIn">
+          <RouterLink to="/account" class="user" :title="auth.session?.email">{{ auth.displayName }}</RouterLink>
+        </template>
+        <RouterLink v-else to="/login" class="user">{{ t('nav.login') }}</RouterLink>
         <RouterLink to="/cart" class="cart" :aria-label="t('cart.title')">
           <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
             <path
@@ -88,6 +98,18 @@ const cart = useCartStore()
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.user {
+  max-width: 140px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.user.router-link-active {
+  color: var(--color-primary);
 }
 
 .cart {

@@ -47,3 +47,8 @@ export function formatCardNumber(s: string): string {
     .replace(/(.{4})/g, '$1 ')
     .trim()
 }
+
+// 密碼規則與後端一致：至少 8 個字元，最多 72 個位元組
+export const isPasswordLongEnough = (s: string) => s.length >= 8
+
+export const isPasswordTooLong = (s: string) => new TextEncoder().encode(s).length > 72

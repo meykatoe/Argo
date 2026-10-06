@@ -6,6 +6,7 @@ import { getCardsByIds } from '@/api/card'
 import { ApiError } from '@/api/http'
 import { createOrder } from '@/api/order'
 import FormField from '@/components/FormField.vue'
+import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import type { CardSummary } from '@/types/card'
 import { TAIWAN_CITIES } from '@/utils/cities'
@@ -16,6 +17,7 @@ import { isEmail, isPhone, isPostalCode } from '@/utils/validators'
 
 const { t, locale } = useI18n()
 const cart = useCartStore()
+const auth = useAuthStore()
 const router = useRouter()
 
 const form = reactive({
@@ -29,6 +31,11 @@ const form = reactive({
   city: '',
   address: '',
 })
+// 已登入就帶入姓名與 Email，仍可自行修改
+if (auth.isLoggedIn && auth.session) {
+  form.email = auth.session.email
+  form.name = auth.session.name ?? ''
+}
 const errors = reactive<Record<string, string>>({})
 
 const details = ref<Map<number, CardSummary>>(new Map())
@@ -146,6 +153,13 @@ onMounted(load)
     <p v-else-if="!loaded" class="hint">{{ t('cart.loading') }}</p>
     <div v-else class="layout">
       <form class="form" novalidate @submit.prevent="submit">
+        <p v-if="auth.isLoggedIn" class="note">{{ t('checkout.loggedInNote') }}</p>
+        <p v-else class="note">
+          {{ t('checkout.guestNote') }}
+          <RouterLink :to="{ name: 'login', query: { redirect: '/checkout' } }" class="link">
+            {{ t('nav.login') }}
+          </RouterLink>
+        </p>
         <fieldset>
           <legend>{{ t('checkout.buyer') }}</legend>
           <FormField :label="t('checkout.name')" :error="errors.name" for="c-name">
@@ -350,5 +364,10 @@ legend {
     position: static;
     order: -1;
   }
+}
+.note {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 14px;
 }
 </style>

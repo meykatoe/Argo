@@ -1,4 +1,5 @@
 import { currentLocale } from '@/i18n'
+import { authToken } from '@/utils/authToken'
 
 const BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
@@ -35,7 +36,7 @@ async function request<T>(
   query.set('lang', currentLocale())
   const res = await fetch(`${BASE}${path}?${query.toString()}`, {
     method,
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    headers: buildHeaders(body !== undefined),
     body: body === undefined ? undefined : JSON.stringify(body),
   })
   const result = await readResult<T>(res)
@@ -44,6 +45,15 @@ async function request<T>(
     throw new ApiError(res.status, result?.msg ?? 'ERROR', toDetails(result?.data))
   }
   return result.data
+}
+
+// 有登入就帶上令牌
+function buildHeaders(hasBody: boolean): Record<string, string> | undefined {
+  const headers: Record<string, string> = {}
+  if (hasBody) headers['Content-Type'] = 'application/json'
+  const token = authToken()
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return Object.keys(headers).length ? headers : undefined
 }
 
 export function get<T>(path: string, params: Params = {}): Promise<T> {

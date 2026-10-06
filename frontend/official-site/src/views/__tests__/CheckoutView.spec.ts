@@ -37,9 +37,12 @@ function card(id: number, extra: Partial<CardSummary> = {}): CardSummary {
   }
 }
 
-async function mountCheckout(items: [number, number][]) {
+async function mountCheckout(items: [number, number][], loggedIn = false) {
   localStorage.clear()
   sessionStorage.clear()
+  if (loggedIn) {
+    localStorage.setItem('argo.auth', JSON.stringify({ token: 'tk', email: 'me@example.com', name: '小明', expiresAt: '2099-01-01T00:00:00Z' }))
+  }
   const pinia = createPinia()
   setActivePinia(pinia)
   const cart = useCartStore()
@@ -50,6 +53,7 @@ async function mountCheckout(items: [number, number][]) {
       { path: '/checkout', component: CheckoutView },
       { path: '/orders/:orderNo', name: 'orderDetail', component: { template: '<i/>' } },
       { path: '/cart', component: { template: '<i/>' } },
+      { path: '/login', name: 'login', component: { template: '<i/>' } },
       { path: '/cards', component: { template: '<i/>' } },
     ],
   })
@@ -78,6 +82,23 @@ describe('CheckoutView', () => {
     const { w } = await mountCheckout([])
     expect(w.text()).toContain('購物車是空的')
     expect(getCardsByIds).not.toHaveBeenCalled()
+  })
+
+  it('訪客看到訪客提示且欄位是空的', async () => {
+    vi.mocked(getCardsByIds).mockResolvedValue([card(1)])
+    const { w } = await mountCheckout([[1, 1]])
+    expect(w.text()).toContain('目前以訪客身分購買')
+    expect((w.find('#c-email').element as HTMLInputElement).value).toBe('')
+  })
+
+  it('已登入自動帶入姓名與 Email，仍可修改', async () => {
+    vi.mocked(getCardsByIds).mockResolvedValue([card(1)])
+    const { w } = await mountCheckout([[1, 1]], true)
+    expect(w.text()).toContain('已登入')
+    expect((w.find('#c-email').element as HTMLInputElement).value).toBe('me@example.com')
+    expect((w.find('#c-name').element as HTMLInputElement).value).toBe('小明')
+    await w.find('#c-email').setValue('other@example.com')
+    expect((w.find('#c-email').element as HTMLInputElement).value).toBe('other@example.com')
   })
 
   it('空白表單送出會顯示錯誤', async () => {
