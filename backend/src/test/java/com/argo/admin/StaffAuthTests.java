@@ -37,6 +37,8 @@ class StaffAuthTests {
 	org.springframework.jdbc.core.JdbcTemplate jdbc;
 	@Autowired
 	WebApplicationContext wac;
+	@jakarta.persistence.PersistenceContext
+	jakarta.persistence.EntityManager em;
 
 	MockMvc mvc;
 
@@ -90,10 +92,56 @@ class StaffAuthTests {
 
 	@Test
 	void locksAfterRepeatedFailures() {
+		// 允許失敗 3 次，第 4 次錯誤才鎖定
 		for (int i = 0; i < 3; i++) {
 			assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN)));
 		}
+		assertEquals("LOGIN_LOCKED", code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN)));
+		// 鎖定期間連正確密碼也不行
 		assertEquals("LOGIN_LOCKED", code(() -> auth.login("alice", "password-1234", LoginPortal.ADMIN)));
+	}
+
+	@Test
+	void lockedResponseTellsHowLongToWait() {
+		for (int i = 0; i < 3; i++) {
+			code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN));
+		}
+		ApiException e = assertThrows(ApiException.class, () -> auth.login("alice", "wrong-password", LoginPortal.ADMIN));
+		long seconds = Long.parseLong(e.getDetails().get("retryAfterSeconds"));
+		assertTrue(seconds > 14 * 60 && seconds <= 15 * 60 + 1, "seconds=" + seconds);
+	}
+
+	@Test
+	void successResetsTheFailureCounter() {
+		for (int i = 0; i < 3; i++) {
+			code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN));
+		}
+		assertEquals("alice", auth.login("alice", "password-1234", LoginPortal.ADMIN).username());
+		// 重新計算，再錯 3 次仍未鎖定
+		for (int i = 0; i < 3; i++) {
+			assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN)));
+		}
+	}
+
+	@Test
+	void lockEndsAfterFifteenMinutes() {
+		for (int i = 0; i < 4; i++) {
+			code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN));
+		}
+		accounts.flush();
+		jdbc.update("update staff_account set locked_until = now() - interval '1 second' where username = 'alice'");
+		em.clear();
+		assertEquals("alice", auth.login("alice", "password-1234", LoginPortal.ADMIN).username());
+	}
+
+	@Test
+	void lockIsAuditedWithItsReason() {
+		for (int i = 0; i < 4; i++) {
+			code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN));
+		}
+		Long id = accounts.findByUsername("alice").orElseThrow().getId();
+		assertEquals(1, jdbc.queryForObject("select count(*) from staff_audit_log where staff_id = ? and action = 'LOGIN_LOCKED' and detail->>'reason' = 'TOO_MANY_FAILURES'", Integer.class, id));
+		assertEquals(3, jdbc.queryForObject("select count(*) from staff_audit_log where staff_id = ? and action = 'LOGIN_FAILED'", Integer.class, id));
 	}
 
 	@Test

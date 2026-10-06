@@ -84,6 +84,31 @@ describe('LoginView', () => {
     expect(router.currentRoute.value.path).toBe('/login')
   })
 
+  it('帳號被鎖定時顯示要等幾分鐘', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ code: 429, msg: 'LOGIN_LOCKED', data: { retryAfterSeconds: '872' } }), { status: 429 }),
+      ),
+    )
+    const { w } = await mountAt('/login')
+    await w.find('#lg-email').setValue('a@b.co')
+    await w.find('#lg-pw').setValue('bad-password')
+    await w.find('form').trigger('submit')
+    await flushPromises()
+    expect(w.find('[role=alert]').text()).toBe('密碼錯誤次數過多，帳號已暫時鎖定，請 15 分鐘後再試')
+  })
+
+  it('鎖定但沒帶秒數時用一般訊息', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fail(429, 'LOGIN_LOCKED')))
+    const { w } = await mountAt('/login')
+    await w.find('#lg-email').setValue('a@b.co')
+    await w.find('#lg-pw').setValue('bad-password')
+    await w.find('form').trigger('submit')
+    await flushPromises()
+    expect(w.find('[role=alert]').text()).toBe('嘗試次數過多，請稍後再試')
+  })
+
   it('說明可以不註冊直接以訪客購買', async () => {
     const { w } = await mountAt('/login')
     expect(w.text()).toContain('訪客身分購買')

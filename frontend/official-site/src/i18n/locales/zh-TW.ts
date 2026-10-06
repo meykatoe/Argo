@@ -88,6 +88,7 @@ const zhTW = {
     haveAccount: "已經有帳號？",
     goLogin: "去登入",
     guestHint: "不想註冊也沒關係，結帳時可以直接以訪客身分購買。",
+    lockedFor: "密碼錯誤次數過多，帳號已暫時鎖定，請 {n} 分鐘後再試",
   },
   account: {
     title: "我的帳號",

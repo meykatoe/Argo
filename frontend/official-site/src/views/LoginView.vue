@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import FormField from '@/components/FormField.vue'
 import { useAuthStore } from '@/stores/auth'
-import { errorText } from '@/utils/error'
+import { errorText, lockedMinutes } from '@/utils/error'
 import { safeRedirect } from '@/utils/redirect'
 import { isEmail } from '@/utils/validators'
 
@@ -29,7 +29,8 @@ async function submit() {
     form.password = ''
     router.replace(safeRedirect(route.query.redirect))
   } catch (e) {
-    error.value = errorText(e)
+    const wait = lockedMinutes(e)
+    error.value = wait ? t('auth.lockedFor', { n: wait }) : errorText(e)
   } finally {
     busy.value = false
   }

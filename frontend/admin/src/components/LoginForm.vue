@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { login } from '@/api/admin'
 import type { Session } from '@/types'
-import { errorText } from '@/utils/error'
+import { errorText, lockedMessage } from '@/utils/error'
 
 const emit = defineEmits<{ login: [session: Session] }>()
 
@@ -22,7 +22,7 @@ async function submit() {
     // 登入後不留密碼
     password.value = ''
   } catch (e) {
-    error.value = errorText(e)
+    error.value = lockedMessage(e) ?? errorText(e)
   } finally {
     busy.value = false
   }

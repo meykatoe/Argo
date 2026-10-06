@@ -77,13 +77,23 @@ public class CustomerAccount {
 		return lockedUntil != null && lockedUntil.isAfter(now);
 	}
 
-	// 失敗達上限即鎖定
-	public void recordFailure(int maxFailures, OffsetDateTime lockUntil) {
+	// 允許失敗 allowed 次，超過就鎖定，回傳這次是否剛被鎖定
+	public boolean recordFailure(int allowed, OffsetDateTime lockUntil) {
 		this.failedAttempts++;
-		if (failedAttempts >= maxFailures) {
+		if (failedAttempts > allowed) {
 			this.lockedUntil = lockUntil;
 			this.failedAttempts = 0;
+			return true;
 		}
+		return false;
+	}
+
+	// 還要等幾秒才能再試，至少 1 秒
+	public long retryAfterSeconds(OffsetDateTime now) {
+		if (lockedUntil == null) {
+			return 0;
+		}
+		return Math.max(1, java.time.Duration.between(now, lockedUntil).toSeconds() + 1);
 	}
 
 	public void recordSuccess(OffsetDateTime now) {

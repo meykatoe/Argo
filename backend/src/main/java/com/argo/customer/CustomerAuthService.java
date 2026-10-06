@@ -72,18 +72,19 @@ public class CustomerAuthService {
 	@Transactional(noRollbackFor = ApiException.class)
 	public CustomerAuthView login(String email, String password) {
 		OffsetDateTime now = OffsetDateTime.now();
-		Optional<CustomerAccount> found = accounts.findByEmail(normalize(email));
+		Optional<CustomerAccount> found = accounts.findByEmailForUpdate(normalize(email));
 		if (found.isEmpty()) {
 			encoder.matches(password, dummyHash);
 			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
 		}
 		CustomerAccount c = found.get();
 		if (c.isLocked(now)) {
-			throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "LOGIN_LOCKED");
+			throw locked(c, now);
 		}
 		boolean ok = encoder.matches(password, c.getPasswordHash());
-		if (!ok) {
-			c.recordFailure(maxFailures, now.plusMinutes(lockMinutes));
+		// 超過允許次數就鎖定，這一次也直接告知已鎖定
+		if (!ok && c.recordFailure(maxFailures, now.plusMinutes(lockMinutes))) {
+			throw locked(c, now);
 		}
 		if (!ok || c.isDisabled()) {
 			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
@@ -117,6 +118,12 @@ public class CustomerAuthService {
 		OffsetDateTime expires = OffsetDateTime.now().plusDays(sessionDays);
 		sessions.save(new CustomerSession(hash(token), c.getId(), expires));
 		return new CustomerAuthView(token, c.getEmail(), c.getName(), expires);
+	}
+
+	// 回應帶上還要等幾秒，前端可顯示分鐘數
+	private static ApiException locked(CustomerAccount c, OffsetDateTime now) {
+		return new ApiException(HttpStatus.TOO_MANY_REQUESTS, "LOGIN_LOCKED",
+				Map.of("retryAfterSeconds", String.valueOf(c.retryAfterSeconds(now))));
 	}
 
 	private static String normalize(String email) {

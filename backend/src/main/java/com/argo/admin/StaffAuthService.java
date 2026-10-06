@@ -68,7 +68,7 @@ public class StaffAuthService {
 	@Transactional(noRollbackFor = ApiException.class)
 	public LoginResponse login(String username, String password, LoginPortal portal) {
 		OffsetDateTime now = OffsetDateTime.now();
-		Optional<StaffAccount> found = accounts.findByUsername(normalize(username));
+		Optional<StaffAccount> found = accounts.findByUsernameForUpdate(normalize(username));
 		if (found.isEmpty()) {
 			encoder.matches(password, dummyHash);
 			audit.record(null, normalize(username), AuditAction.LOGIN_FAILED, false, null, null,
@@ -77,16 +77,25 @@ public class StaffAuthService {
 		}
 		StaffAccount staff = found.get();
 		if (staff.isLocked(now)) {
-			audit.record(staff, null, AuditAction.LOGIN_LOCKED, false, null, null, null);
-			throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "LOGIN_LOCKED");
+			audit.record(staff, null, AuditAction.LOGIN_LOCKED, false, null, null,
+					Map.of("reason", "STILL_LOCKED"));
+			throw locked(staff, now);
 		}
 		boolean ok = encoder.matches(password, staff.getPasswordHash());
-		if (!ok || staff.isDisabled()) {
-			if (!ok) {
-				staff.recordFailure(maxFailures, now.plusMinutes(lockMinutes));
+		if (!ok) {
+			// 超過允許次數就鎖定，這一次也直接告知已鎖定
+			if (staff.recordFailure(maxFailures, now.plusMinutes(lockMinutes))) {
+				audit.record(staff, null, AuditAction.LOGIN_LOCKED, false, null, null,
+						Map.of("reason", "TOO_MANY_FAILURES", "lockMinutes", lockMinutes));
+				throw locked(staff, now);
 			}
 			audit.record(staff, null, AuditAction.LOGIN_FAILED, false, null, null,
-					Map.of("reason", ok ? "DISABLED" : "BAD_PASSWORD"));
+					Map.of("reason", "BAD_PASSWORD"));
+			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
+		}
+		if (staff.isDisabled()) {
+			audit.record(staff, null, AuditAction.LOGIN_FAILED, false, null, null,
+					Map.of("reason", "DISABLED"));
 			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
 		}
 		// 密碼正確但走錯入口，不累計失敗次數
@@ -123,6 +132,12 @@ public class StaffAuthService {
 					s -> audit.record(s, null, AuditAction.LOGOUT, true, null, null, null));
 			sessions.deleteById(hash(token));
 		}
+	}
+
+	// 回應帶上還要等幾秒，前端可顯示分鐘數
+	private static ApiException locked(StaffAccount staff, OffsetDateTime now) {
+		return new ApiException(HttpStatus.TOO_MANY_REQUESTS, "LOGIN_LOCKED",
+				Map.of("retryAfterSeconds", String.valueOf(staff.retryAfterSeconds(now))));
 	}
 
 	private static String normalize(String username) {

@@ -30,4 +30,14 @@ describe('LoginForm', () => {
     expect(w.find('[role=alert]').text()).toBe('帳號或密碼錯誤')
     expect(w.emitted('login')).toBeUndefined()
   })
+
+  it('帳號被鎖定時顯示要等幾分鐘', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 429, json: async () => ({ code: 429, msg: 'LOGIN_LOCKED', data: { retryAfterSeconds: '61' } }) }),
+    )
+    const w = mount(LoginForm)
+    await fill(w, 'alice', 'bad')
+    expect(w.find('[role=alert]').text()).toBe('密碼錯誤次數過多，帳號已暫時鎖定，請 2 分鐘後再試')
+  })
 })

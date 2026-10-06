@@ -12,11 +12,13 @@ export interface Result<T> {
 export class ApiError extends Error {
   readonly status: number
   readonly code: string
+  readonly details: Record<string, string>
 
-  constructor(status: number, code: string) {
+  constructor(status: number, code: string, details: Record<string, string> = {}) {
     super(code)
     this.status = status
     this.code = code
+    this.details = details
   }
 }
 
@@ -56,7 +58,12 @@ async function request<T>(
   }
   // 成功代碼固定為 200，失敗時 msg 為錯誤代碼
   if (!res.ok || result?.code !== 200) {
-    throw new ApiError(res.status, result?.msg ?? 'ERROR')
+    const d = result?.data
+    throw new ApiError(
+      res.status,
+      result?.msg ?? 'ERROR',
+      d && typeof d === 'object' ? (d as Record<string, string>) : {},
+    )
   }
   return result.data
 }

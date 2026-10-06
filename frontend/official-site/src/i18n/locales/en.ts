@@ -90,6 +90,7 @@ const en: MessageSchema = {
     haveAccount: "Already have an account?",
     goLogin: "Log in",
     guestHint: "You do not need an account. You can still check out as a guest.",
+    lockedFor: "Too many wrong passwords. Your account is locked. Please try again in {n} minute(s).",
   },
   account: {
     title: "My account",

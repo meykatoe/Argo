@@ -39,6 +39,8 @@ class CustomerAuthTests {
 	JdbcTemplate jdbc;
 	@Autowired
 	WebApplicationContext wac;
+	@jakarta.persistence.PersistenceContext
+	jakarta.persistence.EntityManager em;
 
 	MockMvc mvc;
 
@@ -100,10 +102,47 @@ class CustomerAuthTests {
 	@Test
 	void locksAfterRepeatedFailures() {
 		auth.register("d@test.local", PW, null);
+		// 允許失敗 3 次，第 4 次錯誤才鎖定
 		for (int i = 0; i < 3; i++) {
 			assertEquals("LOGIN_FAILED", code(() -> auth.login("d@test.local", "wrong-password")));
 		}
+		assertEquals("LOGIN_LOCKED", code(() -> auth.login("d@test.local", "wrong-password")));
+		// 鎖定期間連正確密碼也不行
 		assertEquals("LOGIN_LOCKED", code(() -> auth.login("d@test.local", PW)));
+	}
+
+	@Test
+	void lockedResponseTellsHowLongToWait() {
+		auth.register("d2@test.local", PW, null);
+		for (int i = 0; i < 3; i++) {
+			code(() -> auth.login("d2@test.local", "wrong-password"));
+		}
+		ApiException e = assertThrows(ApiException.class, () -> auth.login("d2@test.local", "wrong-password"));
+		long seconds = Long.parseLong(e.getDetails().get("retryAfterSeconds"));
+		assertTrue(seconds > 14 * 60 && seconds <= 15 * 60 + 1, "seconds=" + seconds);
+	}
+
+	@Test
+	void successResetsTheFailureCounter() {
+		auth.register("d3@test.local", PW, null);
+		for (int i = 0; i < 3; i++) {
+			code(() -> auth.login("d3@test.local", "wrong-password"));
+		}
+		assertEquals("d3@test.local", auth.login("d3@test.local", PW).email());
+		for (int i = 0; i < 3; i++) {
+			assertEquals("LOGIN_FAILED", code(() -> auth.login("d3@test.local", "wrong-password")));
+		}
+	}
+
+	@Test
+	void lockEndsAfterFifteenMinutes() {
+		auth.register("d4@test.local", PW, null);
+		for (int i = 0; i < 4; i++) {
+			code(() -> auth.login("d4@test.local", "wrong-password"));
+		}
+		jdbc.update("update customer_account set locked_until = now() - interval '1 second' where email = 'd4@test.local'");
+		em.clear();
+		assertEquals("d4@test.local", auth.login("d4@test.local", PW).email());
 	}
 
 	@Test
