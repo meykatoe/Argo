@@ -1,4 +1,4 @@
-import type { AuditAction, AuditLog, MenuNode, PageResult, Session } from '@/types'
+import type { AuditAction, AuditLog, IpActivity, IpBlock, MenuNode, PageResult, Session } from '@/types'
 
 const BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
@@ -24,7 +24,7 @@ export class ApiError extends Error {
 
 async function request<T>(
   token: string | null,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'DELETE',
   path: string,
   params: Record<string, string | number | boolean | undefined> = {},
   body?: unknown,
@@ -92,4 +92,28 @@ export function searchAuditLogs(token: string, q: AuditSearch): Promise<PageResu
 
 export function getMenu(token: string): Promise<MenuNode[]> {
   return request(token, 'GET', '/ops/menu')
+}
+
+export interface IpSearch {
+  days: number
+  keyword?: string
+  page: number
+  size: number
+}
+
+export function listIps(token: string, q: IpSearch): Promise<PageResult<IpActivity>> {
+  return request(token, 'GET', '/ops/ips', { ...q })
+}
+
+export function listIpBlocks(token: string): Promise<IpBlock[]> {
+  return request(token, 'GET', '/ops/ip-blocks')
+}
+
+// hours 為空代表永久
+export function blockIp(token: string, ip: string, reason: string, hours: number | null): Promise<IpBlock> {
+  return request(token, 'POST', '/ops/ip-blocks', {}, { ip, reason, hours })
+}
+
+export function unblockIp(token: string, ip: string): Promise<void> {
+  return request(token, 'DELETE', '/ops/ip-blocks', { ip })
 }

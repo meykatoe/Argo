@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, provide, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ApiError, getMenu } from '@/api/admin'
 import type { MenuNode, Session } from '@/types'
 import { errorText } from '@/utils/error'
-import { trailOf } from '@/utils/menu'
+import { MENU_CODES, allCodes, trailOf } from '@/utils/menu'
 import AppSidebar from './AppSidebar.vue'
 import PageHost from './PageHost.vue'
 
@@ -18,6 +18,9 @@ const error = ref('')
 const drawer = ref(false)
 
 const trail = computed(() => trailOf(menu.value, route.path))
+
+// 讓頁面知道目前帳號有哪些功能權限
+provide(MENU_CODES, computed(() => new Set(allCodes(menu.value))))
 
 async function load() {
   error.value = ''

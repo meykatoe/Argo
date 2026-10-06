@@ -14,7 +14,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       // 開發時轉發後端
-      '/api': 'http://localhost:8080',
+      // 轉送時帶上用戶端 IP，後端才分得出是誰
+      '/api': { target: 'http://localhost:8080', xfwd: true },
     },
   },
   resolve: {

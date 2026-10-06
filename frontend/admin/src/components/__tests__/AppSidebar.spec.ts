@@ -68,4 +68,21 @@ describe('AppSidebar', () => {
     expect(w.emitted('logout')).toHaveLength(1)
     expect(w.emitted('navigate')).toHaveLength(1)
   })
+
+  it('沒有頁面的功能權限不會變成空白選項', async () => {
+    const m: MenuNode[] = [
+      {
+        code: 'card',
+        title: '卡牌管理',
+        path: null,
+        children: [
+          { code: 'card.edit', title: '卡牌編輯', path: '/cards', children: [] },
+          { code: 'card.flag', title: '隱藏權限', path: null, children: [] },
+        ],
+      },
+    ]
+    const w = await render('/cards', m)
+    expect(w.findAll('ul.sub li')).toHaveLength(1)
+    expect(w.text()).not.toContain('隱藏權限')
+  })
 })

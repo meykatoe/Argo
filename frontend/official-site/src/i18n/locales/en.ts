@@ -240,6 +240,12 @@ const en: MessageSchema = {
     LOGIN_LOCKED: "Too many attempts. Please try again later.",
     EMAIL_TAKEN: "This email is already registered. Please log in.",
     UNAUTHORIZED: "Your session has expired. Please log in again.",
+    RATE_LIMITED: "Too many requests. Please try again later.",
+    IP_BLOCKED: "Your network address has been restricted.",
+  },
+  blocked: {
+    title: "Access denied",
+    body: "Access from your network address has been restricted. If you think this is a mistake, please contact support and include your network address.",
   },
 }
 

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { blocked } from '@/utils/access'
 import { ApiError, get, post } from '../http'
 
 function mockFetch(status: number, body: unknown) {
@@ -90,5 +91,33 @@ describe('是否類參數', () => {
     const url = new URL(fn.mock.calls[0]![0], 'http://x')
     expect(url.searchParams.get('inStock')).toBe('1')
     expect(url.searchParams.get('desc')).toBe('0')
+  })
+})
+
+describe('被封鎖的 IP', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    blocked.value = false
+  })
+
+  it('收到 IP_BLOCKED 就標記為被封鎖', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 403, msg: 'IP_BLOCKED', data: null }), { status: 403 })))
+    const err = (await get('/cards').catch((e) => e)) as ApiError
+    expect(err.code).toBe('IP_BLOCKED')
+    expect(blocked.value).toBe(true)
+  })
+
+  it('一般錯誤不會標記為被封鎖', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 404, msg: 'CARD_NOT_FOUND', data: null }), { status: 404 })))
+    await get('/cards/1').catch(() => undefined)
+    expect(blocked.value).toBe(false)
+  })
+
+  it('限速錯誤保留細節但不算被封鎖', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 429, msg: 'RATE_LIMITED', data: { retryAfterSeconds: '12' } }), { status: 429 })))
+    const err = (await get('/cards').catch((e) => e)) as ApiError
+    expect(err.code).toBe('RATE_LIMITED')
+    expect(err.details.retryAfterSeconds).toBe('12')
+    expect(blocked.value).toBe(false)
   })
 })

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MenuNode } from '@/types'
-import { firstPath, pageNodes, trailOf } from '../menu'
+import { allCodes, firstPath, pageNodes, trailOf } from '../menu'
 
 const menu: MenuNode[] = [
   {
@@ -26,5 +26,22 @@ describe('menu utils', () => {
     expect(trailOf(menu, '/cards').map((n) => n.title)).toEqual(['卡牌管理', '卡牌編輯'])
     expect(trailOf(menu, '/solo').map((n) => n.title)).toEqual(['單一頁'])
     expect(trailOf(menu, '/nope')).toEqual([])
+  })
+
+  it('列出所有節點代碼，包含沒有頁面的功能權限', () => {
+    const m: MenuNode[] = [
+      {
+        code: 'security',
+        title: '安全管理',
+        path: null,
+        children: [
+          { code: 'security.ips', title: 'IP', path: '/ips', children: [] },
+          { code: 'security.ips.block', title: '封鎖', path: null, children: [] },
+        ],
+      },
+    ]
+    expect(allCodes(m)).toEqual(['security', 'security.ips', 'security.ips.block'])
+    expect(pageNodes(m).map((n) => n.code)).toEqual(['security.ips'])
+    expect(firstPath(m)).toBe('/ips')
   })
 })

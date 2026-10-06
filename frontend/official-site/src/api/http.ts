@@ -1,4 +1,5 @@
 import { currentLocale } from '@/i18n'
+import { blocked } from '@/utils/access'
 import { authToken } from '@/utils/authToken'
 
 const BASE = import.meta.env.VITE_API_BASE ?? '/api'
@@ -41,6 +42,9 @@ async function request<T>(
   })
   const result = await readResult<T>(res)
   // 成功代碼固定為 200
+  if (result?.msg === 'IP_BLOCKED') {
+    blocked.value = true
+  }
   if (!res.ok || result?.code !== 200) {
     throw new ApiError(res.status, result?.msg ?? 'ERROR', toDetails(result?.data))
   }

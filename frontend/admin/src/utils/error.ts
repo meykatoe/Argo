@@ -8,6 +8,8 @@ const TEXT: Record<string, string> = {
   CARD_NOT_FOUND: '找不到這張卡片',
   VALIDATION_ERROR: '折扣必須大於 0 且不超過 1，最多四位小數',
   INVALID_PAGING: '分頁參數錯誤',
+  RATE_LIMITED: '操作太頻繁，請稍後再試',
+  IP_BLOCKED: '你的網路位址已被限制存取',
   SET_NOT_FOUND: '找不到這個系列',
 }
 

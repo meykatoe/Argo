@@ -72,8 +72,8 @@ const initial = computed(() => props.session.username.slice(0, 1).toUpperCase())
               <span class="arrow" :class="{ shut: closed.has(n.code) }" aria-hidden="true">▾</span>
             </button>
             <ul v-show="!closed.has(n.code)" class="sub">
-              <li v-for="c in n.children" :key="c.code">
-                <RouterLink v-if="c.path" :to="c.path" class="item" @click="emit('navigate')">
+              <li v-for="c in n.children.filter((x) => x.path)" :key="c.code">
+                <RouterLink :to="c.path!" class="item" @click="emit('navigate')">
                   {{ c.title }}
                 </RouterLink>
               </li>

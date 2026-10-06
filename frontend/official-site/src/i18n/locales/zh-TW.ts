@@ -238,6 +238,12 @@ const zhTW = {
     LOGIN_LOCKED: "嘗試次數過多，請稍後再試",
     EMAIL_TAKEN: "這個 Email 已經註冊過了，請直接登入",
     UNAUTHORIZED: "登入已失效，請重新登入",
+    RATE_LIMITED: "操作太頻繁，請稍後再試",
+    IP_BLOCKED: "你的網路位址已被限制存取",
+  },
+  blocked: {
+    title: "無法存取這個網站",
+    body: "你目前使用的網路位址已被限制存取。如果你認為這是誤判，請聯絡客服並提供你的網路位址。",
   },
 }
 

@@ -20,6 +20,11 @@ export function logout() {
   return post<null>('/auth/logout', {})
 }
 
+// 啟動時確認這個 IP 有沒有被封鎖
+export function ping() {
+  return get<null>('/ping')
+}
+
 export function me() {
   return get<Me>('/auth/me')
 }

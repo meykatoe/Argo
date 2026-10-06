@@ -49,3 +49,23 @@ export interface MenuNode {
   path: string | null
   children: MenuNode[]
 }
+
+export interface IpActivity {
+  ip: string
+  rateLimited: number
+  loginFailed: number
+  blockedHits: number
+  firstSeen: string
+  lastSeen: string
+  blocked: Flag
+  blockExpiresAt: string | null
+  blockReason: string | null
+}
+
+export interface IpBlock {
+  ip: string
+  reason: string
+  blockedBy: string
+  createdAt: string
+  expiresAt: string | null
+}

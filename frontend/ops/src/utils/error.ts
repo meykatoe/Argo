@@ -6,6 +6,12 @@ const TEXT: Record<string, string> = {
   LOGIN_FAILED: '帳號或密碼錯誤',
   LOGIN_LOCKED: '錯誤次數過多，請稍後再試',
   INVALID_PAGING: '分頁參數錯誤',
+  RATE_LIMITED: '操作太頻繁，請稍後再試',
+  PROTECTED_IP: '這個位址不可封鎖（本機、代理或系統保留位址）',
+  CANNOT_BLOCK_SELF: '不能封鎖你自己目前使用的位址',
+  INVALID_IP: 'IP 格式不正確',
+  IP_NOT_BLOCKED: '這個 IP 目前沒有被封鎖',
+  IP_BLOCKED: '你的網路位址已被限制存取',
   INVALID_RANGE: '開始時間必須早於結束時間',
   BAD_REQUEST: '查詢條件有誤',
 }

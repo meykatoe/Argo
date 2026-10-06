@@ -22,3 +22,11 @@ export function trailOf(menu: MenuNode[], path: string): MenuNode[] {
   }
   return []
 }
+
+// 選單中所有節點的代碼，沒有頁面路徑的節點代表某項功能權限
+export function allCodes(menu: MenuNode[]): string[] {
+  return menu.flatMap((n) => [n.code, ...allCodes(n.children)])
+}
+
+// 頁面用 inject 取得，判斷是否顯示某個操作按鈕
+export const MENU_CODES = Symbol('menuCodes')
