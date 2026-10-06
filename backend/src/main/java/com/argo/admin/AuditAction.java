@@ -1,0 +1,11 @@
+package com.argo.admin;
+
+public enum AuditAction {
+	LOGIN_SUCCESS,
+	LOGIN_FAILED,
+	LOGIN_LOCKED,
+	LOGOUT,
+	ACCESS_DENIED,
+	ACCOUNT_CREATED,
+	CARD_EXTRA_DISCOUNT_UPDATE
+}

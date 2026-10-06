@@ -9,6 +9,7 @@ import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,7 @@ public class StaffAuthService {
 
 	private final StaffAccountRepository accounts;
 	private final StaffSessionRepository sessions;
+	private final AuditLogService audit;
 	private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 	private final SecureRandom random = new SecureRandom();
 	// 帳號不存在時也做一次比對，避免時間差洩漏
@@ -34,11 +36,13 @@ public class StaffAuthService {
 	private final int lockMinutes;
 
 	public StaffAuthService(StaffAccountRepository accounts, StaffSessionRepository sessions,
+			AuditLogService audit,
 			@Value("${argo.admin.session-hours:8}") int sessionHours,
 			@Value("${argo.admin.max-failures:5}") int maxFailures,
 			@Value("${argo.admin.lock-minutes:15}") int lockMinutes) {
 		this.accounts = accounts;
 		this.sessions = sessions;
+		this.audit = audit;
 		this.sessionHours = sessionHours;
 		this.maxFailures = maxFailures;
 		this.lockMinutes = lockMinutes;
@@ -67,10 +71,13 @@ public class StaffAuthService {
 		Optional<StaffAccount> found = accounts.findByUsername(normalize(username));
 		if (found.isEmpty()) {
 			encoder.matches(password, dummyHash);
+			audit.record(null, normalize(username), AuditAction.LOGIN_FAILED, false, null, null,
+					Map.of("reason", "UNKNOWN_USER"));
 			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
 		}
 		StaffAccount staff = found.get();
 		if (staff.isLocked(now)) {
+			audit.record(staff, null, AuditAction.LOGIN_LOCKED, false, null, null, null);
 			throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "LOGIN_LOCKED");
 		}
 		boolean ok = encoder.matches(password, staff.getPasswordHash());
@@ -78,9 +85,12 @@ public class StaffAuthService {
 			if (!ok) {
 				staff.recordFailure(maxFailures, now.plusMinutes(lockMinutes));
 			}
+			audit.record(staff, null, AuditAction.LOGIN_FAILED, false, null, null,
+					Map.of("reason", ok ? "DISABLED" : "BAD_PASSWORD"));
 			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
 		}
 		staff.recordSuccess(now);
+		audit.record(staff, null, AuditAction.LOGIN_SUCCESS, true, null, null, null);
 		sessions.deleteExpired(now);
 		String token = newToken();
 		OffsetDateTime expires = now.plusHours(sessionHours);
@@ -103,6 +113,8 @@ public class StaffAuthService {
 	@Transactional
 	public void logout(String token) {
 		if (token != null) {
+			authenticate(token).ifPresent(
+					s -> audit.record(s, null, AuditAction.LOGOUT, true, null, null, null));
 			sessions.deleteById(hash(token));
 		}
 	}

@@ -4,6 +4,7 @@ import com.argo.common.ApiException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -13,9 +14,11 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
 	public static final String STAFF_ATTR = "argo.staff";
 
 	private final StaffAuthService auth;
+	private final AuditLogService audit;
 
-	public AdminAuthInterceptor(StaffAuthService auth) {
+	public AdminAuthInterceptor(StaffAuthService auth, AuditLogService audit) {
 		this.auth = auth;
+		this.audit = audit;
 	}
 
 	// 從標頭取出 Bearer 令牌
@@ -41,6 +44,8 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
 			}
 		}
 		if (!List.of(allowed).contains(staff.getRole())) {
+			audit.record(staff, null, AuditAction.ACCESS_DENIED, false, "ENDPOINT", req.getRequestURI(),
+					Map.of("method", req.getMethod(), "allowed", List.of(allowed).toString()));
 			throw new ApiException(HttpStatus.FORBIDDEN, "ADMIN_FORBIDDEN");
 		}
 		req.setAttribute(STAFF_ATTR, staff);

@@ -26,6 +26,7 @@ Argo: 傳説中尋找金羊毛的船，象徵尋寶之旅
   - `POST /api/admin/auth/logout`、`GET /api/admin/auth/me`。
   - `GET /api/admin/cards`（`ADMIN`、`GENERAL`）：卡片列表（`keyword`、`setId`、`discounted`、`page`、`size`），回傳折前價、額外折扣與售價。
   - `PATCH /api/admin/cards/{id}/extra-discount`（`ADMIN`、`GENERAL`）：body 為 `{"extraDiscount": 0.4}`，最多四位小數，改完即時重算售價。
+- 後台操作稽核（`staff_audit_log`）：記錄誰（帳號與角色的當下快照）、在何時（`created_at`）、從哪裡（IP、User-Agent）、做了什麼（`action`）、對象是誰（`target_type`、`target_id`）、是否成功，以及變更前後內容（`detail`，JSON）。目前會記錄：登入成功、登入失敗（含帳號不存在、密碼錯誤、帳號停用，失敗原因寫在 `detail`，不記錄密碼）、登入鎖定、登出、越權存取被拒、以指令建立帳號（操作者記為 `cli:系統使用者`）、修改額外折扣（含修改前後的折扣與售價）。修改類操作與稽核紀錄在同一個資料庫交易中寫入，不會出現「改了卻沒紀錄」。資料表以觸發器禁止 `UPDATE` 與 `DELETE`，帳號因此也不能刪除，請改用停用。IP 取自連線位址；若之後放在反向代理後面，需另外設定轉送標頭，否則記到的會是代理的位址。新增後台功能時，請在寫入操作中呼叫 `AuditLogService.record(...)`。
 - 後台（`frontend/admin`）：工作人員以帳號密碼登入（登入資料只存在該分頁的 `sessionStorage`，關閉分頁即登出，過期自動失效），右上角顯示帳號與角色。`ADMIN`、`GENERAL` 可依卡號或卡名搜尋、只看有折扣的卡，直接修改每張卡的額外折扣（輸入 0.4 會顯示為 4 折），儲存後立即顯示新售價，手動定價的卡片不可設定折扣；`SERVICE` 目前登入後顯示「目前尚無可用功能」。帳號需先以上述指令建立。啟動方式：後端啟動後，於 `frontend/admin` 執行 `npm install && npm run dev`（連接埠 5174）。正式部署時需把後台網址加入 `argo.cors.origins`，或與後端放在同一網域下反向代理。
 - 多語系卡片資料：卡片查詢 API 加上 `lang` 參數（`en` 預設、`zh-TW`）即回傳該語言的卡名、效果、特徵與系列名稱，找不到翻譯時回退為英文，原文固定放在 `cardNameEn`、`setNameEn`。繁中資料抓取自 Bandai 官方繁中卡表（`asia-tc.onepiece-cardgame.com`），啟動時加 `--argo.translation.on-startup=true` 手動同步，也會每週一凌晨 5 點自動同步。內容版權屬原權利人，正式營運前請自行確認使用條款。
 - 卡片查詢 API（無需登入，皆為 GET）：
