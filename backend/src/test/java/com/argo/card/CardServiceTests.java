@@ -4,13 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.argo.common.ApiException;
 import com.argo.common.PageResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @SpringBootTest
 @Transactional
@@ -70,8 +70,8 @@ class CardServiceTests {
 	@Test
 	void badParamsRejected() {
 		var q = new CardQuery(null, null, null, null, null, null, false, "en");
-		assertThrows(ResponseStatusException.class, () -> service.search(q, 0, 20, "cardSetId", false));
-		assertThrows(ResponseStatusException.class, () -> service.search(q, 1, 20, "hack", false));
+		assertThrows(ApiException.class, () -> service.search(q, 0, 20, "cardSetId", false));
+		assertThrows(ApiException.class, () -> service.search(q, 1, 20, "hack", false));
 		assertTrue(service.listSets("booster", "en").size() > 0);
 	}
 
@@ -86,8 +86,8 @@ class CardServiceTests {
 
 	@Test
 	void batchRejectsBadSize() {
-		assertThrows(ResponseStatusException.class, () -> service.getAll(java.util.List.of(), "en"));
+		assertThrows(ApiException.class, () -> service.getAll(java.util.List.of(), "en"));
 		var many = java.util.stream.LongStream.rangeClosed(1, 51).boxed().toList();
-		assertThrows(ResponseStatusException.class, () -> service.getAll(many, "en"));
+		assertThrows(ApiException.class, () -> service.getAll(many, "en"));
 	}
 }

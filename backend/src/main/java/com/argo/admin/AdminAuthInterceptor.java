@@ -1,6 +1,7 @@
 package com.argo.admin;
 
 import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
@@ -35,7 +36,7 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
 			return true;
 		}
 		StaffAccount staff = auth.authenticate(bearer(req))
-				.orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "ADMIN_UNAUTHORIZED"));
+				.orElseThrow(() -> new ApiException(ErrorCode.ADMIN_UNAUTHORIZED));
 		// 未標註的端點一律拒絕
 		boolean ok = false;
 		String need = "(none)";
@@ -51,7 +52,7 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
 		if (!ok) {
 			audit.record(staff, null, AuditAction.ACCESS_DENIED, false, "ENDPOINT", req.getRequestURI(),
 					Map.of("method", req.getMethod(), "permission", need));
-			throw new ApiException(HttpStatus.FORBIDDEN, "ADMIN_FORBIDDEN");
+			throw new ApiException(ErrorCode.ADMIN_FORBIDDEN);
 		}
 		req.setAttribute(STAFF_ATTR, staff);
 		return true;

@@ -1,6 +1,7 @@
 package com.argo.security;
 
 import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import com.argo.common.Flag;
 import com.argo.common.PageResult;
 import java.sql.Date;
@@ -34,12 +35,12 @@ public class IpAdminService {
 	@Transactional(readOnly = true)
 	public PageResult<IpActivityView> activity(int days, String prefix, int page, int size) {
 		if (days < 1 || days > MAX_DAYS || page < 1 || size < 1 || size > MAX_SIZE) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_PAGING");
+			throw new ApiException(ErrorCode.INVALID_PAGING);
 		}
 		String like = null;
 		if (prefix != null && !prefix.isBlank()) {
 			if (!PREFIX.matcher(prefix.trim()).matches()) {
-				throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST");
+				throw new ApiException(ErrorCode.BAD_REQUEST);
 			}
 			like = prefix.trim().toLowerCase() + "%";
 		}

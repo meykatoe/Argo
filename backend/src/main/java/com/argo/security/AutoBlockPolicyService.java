@@ -4,6 +4,7 @@ import com.argo.admin.AuditAction;
 import com.argo.admin.AuditLogService;
 import com.argo.admin.StaffAccount;
 import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -86,7 +87,7 @@ public class AutoBlockPolicyService {
 	public IpAutoBlockRule updateRule(StaffAccount actor, AutoBlockMetric metric, boolean enabled, int threshold,
 			int windowMinutes, int blockHours) {
 		IpAutoBlockRule r = rules.findByMetric(metric)
-				.orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "RULE_NOT_FOUND"));
+				.orElseThrow(() -> new ApiException(ErrorCode.RULE_NOT_FOUND));
 		Map<String, Object> detail = new LinkedHashMap<>();
 		detail.put("metric", metric.name());
 		detail.put("before", describe(r.isEnabled(), r.getThreshold(), r.getWindowMinutes(), r.getBlockHours()));
@@ -106,7 +107,7 @@ public class AutoBlockPolicyService {
 	public IpAllowEntry addAllow(StaffAccount actor, String rawIp, String note) {
 		String rule = Ips.normalizeRule(rawIp);
 		if (rule == null) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_IP");
+			throw new ApiException(ErrorCode.INVALID_IP);
 		}
 		IpAllowEntry e = allow.save(new IpAllowEntry(rule, note.trim(), actor.getUsername()));
 		audit.record(actor, null, AuditAction.IP_ALLOWLIST_ADDED, true, "IP", rule, Map.of("note", e.getNote()));
@@ -119,9 +120,9 @@ public class AutoBlockPolicyService {
 	public void removeAllow(StaffAccount actor, String rawIp) {
 		String rule = Ips.normalizeRule(rawIp);
 		if (rule == null) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_IP");
+			throw new ApiException(ErrorCode.INVALID_IP);
 		}
-		IpAllowEntry e = allow.findById(rule).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "ALLOW_NOT_FOUND"));
+		IpAllowEntry e = allow.findById(rule).orElseThrow(() -> new ApiException(ErrorCode.ALLOW_NOT_FOUND));
 		allow.delete(e);
 		audit.record(actor, null, AuditAction.IP_ALLOWLIST_REMOVED, true, "IP", rule, Map.of("note", e.getNote()));
 		allow.flush();

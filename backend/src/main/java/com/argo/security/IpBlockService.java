@@ -4,6 +4,7 @@ import com.argo.admin.AuditAction;
 import com.argo.admin.AuditLogService;
 import com.argo.admin.StaffAccount;
 import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -88,14 +89,14 @@ public class IpBlockService {
 	public IpBlock block(StaffAccount actor, String rawIp, String reason, Integer hours, String requesterIp) {
 		String ip = Ips.normalize(rawIp);
 		if (ip == null) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_IP");
+			throw new ApiException(ErrorCode.INVALID_IP);
 		}
 		// 本機、代理與自己的 IP 不可封鎖，否則可能把所有人或自己鎖在外面
 		if (Ips.isSpecial(ip) || resolver.isTrustedProxy(ip)) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "PROTECTED_IP");
+			throw new ApiException(ErrorCode.PROTECTED_IP);
 		}
 		if (ip.equals(requesterIp)) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "CANNOT_BLOCK_SELF");
+			throw new ApiException(ErrorCode.CANNOT_BLOCK_SELF);
 		}
 		OffsetDateTime expires = hours == null ? null : OffsetDateTime.now().plusHours(hours);
 		IpBlock b = repo.save(new IpBlock(ip, reason.trim(), actor.getUsername(), actor.getId(), expires, false));
@@ -129,9 +130,9 @@ public class IpBlockService {
 	public void unblock(StaffAccount actor, String rawIp) {
 		String ip = Ips.normalize(rawIp);
 		if (ip == null) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_IP");
+			throw new ApiException(ErrorCode.INVALID_IP);
 		}
-		IpBlock b = repo.findById(ip).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "IP_NOT_BLOCKED"));
+		IpBlock b = repo.findById(ip).orElseThrow(() -> new ApiException(ErrorCode.IP_NOT_BLOCKED));
 		repo.delete(b);
 		audit.record(actor, null, AuditAction.IP_UNBLOCKED, true, "IP", ip,
 				Map.of("reason", b.getReason(), "blockedBy", b.getBlockedBy()));

@@ -1,6 +1,7 @@
 package com.argo.order;
 
 import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import java.time.YearMonth;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,11 +25,11 @@ public class PaymentService {
 	public OrderView pay(String orderNo, PayRequest req) {
 		ShopOrder order = orderService.findForUpdate(orderNo, req.email());
 		if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
-			throw new ApiException(HttpStatus.CONFLICT, "ORDER_NOT_PAYABLE");
+			throw new ApiException(ErrorCode.ORDER_NOT_PAYABLE);
 		}
 		if (orderService.isExpired(order)) {
 			orderService.cancelInternal(order, "EXPIRED");
-			throw new ApiException(HttpStatus.GONE, "ORDER_EXPIRED");
+			throw new ApiException(ErrorCode.ORDER_EXPIRED);
 		}
 
 		String number = req.card().number().replaceAll("[ -]", "");
@@ -40,7 +41,7 @@ public class PaymentService {
 				result.success() ? Payment.SUCCEEDED : Payment.FAILED, order.getTotal(),
 				order.getCurrency(), last4, result.transactionId(), result.failureCode()));
 		if (!result.success()) {
-			throw new ApiException(HttpStatus.PAYMENT_REQUIRED, result.failureCode());
+			throw new ApiException(result.failure());
 		}
 		order.markPaid();
 		return orderService.view(order);
@@ -48,10 +49,10 @@ public class PaymentService {
 
 	private void validateCard(String number, PayRequest.Card card) {
 		if (!number.matches("^[0-9]{13,19}$") || !luhn(number)) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_CARD");
+			throw new ApiException(ErrorCode.INVALID_CARD);
 		}
 		if (YearMonth.of(card.expYear(), card.expMonth()).isBefore(YearMonth.now())) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "CARD_EXPIRED");
+			throw new ApiException(ErrorCode.CARD_EXPIRED);
 		}
 	}
 

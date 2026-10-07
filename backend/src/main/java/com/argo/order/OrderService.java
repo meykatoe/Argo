@@ -5,6 +5,7 @@ import com.argo.card.CardRepository;
 import com.argo.card.CardSet;
 import com.argo.card.CardSetRepository;
 import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import com.argo.common.PageResult;
 import com.argo.i18n.CardTranslation;
 import com.argo.i18n.CardTranslationRepository;
@@ -68,7 +69,7 @@ public class OrderService {
 		for (CreateOrderRequest.Item item : req.items()) {
 			int qty = wanted.merge(item.cardId(), item.quantity(), Integer::sum);
 			if (qty > MAX_LINE_QTY) {
-				throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_QUANTITY",
+				throw new ApiException(ErrorCode.INVALID_QUANTITY,
 						Map.of("cardId", String.valueOf(item.cardId())));
 			}
 		}
@@ -85,16 +86,16 @@ public class OrderService {
 			Card card = found.get(e.getKey());
 			Map<String, String> detail = Map.of("cardId", String.valueOf(e.getKey()));
 			if (card == null) {
-				throw new ApiException(HttpStatus.BAD_REQUEST, "ITEM_NOT_FOUND", detail);
+				throw new ApiException(ErrorCode.ITEM_NOT_FOUND, detail);
 			}
 			// 系列下架的卡不可購買
 			boolean onSale = sets.findById(card.getSetId()).map(CardSet::isOnSale).orElse(false);
 			if (!onSale || card.getStock() <= 0 || card.getSalePrice().signum() <= 0) {
-				throw new ApiException(HttpStatus.CONFLICT, "ITEM_UNAVAILABLE", detail);
+				throw new ApiException(ErrorCode.ITEM_UNAVAILABLE, detail);
 			}
 			// 單一語句扣庫存，擋住同時下單
 			if (cards.decrementStock(card.getId(), e.getValue()) == 0) {
-				throw new ApiException(HttpStatus.CONFLICT, "INSUFFICIENT_STOCK", detail);
+				throw new ApiException(ErrorCode.INSUFFICIENT_STOCK, detail);
 			}
 			CardTranslation tr = trs.get(card.getCardSetId());
 			OrderItem item = new OrderItem(card.getId(), card.getCardSetId(),
@@ -118,7 +119,7 @@ public class OrderService {
 	@Transactional(readOnly = true)
 	public PageResult<OrderView> listMine(Long customerId, int page, int size) {
 		if (page < 1 || size < 1 || size > MAX_PAGE_SIZE) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_PAGING");
+			throw new ApiException(ErrorCode.INVALID_PAGING);
 		}
 		var result = orders.findByCustomerId(customerId, PageRequest.of(page - 1, size,
 				Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id"))));
@@ -136,7 +137,7 @@ public class OrderService {
 	public OrderView cancel(String orderNo, String email) {
 		ShopOrder order = findForUpdate(orderNo, email);
 		if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
-			throw new ApiException(HttpStatus.CONFLICT, "ORDER_NOT_CANCELLABLE");
+			throw new ApiException(ErrorCode.ORDER_NOT_CANCELLABLE);
 		}
 		cancelInternal(order, "CUSTOMER");
 		return view(order);
@@ -204,6 +205,6 @@ public class OrderService {
 
 	private static ApiException notFound() {
 		// 不透露是編號還是信箱不符
-		return new ApiException(HttpStatus.NOT_FOUND, "ORDER_NOT_FOUND");
+		return new ApiException(ErrorCode.ORDER_NOT_FOUND);
 	}
 }

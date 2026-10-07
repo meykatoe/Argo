@@ -1,5 +1,7 @@
 package com.argo.admin;
 
+import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import com.argo.common.PageResult;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -10,7 +12,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
@@ -33,10 +34,10 @@ public class OpsAuditService {
 	public PageResult<AuditLogView> search(StaffAccount viewer, AuditLogQuery q, int page, int size,
 			boolean refresh) {
 		if (page < 1 || size < 1 || size > MAX_SIZE) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_PAGING");
+			throw new ApiException(ErrorCode.INVALID_PAGING);
 		}
 		if (q.from() != null && q.to() != null && !q.from().isBefore(q.to())) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_RANGE");
+			throw new ApiException(ErrorCode.INVALID_RANGE);
 		}
 		var result = logs.findAll(AuditLogSpecs.of(q), PageRequest.of(page - 1, size,
 				Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id"))));

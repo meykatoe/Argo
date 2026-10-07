@@ -1,6 +1,7 @@
 package com.argo.customer;
 
 import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,7 @@ public class CustomerAuthInterceptor implements HandlerInterceptor {
 			return true;
 		}
 		CustomerAccount c = auth.authenticate(bearer(req))
-				.orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED"));
+				.orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED));
 		req.setAttribute(CUSTOMER_ATTR, c);
 		return true;
 	}

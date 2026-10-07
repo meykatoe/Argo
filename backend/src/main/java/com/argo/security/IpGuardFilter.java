@@ -1,5 +1,6 @@
 package com.argo.security;
 
+import com.argo.common.ErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,7 +51,7 @@ public class IpGuardFilter extends OncePerRequestFilter {
 		String ip = resolver.resolve(req);
 		if (blocks.isBlocked(ip)) {
 			recorder.blockedHit(ip);
-			reject(req, res, 403, "IP_BLOCKED", null);
+			reject(req, res, ErrorCode.IP_BLOCKED, null);
 			return;
 		}
 		// 預檢請求不計次
@@ -62,7 +63,7 @@ public class IpGuardFilter extends OncePerRequestFilter {
 				recorder.rateLimited(ip);
 				autoBlocker.record(ip, AutoBlockMetric.RATE_LIMITED);
 				res.setHeader("Retry-After", String.valueOf(d.retryAfterSeconds()));
-				reject(req, res, 429, "RATE_LIMITED", d.retryAfterSeconds());
+				reject(req, res, ErrorCode.RATE_LIMITED, d.retryAfterSeconds());
 				return;
 			}
 		}
@@ -75,8 +76,10 @@ public class IpGuardFilter extends OncePerRequestFilter {
 	}
 
 	// 這裡在 MVC 之前，要自己補上跨來源標頭，前端才讀得到錯誤內容
-	private void reject(HttpServletRequest req, HttpServletResponse res, int status, String msg,
+	private void reject(HttpServletRequest req, HttpServletResponse res, ErrorCode error,
 			Long retryAfter) throws IOException {
+		int status = error.status().value();
+		String msg = error.name();
 		String origin = req.getHeader("Origin");
 		if (origin != null && allowedOrigins.contains(origin)) {
 			res.setHeader("Access-Control-Allow-Origin", origin);

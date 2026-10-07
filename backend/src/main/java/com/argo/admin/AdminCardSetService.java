@@ -1,5 +1,7 @@
 package com.argo.admin;
 
+import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import com.argo.card.Card;
 import com.argo.card.CardRepository;
 import com.argo.card.CardSet;
@@ -20,7 +22,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
@@ -91,7 +92,7 @@ public class AdminCardSetService {
 
 	private CardSet find(String setId) {
 		return sets.findById(setId)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "SET_NOT_FOUND"));
+				.orElseThrow(() -> new ApiException(ErrorCode.SET_NOT_FOUND));
 	}
 
 	private Map<String, String> names() {

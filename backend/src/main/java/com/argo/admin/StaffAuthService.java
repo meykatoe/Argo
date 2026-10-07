@@ -1,6 +1,7 @@
 package com.argo.admin;
 
 import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -73,7 +74,7 @@ public class StaffAuthService {
 			encoder.matches(password, dummyHash);
 			audit.record(null, normalize(username), AuditAction.LOGIN_FAILED, false, null, null,
 					Map.of("reason", "UNKNOWN_USER"));
-			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
+			throw new ApiException(ErrorCode.LOGIN_FAILED);
 		}
 		StaffAccount staff = found.get();
 		if (staff.isLocked(now)) {
@@ -91,18 +92,18 @@ public class StaffAuthService {
 			}
 			audit.record(staff, null, AuditAction.LOGIN_FAILED, false, null, null,
 					Map.of("reason", "BAD_PASSWORD"));
-			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
+			throw new ApiException(ErrorCode.LOGIN_FAILED);
 		}
 		if (staff.isDisabled()) {
 			audit.record(staff, null, AuditAction.LOGIN_FAILED, false, null, null,
 					Map.of("reason", "DISABLED"));
-			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
+			throw new ApiException(ErrorCode.LOGIN_FAILED);
 		}
 		// 密碼正確但走錯入口，不累計失敗次數
 		if (!portal.accepts(staff.getRole())) {
 			audit.record(staff, null, AuditAction.LOGIN_FAILED, false, null, null,
 					Map.of("reason", "WRONG_PORTAL", "portal", portal.name()));
-			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
+			throw new ApiException(ErrorCode.LOGIN_FAILED);
 		}
 		staff.recordSuccess(now);
 		audit.record(staff, null, AuditAction.LOGIN_SUCCESS, true, null, null, null);
@@ -136,7 +137,7 @@ public class StaffAuthService {
 
 	// 回應帶上還要等幾秒，前端可顯示分鐘數
 	private static ApiException locked(StaffAccount staff, OffsetDateTime now) {
-		return new ApiException(HttpStatus.TOO_MANY_REQUESTS, "LOGIN_LOCKED",
+		return new ApiException(ErrorCode.LOGIN_LOCKED,
 				Map.of("retryAfterSeconds", String.valueOf(staff.retryAfterSeconds(now))));
 	}
 

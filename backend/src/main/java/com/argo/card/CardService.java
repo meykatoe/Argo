@@ -1,5 +1,7 @@
 package com.argo.card;
 
+import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import com.argo.common.PageResult;
 import com.argo.i18n.CardSetTranslation;
 import com.argo.i18n.CardSetTranslationRepository;
@@ -19,7 +21,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional(readOnly = true)
@@ -50,10 +51,10 @@ public class CardService {
 			String sortBy, boolean desc) {
 		// 頁碼從一起算
 		if (page < 1 || size < 1 || size > MAX_SIZE) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_PAGING");
+			throw new ApiException(ErrorCode.INVALID_PAGING);
 		}
 		if (!SORTS.contains(sortBy)) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_SORT");
+			throw new ApiException(ErrorCode.INVALID_SORT);
 		}
 		// 加主鍵穩定分頁
 		Sort sort = Sort.by(desc ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy)
@@ -70,7 +71,7 @@ public class CardService {
 	// 依編號批次取卡，保留請求順序
 	public List<CardSummary> getAll(List<Long> ids, String lang) {
 		if (ids.isEmpty() || ids.size() > MAX_BATCH) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_IDS");
+			throw new ApiException(ErrorCode.INVALID_IDS);
 		}
 		String locale = Locales.normalize(lang);
 		Map<Long, Card> found = cards.findAllById(ids).stream()
@@ -87,7 +88,7 @@ public class CardService {
 	public CardDetail get(Long id, String lang) {
 		String locale = Locales.normalize(lang);
 		Card card = cards.findById(id)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CARD_NOT_FOUND"));
+				.orElseThrow(() -> new ApiException(ErrorCode.CARD_NOT_FOUND));
 		String setName = setTranslations(locale).get(card.getSetId());
 		if (setName == null) {
 			setName = sets.findById(card.getSetId()).map(CardSet::getSetName).orElse(null);

@@ -29,7 +29,7 @@ class ApiExceptionHandlerTests {
 
 	@Test
 	void detailsGoIntoData() {
-		var res = handler.handle(new ApiException(HttpStatus.CONFLICT, "ITEM_UNAVAILABLE", Map.of("cardId", "7")));
+		var res = handler.handle(new ApiException(ErrorCode.ITEM_UNAVAILABLE, Map.of("cardId", "7")));
 		assertEquals(409, res.getBody().code());
 		assertEquals(Map.of("cardId", "7"), res.getBody().data());
 	}

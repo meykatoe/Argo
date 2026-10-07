@@ -23,6 +23,12 @@ public class ApiExceptionHandler {
 				Result.error(status.value(), msg, details == null || details.isEmpty() ? null : details));
 	}
 
+	private static ResponseEntity<Result<Map<String, String>>> fail(ErrorCode error,
+			Map<String, String> details) {
+		return fail(error.status(), error.name(), details);
+	}
+
+	// 框架自己丟的才會到這
 	@ExceptionHandler(ResponseStatusException.class)
 	public ResponseEntity<Result<Map<String, String>>> handle(ResponseStatusException e) {
 		return fail(e.getStatusCode(), e.getReason() != null ? e.getReason() : "ERROR", null);
@@ -39,18 +45,18 @@ public class ApiExceptionHandler {
 		Map<String, String> fields = new LinkedHashMap<>();
 		e.getBindingResult().getFieldErrors()
 				.forEach(f -> fields.putIfAbsent(f.getField(), String.valueOf(f.getDefaultMessage())));
-		return fail(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", fields);
+		return fail(ErrorCode.VALIDATION_ERROR, fields);
 	}
 
 	// 缺少或型別不對的參數
 	@ExceptionHandler({ MissingServletRequestParameterException.class,
 			MethodArgumentTypeMismatchException.class })
 	public ResponseEntity<Result<Map<String, String>>> handleBadParam(Exception e) {
-		return fail(HttpStatus.BAD_REQUEST, "BAD_REQUEST", null);
+		return fail(ErrorCode.BAD_REQUEST, null);
 	}
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<Result<Map<String, String>>> handleUnreadable(HttpMessageNotReadableException e) {
-		return fail(HttpStatus.BAD_REQUEST, "BAD_REQUEST_BODY", null);
+		return fail(ErrorCode.BAD_REQUEST_BODY, null);
 	}
 }

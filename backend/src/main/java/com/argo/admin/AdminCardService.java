@@ -1,5 +1,7 @@
 package com.argo.admin;
 
+import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import com.argo.card.Card;
 import com.argo.card.CardQuery;
 import com.argo.card.CardRepository;
@@ -20,7 +22,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
@@ -45,7 +46,7 @@ public class AdminCardService {
 	public PageResult<AdminCardView> search(String keyword, String setId, boolean discounted,
 			int page, int size) {
 		if (page < 1 || size < 1 || size > MAX_SIZE) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_PAGING");
+			throw new ApiException(ErrorCode.INVALID_PAGING);
 		}
 		CardQuery q = new CardQuery(keyword, setId, null, null, null, null, false, Locales.ZH_TW);
 		var spec = CardSpecs.of(q);
@@ -60,7 +61,7 @@ public class AdminCardService {
 
 	public AdminCardView setExtraDiscount(StaffAccount actor, Long id, BigDecimal extra) {
 		Card card = cards.findById(id)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CARD_NOT_FOUND"));
+				.orElseThrow(() -> new ApiException(ErrorCode.CARD_NOT_FOUND));
 		BigDecimal discountBefore = card.getExtraDiscount();
 		BigDecimal priceBefore = card.getSalePrice();
 		card.applyExtraDiscount(extra, saleRate);

@@ -1,6 +1,7 @@
 package com.argo.customer;
 
 import com.argo.common.ApiException;
+import com.argo.common.ErrorCode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -50,11 +51,11 @@ public class CustomerAuthService {
 	public CustomerAuthView register(String email, String password, String name) {
 		String mail = normalize(email);
 		if (password.getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR",
+			throw new ApiException(ErrorCode.VALIDATION_ERROR,
 					Map.of("password", "validation.passwordTooLong"));
 		}
 		if (accounts.findByEmail(mail).isPresent()) {
-			throw new ApiException(HttpStatus.CONFLICT, "EMAIL_TAKEN");
+			throw new ApiException(ErrorCode.EMAIL_TAKEN);
 		}
 		String display = name == null || name.isBlank() ? null : name.trim();
 		CustomerAccount c;
@@ -62,7 +63,7 @@ public class CustomerAuthService {
 			c = accounts.saveAndFlush(new CustomerAccount(mail, encoder.encode(password), display));
 		} catch (DataIntegrityViolationException e) {
 			// 同時註冊同一信箱
-			throw new ApiException(HttpStatus.CONFLICT, "EMAIL_TAKEN");
+			throw new ApiException(ErrorCode.EMAIL_TAKEN);
 		}
 		c.recordSuccess(OffsetDateTime.now());
 		return open(c);
@@ -75,7 +76,7 @@ public class CustomerAuthService {
 		Optional<CustomerAccount> found = accounts.findByEmailForUpdate(normalize(email));
 		if (found.isEmpty()) {
 			encoder.matches(password, dummyHash);
-			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
+			throw new ApiException(ErrorCode.LOGIN_FAILED);
 		}
 		CustomerAccount c = found.get();
 		if (c.isLocked(now)) {
@@ -87,7 +88,7 @@ public class CustomerAuthService {
 			throw locked(c, now);
 		}
 		if (!ok || c.isDisabled()) {
-			throw new ApiException(HttpStatus.UNAUTHORIZED, "LOGIN_FAILED");
+			throw new ApiException(ErrorCode.LOGIN_FAILED);
 		}
 		c.recordSuccess(now);
 		sessions.deleteExpired(now);
@@ -122,7 +123,7 @@ public class CustomerAuthService {
 
 	// 回應帶上還要等幾秒，前端可顯示分鐘數
 	private static ApiException locked(CustomerAccount c, OffsetDateTime now) {
-		return new ApiException(HttpStatus.TOO_MANY_REQUESTS, "LOGIN_LOCKED",
+		return new ApiException(ErrorCode.LOGIN_LOCKED,
 				Map.of("retryAfterSeconds", String.valueOf(c.retryAfterSeconds(now))));
 	}
 
