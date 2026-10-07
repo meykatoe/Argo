@@ -80,6 +80,7 @@ public class IpGuardFilter extends OncePerRequestFilter {
 			Long retryAfter) throws IOException {
 		int status = error.status().value();
 		String msg = error.name();
+		int code = error.number();
 		String origin = req.getHeader("Origin");
 		if (origin != null && allowedOrigins.contains(origin)) {
 			res.setHeader("Access-Control-Allow-Origin", origin);
@@ -89,6 +90,6 @@ public class IpGuardFilter extends OncePerRequestFilter {
 		res.setContentType("application/json");
 		res.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		String data = retryAfter == null ? "null" : "{\"retryAfterSeconds\":\"" + retryAfter + "\"}";
-		res.getWriter().write("{\"code\":" + status + ",\"msg\":\"" + msg + "\",\"data\":" + data + "}");
+		res.getWriter().write("{\"code\":" + code + ",\"msg\":\"" + msg + "\",\"data\":" + data + "}");
 	}
 }

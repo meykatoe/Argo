@@ -1,6 +1,7 @@
 package com.argo.common;
 
-// 後端回傳前端的統一格式，失敗時 msg 為錯誤代碼、data 放欄位細節
+// 統一回應格式，失敗時 code 為錯誤編號
+// msg 為錯誤碼，data 放細節
 public record Result<T>(int code, String msg, T data) {
 
 	public static final int OK = 200;

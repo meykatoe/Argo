@@ -101,7 +101,7 @@ class IpGuardFilterTests {
 	void blockedIpGets403ForEveryApiCall() throws Exception {
 		blockNow("203.0.113.11");
 		mvc.perform(ping("203.0.113.11")).andExpect(status().isForbidden())
-				.andExpect(jsonPath("$.code").value(403)).andExpect(jsonPath("$.msg").value("IP_BLOCKED"));
+				.andExpect(jsonPath("$.code").value(6001)).andExpect(jsonPath("$.msg").value("IP_BLOCKED"));
 		mvc.perform(from(get("/api/cards"), "203.0.113.11")).andExpect(status().isForbidden());
 		mvc.perform(from(get("/api/admin/menu"), "203.0.113.11")).andExpect(status().isForbidden());
 		mvc.perform(login("203.0.113.11")).andExpect(status().isForbidden());
@@ -141,7 +141,7 @@ class IpGuardFilterTests {
 			mvc.perform(ping("203.0.113.16")).andExpect(status().isOk());
 		}
 		mvc.perform(ping("203.0.113.16")).andExpect(status().isTooManyRequests())
-				.andExpect(jsonPath("$.code").value(429)).andExpect(jsonPath("$.msg").value("RATE_LIMITED"))
+				.andExpect(jsonPath("$.code").value(6002)).andExpect(jsonPath("$.msg").value("RATE_LIMITED"))
 				.andExpect(jsonPath("$.data.retryAfterSeconds").exists()).andExpect(header().exists("Retry-After"));
 		mvc.perform(ping("203.0.113.17")).andExpect(status().isOk());
 		assertEquals(1, activity("203.0.113.16", "rate_limited"));
