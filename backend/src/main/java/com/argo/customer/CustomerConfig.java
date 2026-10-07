@@ -1,7 +1,5 @@
-package com.argo.config;
+package com.argo.customer;
 
-import com.argo.customer.CustomerAuthInterceptor;
-import com.argo.customer.CustomerAuthService;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
