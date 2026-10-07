@@ -1,4 +1,4 @@
-package com.argo.i18n;
+package com.argo.card.i18n;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;

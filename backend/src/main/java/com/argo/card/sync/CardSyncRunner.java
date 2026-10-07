@@ -1,4 +1,4 @@
-package com.argo.sync;
+package com.argo.card.sync;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;

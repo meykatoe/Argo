@@ -1,4 +1,4 @@
-package com.argo.i18n;
+package com.argo.card.i18n;
 
 import java.net.http.HttpClient;
 import org.springframework.beans.factory.annotation.Value;

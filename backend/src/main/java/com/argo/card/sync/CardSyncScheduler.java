@@ -1,4 +1,4 @@
-package com.argo.sync;
+package com.argo.card.sync;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;

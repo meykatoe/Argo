@@ -1,4 +1,4 @@
-package com.argo.i18n;
+package com.argo.card.i18n;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

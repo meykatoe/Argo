@@ -1,4 +1,4 @@
-package com.argo.sync;
+package com.argo.card.sync;
 
 import com.argo.card.Card;
 import com.argo.card.CardRepository;

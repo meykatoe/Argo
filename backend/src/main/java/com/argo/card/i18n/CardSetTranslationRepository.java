@@ -1,4 +1,4 @@
-package com.argo.i18n;
+package com.argo.card.i18n;
 
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;

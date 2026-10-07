@@ -1,7 +1,7 @@
 package com.argo.card;
 
-import com.argo.i18n.CardTranslation;
-import com.argo.i18n.Locales;
+import com.argo.card.i18n.CardTranslation;
+import com.argo.card.i18n.Locales;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
 import java.util.ArrayList;

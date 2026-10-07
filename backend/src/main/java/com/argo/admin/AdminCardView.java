@@ -2,7 +2,7 @@ package com.argo.admin;
 
 import com.argo.card.Card;
 import com.argo.common.Flag;
-import com.argo.i18n.CardTranslation;
+import com.argo.card.i18n.CardTranslation;
 import java.math.BigDecimal;
 
 public record AdminCardView(Long id, String cardSetId, String cardName, String cardNameEn,
