@@ -1,4 +1,4 @@
-package com.argo.admin;
+package com.argo.card.admin;
 
 import java.math.BigDecimal;
 

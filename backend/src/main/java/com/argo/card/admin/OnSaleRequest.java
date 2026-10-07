@@ -1,4 +1,4 @@
-package com.argo.admin;
+package com.argo.card.admin;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

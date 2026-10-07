@@ -1,4 +1,4 @@
-package com.argo.admin;
+package com.argo.card.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -6,6 +6,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.argo.admin.LoginPortal;
+import com.argo.admin.StaffAuthService;
+import com.argo.admin.StaffRole;
 import com.argo.card.Card;
 import com.argo.card.CardRepository;
 import com.argo.card.CardSet;

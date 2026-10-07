@@ -1,5 +1,8 @@
-package com.argo.admin;
+package com.argo.card.admin;
 
+import com.argo.admin.AdminAuthInterceptor;
+import com.argo.admin.RequirePermission;
+import com.argo.admin.StaffAccount;
 import com.argo.common.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
