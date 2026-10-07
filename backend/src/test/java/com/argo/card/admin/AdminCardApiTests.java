@@ -5,14 +5,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.argo.admin.LoginPortal;
-import com.argo.admin.StaffAuthService;
-import com.argo.admin.StaffRole;
 import com.argo.card.Card;
 import com.argo.card.CardRepository;
 import com.argo.card.CardSet;
 import com.argo.card.CardSetRepository;
 import com.argo.card.OptcgCard;
+import com.argo.staff.auth.LoginPortal;
+import com.argo.staff.auth.StaffAuthService;
+import com.argo.staff.auth.StaffRole;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

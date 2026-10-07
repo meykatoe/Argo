@@ -1,9 +1,9 @@
 package com.argo.card.admin;
 
-import com.argo.admin.AdminAuthInterceptor;
-import com.argo.admin.RequirePermission;
-import com.argo.admin.StaffAccount;
 import com.argo.common.Result;
+import com.argo.staff.auth.AdminAuthInterceptor;
+import com.argo.staff.auth.RequirePermission;
+import com.argo.staff.auth.StaffAccount;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;

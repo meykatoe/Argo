@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.argo.admin.LoginPortal;
-import com.argo.admin.StaffAuthService;
-import com.argo.admin.StaffRole;
+import com.argo.staff.auth.LoginPortal;
+import com.argo.staff.auth.StaffAuthService;
+import com.argo.staff.auth.StaffRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

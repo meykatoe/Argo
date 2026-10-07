@@ -9,9 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.argo.admin.LoginPortal;
-import com.argo.admin.StaffAuthService;
-import com.argo.admin.StaffRole;
+import com.argo.staff.auth.LoginPortal;
+import com.argo.staff.auth.StaffAuthService;
+import com.argo.staff.auth.StaffRole;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
