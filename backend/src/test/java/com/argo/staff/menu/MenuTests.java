@@ -50,9 +50,11 @@ class MenuTests {
 
 	@Test
 	void seededMenuMatchesTheCurrentPermissions() {
-		assertEquals(List.of("card", "card.series", "card.edit"), codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
-		assertEquals(List.of("card", "card.series", "card.edit"), codes(menus.menuFor(StaffRole.ADMIN, LoginPortal.ADMIN)));
-		assertEquals(List.of(), codes(menus.menuFor(StaffRole.SERVICE, LoginPortal.ADMIN)));
+		assertEquals(List.of("card", "card.series", "card.edit", "order", "order.list"),
+				codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
+		assertEquals(List.of("card", "card.series", "card.edit", "order", "order.list"),
+				codes(menus.menuFor(StaffRole.ADMIN, LoginPortal.ADMIN)));
+		assertEquals(List.of("order", "order.list"), codes(menus.menuFor(StaffRole.SERVICE, LoginPortal.ADMIN)));
 		assertEquals(List.of("audit", "audit.logs", "security", "security.ips", "security.ips.block",
 				"security.rules", "security.rules.edit"),
 				codes(menus.menuFor(StaffRole.OPS, LoginPortal.OPS)));
@@ -77,10 +79,10 @@ class MenuTests {
 				+ "values ((select id from admin_menu where code = 'card'), 'ADMIN', 'card.extra', '額外功能', '/extra', 3)");
 		jdbc.update("insert into role_menu (role, menu_id) select 'SERVICE', id from admin_menu where code = 'card.extra'");
 		List<MenuNode> svc = menus.menuFor(StaffRole.SERVICE, LoginPortal.ADMIN);
-		assertEquals(List.of("card", "card.extra"), codes(svc));
+		assertEquals(List.of("card", "card.extra", "order", "order.list"), codes(svc));
 		// 排序小的在前
 		List<MenuNode> gen = menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN);
-		assertEquals(List.of("card", "card.series", "card.edit"), codes(gen));
+		assertEquals(List.of("card", "card.series", "card.edit", "order", "order.list"), codes(gen));
 		assertTrue(menus.hasPermission(StaffRole.SERVICE, "card.extra"));
 		assertFalse(menus.hasPermission(StaffRole.GENERAL, "card.extra"));
 	}
@@ -97,7 +99,8 @@ class MenuTests {
 	@Test
 	void disabledNodeIsHiddenAndDenied() {
 		jdbc.update("update admin_menu set enabled = 0 where code = 'card.edit'");
-		assertEquals(List.of("card", "card.series"), codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
+		assertEquals(List.of("card", "card.series", "order", "order.list"),
+				codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
 		assertFalse(menus.hasPermission(StaffRole.GENERAL, "card.edit"));
 		assertTrue(menus.hasPermission(StaffRole.GENERAL, "card.series"));
 	}
@@ -123,7 +126,8 @@ class MenuTests {
 				.andExpect(jsonPath("$.data[0].title").value("卡牌管理"))
 				.andExpect(jsonPath("$.data[0].children[1].path").value("/cards"));
 		mvc.perform(get("/api/admin/menu").header("Authorization", svc)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.length()").value(0));
+				.andExpect(jsonPath("$.data.length()").value(1))
+				.andExpect(jsonPath("$.data[0].code").value("order"));
 		mvc.perform(get("/api/ops/menu").header("Authorization", ops)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.data[0].children[0].code").value("audit.logs"));
 		mvc.perform(get("/api/ops/menu")).andExpect(status().isUnauthorized());

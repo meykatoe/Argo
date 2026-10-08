@@ -13,7 +13,7 @@ public record OrderView(String orderNo, OrderStatus status, String currency, Big
 	public record ItemView(Long cardId, String cardSetId, String cardName, String cardNameEn,
 			String imageUrl, BigDecimal unitPrice, int quantity, BigDecimal subtotal) {
 
-		static ItemView from(OrderItem i) {
+		public static ItemView from(OrderItem i) {
 			return new ItemView(i.getCardId(), i.getCardSetId(), i.getCardName(), i.getCardNameEn(),
 					i.getImageUrl(), i.getUnitPrice(), i.getQuantity(), i.getSubtotal());
 		}
@@ -22,7 +22,7 @@ public record OrderView(String orderNo, OrderStatus status, String currency, Big
 	public record PaymentView(String status, String cardLast4, String failureCode,
 			OffsetDateTime createdAt) {
 
-		static PaymentView from(Payment p) {
+		public static PaymentView from(Payment p) {
 			return p == null ? null
 					: new PaymentView(p.getStatus(), p.getCardLast4(), p.getFailureCode(), p.getCreatedAt());
 		}

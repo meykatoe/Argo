@@ -221,6 +221,10 @@ public class ShopOrder {
 		return createdAt;
 	}
 
+	public OffsetDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
 	public OffsetDateTime getPaidAt() {
 		return paidAt;
 	}

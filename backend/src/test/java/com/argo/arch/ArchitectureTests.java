@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 class ArchitectureTests {
 
 	private static final List<String> PACKAGES = List.of("common", "staff", "customer", "card", "card.admin",
-			"order", "security", "security.net", "security.block", "security.guard", "security.web", "config");
+			"order", "order.admin", "security", "security.net", "security.block", "security.guard", "security.web", "config");
 
 	// 依賴指向方向，箭頭左邊不可用右邊
 	private static ArchRule forbid(String from, String... to) {
@@ -64,7 +64,13 @@ class ArchitectureTests {
 			.dependOnClassesThat(resideInAnyPackage(prefixed("staff")));
 
 	@ArchTest
-	static final ArchRule orderLayer = forbid("order", "staff", "security", "config");
+	static final ArchRule orderLayer = forbid("order", "security", "config");
+
+	// 只有後台管理可用員工權限
+	@ArchTest
+	static final ArchRule orderCoreNotUsingStaff = noClasses().that().resideInAPackage("com.argo.order..").and()
+			.resideOutsideOfPackage("com.argo.order.admin..").should()
+			.dependOnClassesThat(resideInAnyPackage(prefixed("staff")));
 
 	@ArchTest
 	static final ArchRule securityLayer = forbid("security", "customer", "card", "order", "config");
