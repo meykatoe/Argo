@@ -1,4 +1,15 @@
-import type { AdminCard, AdminCardSet, Flag, MenuNode, PageResult, Session, SetOption } from '@/types'
+import type {
+  AdminCard,
+  AdminCardSet,
+  AdminOrder,
+  AdminOrderRow,
+  Flag,
+  MenuNode,
+  OrderStatus,
+  PageResult,
+  Session,
+  SetOption,
+} from '@/types'
 
 const BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
@@ -113,4 +124,19 @@ export function setCardSetDiscount(token: string, setId: string, extraDiscount: 
 // 公開 API，不需要令牌，取繁中系列名稱
 export function listSetOptions(): Promise<SetOption[]> {
   return request(null, 'GET', '/sets', { lang: 'zh-TW' })
+}
+
+export interface OrderSearch {
+  keyword?: string
+  status?: OrderStatus
+  page: number
+  size: number
+}
+
+export function searchOrders(token: string, q: OrderSearch): Promise<PageResult<AdminOrderRow>> {
+  return request(token, 'GET', '/admin/orders', { ...q })
+}
+
+export function getOrder(token: string, orderNo: string): Promise<AdminOrder> {
+  return request(token, 'GET', `/admin/orders/${encodeURIComponent(orderNo)}`)
 }

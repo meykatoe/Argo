@@ -11,6 +11,7 @@ const TEXT: Record<string, string> = {
   RATE_LIMITED: '操作太頻繁，請稍後再試',
   IP_BLOCKED: '你的網路位址已被限制存取',
   SET_NOT_FOUND: '找不到這個系列',
+  ORDER_NOT_FOUND: '找不到這筆訂單',
 }
 
 // 鎖定時回應會帶還要等幾秒，換成分鐘顯示
