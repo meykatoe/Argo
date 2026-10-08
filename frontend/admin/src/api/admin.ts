@@ -140,3 +140,20 @@ export function searchOrders(token: string, q: OrderSearch): Promise<PageResult<
 export function getOrder(token: string, orderNo: string): Promise<AdminOrder> {
   return request(token, 'GET', `/admin/orders/${encodeURIComponent(orderNo)}`)
 }
+
+// 已付款訂單出貨，單號可留空
+export function shipOrder(token: string, orderNo: string, trackingNo: string): Promise<AdminOrder> {
+  return request(token, 'POST', `/admin/orders/${encodeURIComponent(orderNo)}/ship`, {}, { trackingNo })
+}
+
+export function completeOrder(token: string, orderNo: string): Promise<AdminOrder> {
+  return request(token, 'POST', `/admin/orders/${encodeURIComponent(orderNo)}/complete`, {}, {})
+}
+
+export function cancelOrder(token: string, orderNo: string): Promise<AdminOrder> {
+  return request(token, 'POST', `/admin/orders/${encodeURIComponent(orderNo)}/cancel`, {}, {})
+}
+
+export function setOrderNote(token: string, orderNo: string, note: string): Promise<AdminOrder> {
+  return request(token, 'PATCH', `/admin/orders/${encodeURIComponent(orderNo)}/note`, {}, { note })
+}

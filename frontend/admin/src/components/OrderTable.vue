@@ -104,6 +104,7 @@ onMounted(load)
       :token="token"
       :order-no="opened"
       @close="opened = null"
+      @changed="load"
       @unauthorized="emit('unauthorized')"
     />
   </section>

@@ -13,6 +13,7 @@ export const STATUS_OPTIONS = Object.keys(STATUS_TEXT) as OrderStatus[]
 const CANCEL_TEXT: Record<string, string> = {
   CUSTOMER: '顧客取消',
   EXPIRED: '逾期未付款',
+  STAFF: '店家取消',
 }
 
 export function cancelText(reason: string | null): string {

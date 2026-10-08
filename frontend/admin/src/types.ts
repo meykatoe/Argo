@@ -110,8 +110,12 @@ export interface AdminOrder {
   cancelReason: string | null
   createdAt: string
   paidAt: string | null
+  shippedAt: string | null
+  completedAt: string | null
   cancelledAt: string | null
   updatedAt: string
+  trackingNo: string | null
+  staffNote: string | null
   items: AdminOrderItem[]
   payment: AdminOrderPayment | null
 }
