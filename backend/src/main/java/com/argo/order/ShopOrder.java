@@ -86,6 +86,14 @@ public class ShopOrder {
 
 	private OffsetDateTime cancelledAt;
 
+	private OffsetDateTime shippedAt;
+
+	private OffsetDateTime completedAt;
+
+	private String trackingNo;
+
+	private String staffNote;
+
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
 	@JoinColumn(name = "order_id", nullable = false)
 	private List<OrderItem> items = new ArrayList<>();
@@ -143,6 +151,24 @@ public class ShopOrder {
 		this.cancelReason = reason;
 		this.cancelledAt = OffsetDateTime.now();
 		this.updatedAt = this.cancelledAt;
+	}
+
+	public void markShipped(String trackingNo) {
+		this.status = OrderStatus.SHIPPED;
+		this.trackingNo = trackingNo;
+		this.shippedAt = OffsetDateTime.now();
+		this.updatedAt = this.shippedAt;
+	}
+
+	public void markCompleted() {
+		this.status = OrderStatus.COMPLETED;
+		this.completedAt = OffsetDateTime.now();
+		this.updatedAt = this.completedAt;
+	}
+
+	public void setStaffNote(String note) {
+		this.staffNote = note;
+		this.updatedAt = OffsetDateTime.now();
 	}
 
 	public boolean emailMatches(String email) {
@@ -223,6 +249,22 @@ public class ShopOrder {
 
 	public OffsetDateTime getUpdatedAt() {
 		return updatedAt;
+	}
+
+	public OffsetDateTime getShippedAt() {
+		return shippedAt;
+	}
+
+	public OffsetDateTime getCompletedAt() {
+		return completedAt;
+	}
+
+	public String getTrackingNo() {
+		return trackingNo;
+	}
+
+	public String getStaffNote() {
+		return staffNote;
 	}
 
 	public OffsetDateTime getPaidAt() {

@@ -229,6 +229,7 @@ const zhTW = {
     ORDER_NOT_PAYABLE: "這筆訂單目前無法付款",
     ORDER_NOT_CANCELLABLE: "這筆訂單目前無法取消",
     ORDER_EXPIRED: "付款期限已過，訂單已取消",
+    ORDER_STATE_CONFLICT: "訂單狀態已變更，請重新整理後再試",
     CARD_DECLINED: "信用卡被拒絕，請換一張卡或聯絡發卡銀行",
     INSUFFICIENT_FUNDS: "信用卡餘額不足",
     PROCESSING_ERROR: "付款處理發生錯誤，請稍後再試",

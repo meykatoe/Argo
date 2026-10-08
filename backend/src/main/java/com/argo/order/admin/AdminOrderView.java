@@ -12,7 +12,8 @@ public record AdminOrderView(String orderNo, OrderStatus status, String currency
 		BigDecimal shippingFee, BigDecimal total, Long customerId, String customerName,
 		String customerEmail, String customerPhone, String recipientName, String recipientPhone,
 		String postalCode, String city, String address, String cancelReason, OffsetDateTime createdAt,
-		OffsetDateTime paidAt, OffsetDateTime cancelledAt, OffsetDateTime updatedAt,
+		OffsetDateTime paidAt, OffsetDateTime shippedAt, OffsetDateTime completedAt,
+		OffsetDateTime cancelledAt, OffsetDateTime updatedAt, String trackingNo, String staffNote,
 		List<OrderView.ItemView> items, OrderView.PaymentView payment) {
 
 	static AdminOrderView from(ShopOrder o, Payment lastPayment) {
@@ -20,7 +21,8 @@ public record AdminOrderView(String orderNo, OrderStatus status, String currency
 				o.getShippingFee(), o.getTotal(), o.getCustomerId(), o.getCustomerName(),
 				o.getCustomerEmail(), o.getCustomerPhone(), o.getRecipientName(), o.getRecipientPhone(),
 				o.getPostalCode(), o.getCity(), o.getAddress(), o.getCancelReason(), o.getCreatedAt(),
-				o.getPaidAt(), o.getCancelledAt(), o.getUpdatedAt(),
+				o.getPaidAt(), o.getShippedAt(), o.getCompletedAt(), o.getCancelledAt(), o.getUpdatedAt(),
+				o.getTrackingNo(), o.getStaffNote(),
 				o.getItems().stream().map(OrderView.ItemView::from).toList(),
 				OrderView.PaymentView.from(lastPayment));
 	}

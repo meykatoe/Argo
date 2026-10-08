@@ -59,6 +59,7 @@
 | 4006 | `ORDER_NOT_PAYABLE` | 409 | 訂單狀態不可付款 |
 | 4007 | `ORDER_NOT_CANCELLABLE` | 409 | 訂單狀態不可取消 |
 | 4008 | `ORDER_EXPIRED` | 410 | 付款期限已過，訂單已取消 |
+| 4009 | `ORDER_STATE_CONFLICT` | 409 | 訂單目前狀態不可執行此操作 |
 
 ## 5xxx 付款
 

@@ -172,7 +172,7 @@ public class OrderService {
 		return order.getCreatedAt().plusMinutes(expireMinutes).isBefore(OffsetDateTime.now());
 	}
 
-	void cancelInternal(ShopOrder order, String reason) {
+	public void cancelInternal(ShopOrder order, String reason) {
 		order.markCancelled(reason);
 		order.getItems().stream()
 				.sorted(Comparator.comparing(OrderItem::getCardId))

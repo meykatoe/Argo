@@ -35,6 +35,7 @@ public enum ErrorCode {
 	ORDER_NOT_PAYABLE(4006, HttpStatus.CONFLICT, "訂單狀態不可付款"),
 	ORDER_NOT_CANCELLABLE(4007, HttpStatus.CONFLICT, "訂單狀態不可取消"),
 	ORDER_EXPIRED(4008, HttpStatus.GONE, "付款期限已過，訂單已取消"),
+	ORDER_STATE_CONFLICT(4009, HttpStatus.CONFLICT, "訂單目前狀態不可執行此操作"),
 
 	// 付款
 	INVALID_CARD(5001, HttpStatus.BAD_REQUEST, "信用卡號不正確"),

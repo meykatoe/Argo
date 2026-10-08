@@ -231,6 +231,7 @@ const en: MessageSchema = {
     ORDER_NOT_PAYABLE: "This order cannot be paid right now",
     ORDER_NOT_CANCELLABLE: "This order cannot be cancelled",
     ORDER_EXPIRED: "The payment window has passed and the order was cancelled",
+    ORDER_STATE_CONFLICT: "The order status has changed. Please refresh and try again",
     CARD_DECLINED: "Your card was declined. Please try another card.",
     INSUFFICIENT_FUNDS: "Insufficient funds",
     PROCESSING_ERROR: "A processing error occurred. Please try again.",

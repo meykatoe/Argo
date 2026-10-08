@@ -13,6 +13,7 @@ const TEXT: Record<string, string> = {
   IP_NOT_BLOCKED: '這個 IP 目前沒有被封鎖',
   IP_BLOCKED: '你的網路位址已被限制存取',
   INVALID_RANGE: '開始時間必須早於結束時間',
+  ORDER_STATE_CONFLICT: '訂單狀態已變更，請重新整理後再試',
   BAD_REQUEST: '查詢條件有誤',
 }
 

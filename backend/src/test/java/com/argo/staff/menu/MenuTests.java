@@ -50,11 +50,11 @@ class MenuTests {
 
 	@Test
 	void seededMenuMatchesTheCurrentPermissions() {
-		assertEquals(List.of("card", "card.series", "card.edit", "order", "order.list"),
+		assertEquals(List.of("card", "card.series", "card.edit", "order", "order.list", "order.manage"),
 				codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
-		assertEquals(List.of("card", "card.series", "card.edit", "order", "order.list"),
+		assertEquals(List.of("card", "card.series", "card.edit", "order", "order.list", "order.manage"),
 				codes(menus.menuFor(StaffRole.ADMIN, LoginPortal.ADMIN)));
-		assertEquals(List.of("order", "order.list"), codes(menus.menuFor(StaffRole.SERVICE, LoginPortal.ADMIN)));
+		assertEquals(List.of("order", "order.list", "order.manage"), codes(menus.menuFor(StaffRole.SERVICE, LoginPortal.ADMIN)));
 		assertEquals(List.of("audit", "audit.logs", "security", "security.ips", "security.ips.block",
 				"security.rules", "security.rules.edit"),
 				codes(menus.menuFor(StaffRole.OPS, LoginPortal.OPS)));
@@ -79,10 +79,10 @@ class MenuTests {
 				+ "values ((select id from admin_menu where code = 'card'), 'ADMIN', 'card.extra', '額外功能', '/extra', 3)");
 		jdbc.update("insert into role_menu (role, menu_id) select 'SERVICE', id from admin_menu where code = 'card.extra'");
 		List<MenuNode> svc = menus.menuFor(StaffRole.SERVICE, LoginPortal.ADMIN);
-		assertEquals(List.of("card", "card.extra", "order", "order.list"), codes(svc));
+		assertEquals(List.of("card", "card.extra", "order", "order.list", "order.manage"), codes(svc));
 		// 排序小的在前
 		List<MenuNode> gen = menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN);
-		assertEquals(List.of("card", "card.series", "card.edit", "order", "order.list"), codes(gen));
+		assertEquals(List.of("card", "card.series", "card.edit", "order", "order.list", "order.manage"), codes(gen));
 		assertTrue(menus.hasPermission(StaffRole.SERVICE, "card.extra"));
 		assertFalse(menus.hasPermission(StaffRole.GENERAL, "card.extra"));
 	}
@@ -99,7 +99,7 @@ class MenuTests {
 	@Test
 	void disabledNodeIsHiddenAndDenied() {
 		jdbc.update("update admin_menu set enabled = 0 where code = 'card.edit'");
-		assertEquals(List.of("card", "card.series", "order", "order.list"),
+		assertEquals(List.of("card", "card.series", "order", "order.list", "order.manage"),
 				codes(menus.menuFor(StaffRole.GENERAL, LoginPortal.ADMIN)));
 		assertFalse(menus.hasPermission(StaffRole.GENERAL, "card.edit"));
 		assertTrue(menus.hasPermission(StaffRole.GENERAL, "card.series"));
