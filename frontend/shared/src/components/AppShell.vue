@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, provide, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { ApiError, getMenu } from '@/api/ops'
-import type { MenuNode, Session } from '@/types'
-import { errorText } from '@/utils/error'
-import { MENU_CODES, allCodes, trailOf } from '@/utils/menu'
+import { ApiError } from '../api'
+import type { StaffConfig } from '../config'
+import type { MenuNode, Session } from '../types'
+import { MENU_CODES, allCodes, trailOf } from '../utils/menu'
 import AppSidebar from './AppSidebar.vue'
 import PageHost from './PageHost.vue'
 
-const props = defineProps<{ brand: string; session: Session }>()
+const props = defineProps<{ config: StaffConfig; session: Session }>()
 const emit = defineEmits<{ logout: []; expired: [] }>()
 
 const route = useRoute()
@@ -25,14 +25,14 @@ provide(MENU_CODES, computed(() => new Set(allCodes(menu.value))))
 async function load() {
   error.value = ''
   try {
-    menu.value = await getMenu(props.session.token)
+    menu.value = await props.config.api.getMenu(props.session.token)
     loaded.value = true
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) {
       emit('expired')
       return
     }
-    error.value = errorText(e)
+    error.value = props.config.errors.errorText(e)
   }
 }
 
@@ -43,7 +43,7 @@ onMounted(load)
   <div class="shell" :class="{ open: drawer }">
     <AppSidebar
       class="side"
-      :brand="brand"
+      :brand="config.brand"
       :session="session"
       :menu="menu"
       @logout="emit('logout')"
@@ -72,7 +72,7 @@ onMounted(load)
           <button type="button" @click="load">重試</button>
         </div>
         <p v-else-if="!loaded" class="hint">載入中</p>
-        <PageHost v-else :menu="menu" :token="session.token" @unauthorized="emit('expired')" />
+        <PageHost v-else :menu="menu" :pages="config.pages" :token="session.token" @unauthorized="emit('expired')" />
       </main>
     </div>
   </div>

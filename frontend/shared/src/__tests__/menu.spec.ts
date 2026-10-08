@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { MenuNode } from '@/types'
-import { allCodes, firstPath, pageNodes, trailOf } from '../menu'
+import type { MenuNode } from '../types'
+import { allCodes, firstPath, pageNodes, trailOf } from '../utils/menu'
 
 const menu: MenuNode[] = [
   {

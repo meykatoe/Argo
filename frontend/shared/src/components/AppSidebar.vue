@@ -2,8 +2,8 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import logo from '@brand/favicon.svg'
-import type { MenuNode, Session } from '@/types'
-import { roleName } from '@/utils/role'
+import type { MenuNode, Session } from '../types'
+import { roleName } from '../utils/role'
 
 const props = defineProps<{ brand: string; session: Session; menu: MenuNode[] }>()
 const emit = defineEmits<{ logout: []; navigate: [] }>()

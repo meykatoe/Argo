@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue'
+import { computed, watchEffect, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { pages } from '@/pages'
-import type { MenuNode } from '@/types'
-import { firstPath, pageNodes } from '@/utils/menu'
+import type { MenuNode } from '../types'
+import { firstPath, pageNodes } from '../utils/menu'
 
-const props = defineProps<{ menu: MenuNode[]; token: string }>()
+const props = defineProps<{ menu: MenuNode[]; token: string; pages: Record<string, Component> }>()
 const emit = defineEmits<{ unauthorized: [] }>()
 
 const route = useRoute()
@@ -21,7 +20,7 @@ watchEffect(() => {
   }
 })
 
-const page = computed(() => (allowed.value.includes(route.path) ? pages[route.path] : undefined))
+const page = computed(() => (allowed.value.includes(route.path) ? props.pages[route.path] : undefined))
 </script>
 
 <template>

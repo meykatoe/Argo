@@ -17,8 +17,11 @@ export default defineConfig({
   // 圖示等共用資源放在 shared
   publicDir: '../shared/public',
   resolve: {
+    // 共用程式碼在 shared，vue 一律從本專案解析
+    dedupe: ['vue', 'vue-router', '@vue/test-utils'],
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@shared': fileURLToPath(new URL('../shared/src', import.meta.url)),
       '@brand': fileURLToPath(new URL('../shared/public', import.meta.url)),
     },
   },

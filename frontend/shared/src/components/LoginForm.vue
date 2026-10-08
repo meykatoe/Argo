@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { login } from '@/api/ops'
-import type { Session } from '@/types'
-import { errorText, lockedMessage } from '@/utils/error'
+import type { StaffConfig } from '../config'
+import type { Session } from '../types'
 
+const props = defineProps<{ config: StaffConfig }>()
 const emit = defineEmits<{ login: [session: Session] }>()
 
 const username = ref('')
@@ -18,11 +18,11 @@ async function submit() {
   busy.value = true
   error.value = ''
   try {
-    emit('login', await login(username.value.trim(), password.value))
+    emit('login', await props.config.api.login(username.value.trim(), password.value))
     // 登入後不留密碼
     password.value = ''
   } catch (e) {
-    error.value = lockedMessage(e) ?? errorText(e)
+    error.value = props.config.errors.lockedMessage(e) ?? props.config.errors.errorText(e)
   } finally {
     busy.value = false
   }
@@ -31,7 +31,7 @@ async function submit() {
 
 <template>
   <form class="login" @submit.prevent="submit">
-    <h1>Argo 運維後台</h1>
+    <h1>{{ config.title }}</h1>
     <input v-model="username" placeholder="帳號" autocomplete="username" />
     <input v-model="password" type="password" placeholder="密碼" autocomplete="current-password" />
     <p v-if="error" class="error" role="alert">{{ error }}</p>

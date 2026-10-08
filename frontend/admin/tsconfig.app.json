@@ -1,7 +1,7 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
-  "exclude": ["src/**/__tests__/*"],
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "../shared/src/**/*", "../shared/src/**/*.vue"],
+  "exclude": ["src/**/__tests__/*", "../shared/src/**/__tests__/*"],
   "compilerOptions": {
     // Extra safety for array and object lookups, but may have false positives.
     "noUncheckedIndexedAccess": true,
@@ -9,7 +9,10 @@
     // Path mapping for cleaner imports.
     "paths": {
       "@/*": ["./src/*"],
-      "@brand/*": ["../shared/public/*"]
+      "@brand/*": ["../shared/public/*"],
+      "@shared/*": ["../shared/src/*"],
+      "vue": ["./node_modules/vue"],
+      "vue-router": ["./node_modules/vue-router"]
     },
 
     // `vue-tsc --build` produces a .tsbuildinfo file for incremental type-checking.

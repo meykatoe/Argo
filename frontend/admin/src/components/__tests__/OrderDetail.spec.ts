@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { computed } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { MENU_CODES } from '@/utils/menu'
+import { MENU_CODES } from '@shared/utils/menu'
 import OrderDetail from '../OrderDetail.vue'
 
 const base = {

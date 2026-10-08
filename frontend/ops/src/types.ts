@@ -1,14 +1,5 @@
-export type StaffRole = 'ADMIN' | 'GENERAL' | 'SERVICE' | 'OPS'
-
-export interface Session {
-  token: string
-  username: string
-  role: StaffRole
-  expiresAt: string
-}
-
-// 是否類欄位一律為 0 或 1
-export type Flag = 0 | 1
+export type { Flag, MenuNode, PageResult, Session, StaffRole } from '@shared/types'
+import type { Flag, StaffRole } from '@shared/types'
 
 export type AuditAction =
   | 'LOGIN_SUCCESS'
@@ -44,21 +35,6 @@ export interface AuditLog {
   ip: string | null
   userAgent: string | null
   createdAt: string
-}
-
-export interface PageResult<T> {
-  items: T[]
-  page: number
-  size: number
-  total: number
-  totalPages: number
-}
-
-export interface MenuNode {
-  code: string
-  title: string
-  path: string | null
-  children: MenuNode[]
 }
 
 export interface IpActivity {

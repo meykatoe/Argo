@@ -1,8 +1,8 @@
-import './assets/main.css'
+import '@shared/assets/main.css'
 
 import { createApp } from 'vue'
+import { createStaffRouter } from '@shared/router'
 
 import App from './App.vue'
-import { router } from './router'
 
-createApp(App).use(router).mount('#app')
+createApp(App).use(createStaffRouter()).mount('#app')

@@ -3,7 +3,7 @@
 
   // Override to include only test files and clear exclusions.
   // Application code imported in tests is automatically included via module resolution.
-  "include": ["src/**/__tests__/*", "env.d.ts"],
+  "include": ["src/**/__tests__/*", "../shared/src/**/__tests__/*", "env.d.ts"],
   "exclude": [],
 
   "compilerOptions": {
@@ -11,6 +11,17 @@
     // Adjust lib and types accordingly.
     "lib": [],
     "types": ["node", "jsdom"],
+
+    // 共用的測試檔在 shared，測試套件從本專案解析
+    "paths": {
+      "@/*": ["./src/*"],
+      "@brand/*": ["../shared/public/*"],
+      "@shared/*": ["../shared/src/*"],
+      "vue": ["./node_modules/vue"],
+      "vue-router": ["./node_modules/vue-router"],
+      "vitest": ["./node_modules/vitest"],
+      "@vue/test-utils": ["./node_modules/@vue/test-utils"]
+    },
 
     // `vue-tsc --build` produces a .tsbuildinfo file for incremental type-checking.
     // Specified here to keep it out of the root directory.

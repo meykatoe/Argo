@@ -4,7 +4,7 @@ import { ApiError, cancelOrder, completeOrder, getOrder, setOrderNote, shipOrder
 import type { AdminOrder } from '@/types'
 import { errorText } from '@/utils/error'
 import { formatPrice } from '@/utils/discount'
-import { MENU_CODES } from '@/utils/menu'
+import { MENU_CODES } from '@shared/utils/menu'
 import { cancelText, formatTime, STATUS_TEXT } from '@/utils/order'
 
 const props = defineProps<{ token: string; orderNo: string }>()

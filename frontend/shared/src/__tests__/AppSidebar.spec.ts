@@ -1,8 +1,8 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import type { MenuNode, Session } from '@/types'
-import AppSidebar from '../AppSidebar.vue'
+import type { MenuNode, Session } from '../types'
+import AppSidebar from '../components/AppSidebar.vue'
 
 const session: Session = { token: 't', username: 'alice', role: 'GENERAL', expiresAt: '2099-01-01T00:00:00Z' }
 const menu: MenuNode[] = [

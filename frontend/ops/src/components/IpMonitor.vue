@@ -5,7 +5,7 @@ import type { IpActivity, IpBlock, PageResult } from '@/types'
 import { formatTime } from '@/utils/audit'
 import { REFRESH_MS, useAutoRefresh } from '@/utils/autoRefresh'
 import { errorText } from '@/utils/error'
-import { MENU_CODES } from '@/utils/menu'
+import { MENU_CODES } from '@shared/utils/menu'
 import IpBlockDialog from './IpBlockDialog.vue'
 
 const props = defineProps<{ token: string }>()

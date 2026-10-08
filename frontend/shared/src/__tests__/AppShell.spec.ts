@@ -1,12 +1,12 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import type { Session } from '@/types'
-import AppShell from '../AppShell.vue'
+import { ApiError } from '../api'
+import AppShell from '../components/AppShell.vue'
+import type { Session } from '../types'
+import { fakeConfig } from './support'
 
-vi.mock('@/pages', () => ({
-  pages: { '/cards': { props: ['token'], template: '<div class="cards-page">cards {{ token }}</div>' } },
-}))
+const pages = { '/cards': { props: ['token'], template: '<div class="cards-page">cards {{ token }}</div>' } }
 
 const session: Session = { token: 'tk', username: 'alice', role: 'GENERAL', expiresAt: '2099-01-01T00:00:00Z' }
 
@@ -22,26 +22,25 @@ function menuOf(...paths: [string, string, string | null][]) {
 }
 
 async function render(path: string, menu: unknown, status = 200) {
-  const fetchMock = vi.fn().mockResolvedValue({ ok: status === 200, status, json: async () => (status === 200 ? { code: 200, msg: 'OK', data: menu } : { code: status, msg: 'ADMIN_UNAUTHORIZED', data: null }) })
-  vi.stubGlobal('fetch', fetchMock)
+  const getMenu =
+    status === 200
+      ? vi.fn().mockResolvedValue(menu)
+      : vi.fn().mockRejectedValue(new ApiError(status, 'ADMIN_UNAUTHORIZED'))
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: '/:p(.*)*', component: { render: () => null } }],
   })
   await router.push(path)
   await router.isReady()
-  const w = mount(AppShell, { props: { brand: '業務後台', session }, global: { plugins: [router] } })
+  const w = mount(AppShell, { props: { config: fakeConfig({ getMenu }, pages), session }, global: { plugins: [router] } })
   await flushPromises()
-  return { w, router, fetchMock }
+  return { w, router, getMenu }
 }
-
-afterEach(() => vi.unstubAllGlobals())
 
 describe('AppShell', () => {
   it('帶令牌取得選單並顯示對應頁面與麵包屑', async () => {
-    const { w, fetchMock } = await render('/cards', menuOf(['card.edit', '卡牌編輯', '/cards']))
-    expect(fetchMock.mock.calls[0]![0]).toContain('/admin/menu')
-    expect(fetchMock.mock.calls[0]![1].headers['Authorization']).toBe('Bearer tk')
+    const { w, getMenu } = await render('/cards', menuOf(['card.edit', '卡牌編輯', '/cards']))
+    expect(getMenu).toHaveBeenCalledWith('tk')
     expect(w.find('.cards-page').text()).toBe('cards tk')
     expect(w.find('.crumbs').text()).toContain('卡牌管理')
     expect(w.find('[aria-current=page]').text()).toBe('卡牌編輯')
@@ -69,7 +68,7 @@ describe('AppShell', () => {
   })
 
   it('選單 401 通知登入失效', async () => {
-    const { w } = await render('/', { code: 'ADMIN_UNAUTHORIZED' }, 401)
+    const { w } = await render('/', null, 401)
     expect(w.emitted('expired')).toHaveLength(1)
   })
 
