@@ -65,7 +65,7 @@ onMounted(load)
     <div class="head">
       <div>
         <h1>{{ t('account.title') }}</h1>
-        <p class="who">{{ auth.displayName }} · {{ auth.session?.email }}</p>
+        <p class="who">{{ auth.displayName }}<template v-if="auth.session?.username"> · @{{ auth.session.username }}</template> · {{ auth.session?.email }}</p>
       </div>
       <button type="button" class="out" @click="logout">{{ t('nav.logout') }}</button>
     </div>

@@ -6,26 +6,25 @@ import FormField from '@/components/FormField.vue'
 import { useAuthStore } from '@/stores/auth'
 import { errorText, lockedMinutes } from '@/utils/error'
 import { safeRedirect } from '@/utils/redirect'
-import { isEmail } from '@/utils/validators'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
-const form = reactive({ email: '', password: '' })
+const form = reactive({ account: '', password: '' })
 const errors = reactive<Record<string, string>>({})
 const busy = ref(false)
 const error = ref('')
 
 async function submit() {
   error.value = ''
-  errors.email = isEmail(form.email) ? '' : 'validation.email'
+  errors.account = form.account.trim() ? '' : 'validation.required'
   errors.password = form.password ? '' : 'validation.required'
-  if (errors.email || errors.password || busy.value) return
+  if (errors.account || errors.password || busy.value) return
   busy.value = true
   try {
-    await auth.login(form.email.trim(), form.password)
+    await auth.login(form.account.trim(), form.password)
     form.password = ''
     router.replace(safeRedirect(route.query.redirect))
   } catch (e) {
@@ -41,8 +40,8 @@ async function submit() {
   <section class="auth">
     <h1>{{ t('auth.loginTitle') }}</h1>
     <form novalidate @submit.prevent="submit">
-      <FormField :label="t('auth.email')" :error="errors.email" for="lg-email">
-        <input id="lg-email" v-model="form.email" type="email" autocomplete="email" />
+      <FormField :label="t('auth.account')" :error="errors.account" for="lg-account">
+        <input id="lg-account" v-model="form.account" autocomplete="username" />
       </FormField>
       <FormField :label="t('auth.password')" :error="errors.password" for="lg-pw">
         <input id="lg-pw" v-model="form.password" type="password" autocomplete="current-password" />

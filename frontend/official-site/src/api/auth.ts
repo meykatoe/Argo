@@ -5,15 +5,22 @@ import type { AuthSession } from '@/utils/authToken'
 
 export interface Me {
   email: string
+  username: string | null
   name: string | null
 }
 
-export function register(email: string, password: string, name: string) {
-  return post<AuthSession>('/auth/register', { email, password, name: name || null })
+export function register(username: string, email: string, password: string, name: string) {
+  return post<AuthSession>('/auth/register', { username, email, password, name: name || null })
 }
 
-export function login(email: string, password: string) {
-  return post<AuthSession>('/auth/login', { email, password })
+// 帳號名稱或 Email 皆可
+export function login(account: string, password: string) {
+  return post<AuthSession>('/auth/login', { account, password })
+}
+
+// 1 可用、0 已被使用
+export function usernameAvailable(username: string) {
+  return get<{ available: 0 | 1 }>('/auth/username-available', { username })
 }
 
 export function logout() {

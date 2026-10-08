@@ -3,6 +3,8 @@ export const AUTH_KEY = 'argo.auth'
 export interface AuthSession {
   token: string
   email: string
+  // 舊帳號沒有帳號名稱
+  username: string | null
   name: string | null
   expiresAt: string
 }
@@ -13,7 +15,7 @@ export function readSession(): AuthSession | null {
     const raw = JSON.parse(localStorage.getItem(AUTH_KEY) ?? 'null')
     if (!raw || typeof raw.token !== 'string' || typeof raw.email !== 'string') return null
     if (!(new Date(raw.expiresAt).getTime() > Date.now())) return null
-    return { token: raw.token, email: raw.email, name: raw.name ?? null, expiresAt: raw.expiresAt }
+    return { token: raw.token, email: raw.email, username: raw.username ?? null, name: raw.name ?? null, expiresAt: raw.expiresAt }
   } catch {
     return null
   }

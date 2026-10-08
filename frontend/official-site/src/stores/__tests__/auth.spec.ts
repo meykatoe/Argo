@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AUTH_KEY, authToken } from '@/utils/authToken'
 import { useAuthStore } from '../auth'
 
-const view = { token: 'tok', email: 'a@b.co', name: '小明', expiresAt: '2099-01-01T00:00:00Z' }
+const view = { token: 'tok', email: 'a@b.co', username: 'ming', name: '小明', expiresAt: '2099-01-01T00:00:00Z' }
 const ok = (data: unknown) => new Response(JSON.stringify({ code: 200, msg: 'OK', data }))
 const fail = (status: number, msg: string) => new Response(JSON.stringify({ code: status, msg, data: null }), { status })
 
@@ -15,7 +15,7 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('auth store', () => {
   it('登入後保存並讓請求帶上令牌', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce(ok(view)).mockResolvedValueOnce(ok({ email: 'a@b.co', name: '小明' }))
+    const fetchMock = vi.fn().mockResolvedValueOnce(ok(view)).mockResolvedValueOnce(ok({ email: 'a@b.co', username: 'ming', name: '小明' }))
     vi.stubGlobal('fetch', fetchMock)
     const auth = useAuthStore()
     expect(auth.isLoggedIn).toBe(false)
@@ -40,14 +40,17 @@ describe('auth store', () => {
     const fetchMock = vi.fn().mockResolvedValue(ok(view))
     vi.stubGlobal('fetch', fetchMock)
     const auth = useAuthStore()
-    await auth.register('a@b.co', 'password-1234', '')
+    await auth.register('ming', 'a@b.co', 'password-1234', '')
     expect(auth.isLoggedIn).toBe(true)
-    expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toEqual({ email: 'a@b.co', password: 'password-1234', name: null })
+    expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toEqual({ username: 'ming', email: 'a@b.co', password: 'password-1234', name: null })
   })
 
-  it('沒有名字時顯示 Email', async () => {
+  it('沒有名字時顯示帳號，兩者都沒有才顯示 Email', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok({ ...view, name: null })))
     const auth = useAuthStore()
+    await auth.login('a@b.co', 'password-1234')
+    expect(auth.displayName).toBe('ming')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok({ ...view, name: null, username: null })))
     await auth.login('a@b.co', 'password-1234')
     expect(auth.displayName).toBe('a@b.co')
   })

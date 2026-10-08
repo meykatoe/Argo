@@ -8,7 +8,7 @@ import AccountView from '../AccountView.vue'
 import LoginView from '../LoginView.vue'
 import RegisterView from '../RegisterView.vue'
 
-const view = { token: 'tok', email: 'a@b.co', name: '小明', expiresAt: '2099-01-01T00:00:00Z' }
+const view = { token: 'tok', email: 'a@b.co', username: 'ming', name: '小明', expiresAt: '2099-01-01T00:00:00Z' }
 const ok = (data: unknown) => new Response(JSON.stringify({ code: 200, msg: 'OK', data }))
 const fail = (status: number, msg: string) => new Response(JSON.stringify({ code: status, msg, data: null }), { status })
 
@@ -47,14 +47,14 @@ describe('LoginView', () => {
     const { w } = await mountAt('/login')
     await w.find('form').trigger('submit')
     expect(fetchMock).not.toHaveBeenCalled()
-    expect(w.text()).toContain('Email 格式不正確')
     expect(w.text()).toContain('此欄位必填')
+    expect(w.findAll('[role=alert], .error').length).toBeGreaterThan(0)
   })
 
   it('成功後導向 redirect 指定的站內頁面', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok(view)))
     const { w, router, auth } = await mountAt('/login?redirect=/checkout')
-    await w.find('#lg-email').setValue('a@b.co')
+    await w.find('#lg-account').setValue('a@b.co')
     await w.find('#lg-pw').setValue('password-1234')
     await w.find('form').trigger('submit')
     await flushPromises()
@@ -65,21 +65,32 @@ describe('LoginView', () => {
   it('redirect 指向外部網址時回首頁', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok(view)))
     const { w, router } = await mountAt('/login?redirect=//evil.example')
-    await w.find('#lg-email').setValue('a@b.co')
+    await w.find('#lg-account').setValue('a@b.co')
     await w.find('#lg-pw').setValue('password-1234')
     await w.find('form').trigger('submit')
     await flushPromises()
     expect(router.currentRoute.value.path).toBe('/')
   })
 
+  it('可以用帳號或 Email 登入，原樣送出', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok(view))
+    vi.stubGlobal('fetch', fetchMock)
+    const { w } = await mountAt('/login')
+    await w.find('#lg-account').setValue(' Ming ')
+    await w.find('#lg-pw').setValue('password-1234')
+    await w.find('form').trigger('submit')
+    await flushPromises()
+    expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toEqual({ account: 'Ming', password: 'password-1234' })
+  })
+
   it('帳密錯誤顯示訊息並留在原頁', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fail(401, 'LOGIN_FAILED')))
     const { w, router, auth } = await mountAt('/login')
-    await w.find('#lg-email').setValue('a@b.co')
+    await w.find('#lg-account').setValue('a@b.co')
     await w.find('#lg-pw').setValue('bad-password')
     await w.find('form').trigger('submit')
     await flushPromises()
-    expect(w.find('[role=alert]').text()).toBe('Email 或密碼錯誤')
+    expect(w.find('[role=alert]').text()).toBe('帳號、Email 或密碼錯誤')
     expect(auth.isLoggedIn).toBe(false)
     expect(router.currentRoute.value.path).toBe('/login')
   })
@@ -92,7 +103,7 @@ describe('LoginView', () => {
       ),
     )
     const { w } = await mountAt('/login')
-    await w.find('#lg-email').setValue('a@b.co')
+    await w.find('#lg-account').setValue('a@b.co')
     await w.find('#lg-pw').setValue('bad-password')
     await w.find('form').trigger('submit')
     await flushPromises()
@@ -102,7 +113,7 @@ describe('LoginView', () => {
   it('鎖定但沒帶秒數時用一般訊息', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fail(429, 'LOGIN_LOCKED')))
     const { w } = await mountAt('/login')
-    await w.find('#lg-email').setValue('a@b.co')
+    await w.find('#lg-account').setValue('a@b.co')
     await w.find('#lg-pw').setValue('bad-password')
     await w.find('form').trigger('submit')
     await flushPromises()
@@ -117,6 +128,10 @@ describe('LoginView', () => {
 
 describe('RegisterView', () => {
   async function fill(w: Awaited<ReturnType<typeof mountAt>>['w'], pw: string, confirm: string) {
+    // 沒填帳號才補預設值，讓測試可先指定帳號
+    if (!(w.find('#rg-username').element as HTMLInputElement).value) {
+      await w.find('#rg-username').setValue('ming_01')
+    }
     await w.find('#rg-email').setValue('a@b.co')
     await w.find('#rg-pw').setValue(pw)
     await w.find('#rg-confirm').setValue(confirm)
@@ -147,6 +162,62 @@ describe('RegisterView', () => {
     await fill(w, long, long)
     expect(w.text()).toContain('密碼太長')
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('帳號格式不對不送出', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const { w } = await mountAt('/register')
+    for (const bad of ['ab', 'has space', 'a@b.co', '-lead', '中文帳號']) {
+      await w.find('#rg-username').setValue(bad)
+      await fill(w, 'password-1234', 'password-1234')
+      expect(w.text()).toContain('帳號需為 3 到 30 個')
+    }
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('離開帳號欄位會檢查，已被使用就提示', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ available: 0 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const { w } = await mountAt('/register')
+    await w.find('#rg-username').setValue('Taken_Name')
+    await w.find('#rg-username').trigger('blur')
+    await flushPromises()
+    expect(String(fetchMock.mock.calls[0]![0])).toContain('/auth/username-available')
+    expect(String(fetchMock.mock.calls[0]![0])).toContain('username=Taken_Name')
+    expect(w.text()).toContain('這個帳號已經有人使用')
+    // 已知被使用就不送出註冊
+    await fill(w, 'password-1234', 'password-1234')
+    expect(fetchMock.mock.calls.every((c) => String(c[0]).includes('username-available'))).toBe(true)
+  })
+
+  it('帳號可用時不顯示錯誤，改過欄位後清除提示', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok({ available: 1 })))
+    const { w } = await mountAt('/register')
+    await w.find('#rg-username').setValue('free_name')
+    await w.find('#rg-username').trigger('blur')
+    await flushPromises()
+    expect(w.text()).not.toContain('這個帳號已經有人使用')
+  })
+
+  it('檢查帳號失敗不擋註冊', async () => {
+    const fetchMock = vi.fn().mockRejectedValueOnce(new TypeError('x')).mockResolvedValue(ok(view))
+    vi.stubGlobal('fetch', fetchMock)
+    const { w, auth } = await mountAt('/register')
+    await w.find('#rg-username').trigger('blur')
+    await w.find('#rg-username').setValue('ming_01')
+    await w.find('#rg-username').trigger('blur')
+    await flushPromises()
+    await fill(w, 'password-1234', 'password-1234')
+    expect(auth.isLoggedIn).toBe(true)
+  })
+
+  it('註冊時帳號被搶先使用，標在帳號欄位', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fail(409, 'USERNAME_TAKEN')))
+    const { w, auth } = await mountAt('/register')
+    await fill(w, 'password-1234', 'password-1234')
+    expect(w.text()).toContain('這個帳號已經有人使用')
+    expect(auth.isLoggedIn).toBe(false)
   })
 
   it('成功後直接登入', async () => {
