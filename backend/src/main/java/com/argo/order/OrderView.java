@@ -6,7 +6,7 @@ import java.util.List;
 
 public record OrderView(String orderNo, OrderStatus status, String currency, BigDecimal subtotal,
 		BigDecimal shippingFee, BigDecimal total, OffsetDateTime createdAt, OffsetDateTime expiresAt,
-		OffsetDateTime paidAt, String cancelReason, String customerName, String customerEmail,
+		OffsetDateTime paidAt, OffsetDateTime shippedAt, String trackingNo, String cancelReason, String customerName, String customerEmail,
 		String recipientName, String recipientPhone, String postalCode, String city, String address,
 		List<ItemView> items, PaymentView payment) {
 
@@ -31,7 +31,7 @@ public record OrderView(String orderNo, OrderStatus status, String currency, Big
 	public static OrderView from(ShopOrder o, Payment lastPayment, long expireMinutes) {
 		return new OrderView(o.getOrderNo(), o.getStatus(), o.getCurrency(), o.getSubtotal(),
 				o.getShippingFee(), o.getTotal(), o.getCreatedAt(), o.getCreatedAt().plusMinutes(expireMinutes),
-				o.getPaidAt(), o.getCancelReason(), o.getCustomerName(), o.getCustomerEmail(),
+				o.getPaidAt(), o.getShippedAt(), o.getTrackingNo(), o.getCancelReason(), o.getCustomerName(), o.getCustomerEmail(),
 				o.getRecipientName(), o.getRecipientPhone(), o.getPostalCode(), o.getCity(), o.getAddress(),
 				o.getItems().stream().map(ItemView::from).toList(), PaymentView.from(lastPayment));
 	}

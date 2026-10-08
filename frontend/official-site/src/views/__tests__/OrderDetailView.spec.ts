@@ -21,6 +21,8 @@ function order(extra: Partial<Order> = {}): Order {
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 20 * 60_000).toISOString(),
     paidAt: null,
+    shippedAt: null,
+    trackingNo: null,
     cancelReason: null,
     customerName: '王小明',
     customerEmail: 'ming@example.com',
@@ -188,6 +190,19 @@ describe('OrderDetailView', () => {
     await flushPromises()
     expect(cancelOrder).toHaveBeenCalledWith('AR261005-ABC234', 'ming@example.com')
     expect(w.text()).toContain('訂單已取消')
+  })
+
+  it('已出貨會顯示物流單號', async () => {
+    vi.mocked(getOrder).mockResolvedValue(order({ status: 'SHIPPED', trackingNo: 'TW123' }))
+    const w = await mountOrder()
+    expect(w.text()).toContain('訂單已出貨')
+    expect(w.text()).toContain('TW123')
+  })
+
+  it('店家取消顯示對應說明', async () => {
+    vi.mocked(getOrder).mockResolvedValue(order({ status: 'CANCELLED', cancelReason: 'STAFF' }))
+    const w = await mountOrder()
+    expect(w.text()).toContain('由店家取消')
   })
 
   it('不確認就不取消', async () => {

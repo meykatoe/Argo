@@ -9,6 +9,17 @@ export const ACTION_LABELS: Record<AuditAction, string> = {
   ACCESS_DENIED: '越權被拒',
   ACCOUNT_CREATED: '建立帳號',
   CARD_EXTRA_DISCOUNT_UPDATE: '修改額外折扣',
+  CARD_SET_ON_SALE_UPDATE: '系列上下架',
+  CARD_SET_EXTRA_DISCOUNT_UPDATE: '修改系列折扣',
+  ORDER_SHIPPED: '訂單出貨',
+  ORDER_COMPLETED: '訂單完成',
+  ORDER_CANCELLED: '取消訂單',
+  ORDER_NOTE_UPDATED: '修改訂單備註',
+  IP_BLOCKED: '封鎖 IP',
+  IP_UNBLOCKED: '解除封鎖 IP',
+  IP_RULE_UPDATED: '修改自動封鎖規則',
+  IP_ALLOWLIST_ADDED: '新增白名單',
+  IP_ALLOWLIST_REMOVED: '移除白名單',
   AUDIT_LOG_VIEWED: '查看稽核紀錄',
 }
 
@@ -51,6 +62,12 @@ export function summarize(log: AuditLog): string {
   switch (log.action) {
     case 'CARD_EXTRA_DISCOUNT_UPDATE':
       return `${str(d.cardSetId)} 折扣 ${str(d.extraDiscountBefore)} → ${str(d.extraDiscountAfter)}，售價 ${str(d.salePriceBefore)} → ${str(d.salePriceAfter)}`
+    case 'ORDER_CANCELLED':
+      return `${str(log.targetId)}（原狀態 ${str(d.statusBefore)}）`
+    case 'ORDER_SHIPPED':
+    case 'ORDER_COMPLETED':
+    case 'ORDER_NOTE_UPDATED':
+      return str(log.targetId)
     case 'LOGIN_FAILED':
       return REASONS[str(d.reason)] ?? str(d.reason)
     case 'ACCESS_DENIED':

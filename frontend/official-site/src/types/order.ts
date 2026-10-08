@@ -28,6 +28,8 @@ export interface Order {
   createdAt: string
   expiresAt: string
   paidAt: string | null
+  shippedAt: string | null
+  trackingNo: string | null
   cancelReason: string | null
   customerName: string
   customerEmail: string

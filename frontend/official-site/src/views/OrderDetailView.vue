@@ -38,6 +38,17 @@ const cancelling = ref(false)
 
 const showTestCards = import.meta.env.DEV
 
+const cancelText = computed(() => {
+  switch (order.value?.cancelReason) {
+    case 'EXPIRED':
+      return t('order.cancelledExpired')
+    case 'STAFF':
+      return t('order.cancelledStaff')
+    default:
+      return t('order.cancelledCustomer')
+  }
+})
+
 const pending = computed(() => order.value?.status === 'PENDING_PAYMENT')
 const expiresAt = computed(() => (pending.value ? order.value?.expiresAt : undefined))
 const countdown = useCountdown(expiresAt, () => load())
@@ -180,8 +191,13 @@ onBeforeUnmount(clearCard)
           {{ t('payment.last4', { n: order.payment.cardLast4 }) }}
         </div>
       </div>
+      <div v-else-if="order.status === 'SHIPPED' || order.status === 'COMPLETED'" class="banner ok">
+        <strong>{{ order.status === 'SHIPPED' ? t('order.shippedThanks') : t('order.completedThanks') }}</strong>
+        <div v-if="order.status === 'SHIPPED'">{{ t('order.shippedHint') }}</div>
+        <div v-if="order.trackingNo" class="small">{{ t('order.trackingNo', { no: order.trackingNo }) }}</div>
+      </div>
       <div v-else-if="order.status === 'CANCELLED'" class="banner off">
-        {{ order.cancelReason === 'EXPIRED' ? t('order.cancelledExpired') : t('order.cancelledCustomer') }}
+        {{ cancelText }}
       </div>
 
       <div class="layout">
