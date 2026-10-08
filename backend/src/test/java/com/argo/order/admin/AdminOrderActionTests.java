@@ -53,8 +53,8 @@ class AdminOrderActionTests {
 	@BeforeEach
 	void setUp() {
 		mvc = MockMvcBuilders.webAppContextSetup(wac).build();
-		auth.create("actsvc1", "password-1234", StaffRole.SERVICE);
-		hdr = "Bearer " + auth.login("actsvc1", "password-1234", LoginPortal.ADMIN).token();
+		auth.create("actsvc1", "Password-1234", StaffRole.SERVICE);
+		hdr = "Bearer " + auth.login("actsvc1", "Password-1234", LoginPortal.ADMIN).token();
 		sets.save(new CardSet("ZT-09", "Test Set", "booster"));
 		Card c = new Card("ZT-09|A|");
 		c.fill(new OptcgCard("ZT09-A", "ZT09-A", "ZT-09", "Test Set", "Card A", null, "C", "Red",

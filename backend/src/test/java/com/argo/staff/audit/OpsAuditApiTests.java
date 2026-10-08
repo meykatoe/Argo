@@ -26,7 +26,7 @@ import org.springframework.web.context.WebApplicationContext;
 @Transactional
 class OpsAuditApiTests {
 
-	static final String PW = "password-1234";
+	static final String PW = "Password-1234";
 
 	@Autowired
 	StaffAuthService auth;

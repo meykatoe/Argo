@@ -58,8 +58,8 @@ class AuditLogTests {
 				"Character", "1", "1000", null, null, null, null, null, 10.0, 1.0, null),
 				new BigDecimal("0.9"));
 		cardId = cards.saveAndFlush(c).getId();
-		auth.create("gen1", "password-1234", StaffRole.GENERAL);
-		auth.create("svc1", "password-1234", StaffRole.SERVICE);
+		auth.create("gen1", "Password-1234", StaffRole.GENERAL);
+		auth.create("svc1", "Password-1234", StaffRole.SERVICE);
 	}
 
 	private List<Map<String, Object>> logs(String where, Object... args) {
@@ -70,7 +70,7 @@ class AuditLogTests {
 	void loginSuccessIsRecordedWithRoleAndIp() throws Exception {
 		mvc.perform(post("/api/admin/auth/login").contentType(MediaType.APPLICATION_JSON)
 				.header("User-Agent", "JUnit")
-				.content("{\"username\":\"gen1\",\"password\":\"password-1234\"}"));
+				.content("{\"username\":\"gen1\",\"password\":\"Password-1234\"}"));
 		var rows = logs("action = 'LOGIN_SUCCESS' and username = 'gen1'");
 		assertEquals(1, rows.size());
 		assertEquals("GENERAL", rows.get(0).get("role"));
@@ -96,14 +96,14 @@ class AuditLogTests {
 
 	@Test
 	void logoutIsRecorded() {
-		String token = auth.login("gen1", "password-1234", LoginPortal.ADMIN).token();
+		String token = auth.login("gen1", "Password-1234", LoginPortal.ADMIN).token();
 		auth.logout(token);
 		assertEquals(1, logs("action = 'LOGOUT' and username = 'gen1'").size());
 	}
 
 	@Test
 	void discountChangeRecordsActorAndBeforeAfter() throws Exception {
-		String token = auth.login("gen1", "password-1234", LoginPortal.ADMIN).token();
+		String token = auth.login("gen1", "Password-1234", LoginPortal.ADMIN).token();
 		mvc.perform(patch("/api/admin/cards/" + cardId + "/extra-discount")
 				.header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"extraDiscount\":0.4}"));
@@ -122,7 +122,7 @@ class AuditLogTests {
 
 	@Test
 	void forbiddenAccessIsRecorded() throws Exception {
-		String token = auth.login("svc1", "password-1234", LoginPortal.ADMIN).token();
+		String token = auth.login("svc1", "Password-1234", LoginPortal.ADMIN).token();
 		mvc.perform(get("/api/admin/cards").header("Authorization", "Bearer " + token));
 		var rows = logs("action = 'ACCESS_DENIED' and username = 'svc1'");
 		assertEquals(1, rows.size());
@@ -132,7 +132,7 @@ class AuditLogTests {
 
 	@Test
 	void logsCannotBeUpdatedOrDeleted() {
-		auth.login("gen1", "password-1234", LoginPortal.ADMIN);
+		auth.login("gen1", "Password-1234", LoginPortal.ADMIN);
 		assertThrows(DataAccessException.class, () -> jdbc.update("update staff_audit_log set username = 'x'"));
 	}
 }

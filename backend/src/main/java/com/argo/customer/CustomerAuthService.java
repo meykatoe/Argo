@@ -2,6 +2,7 @@ package com.argo.customer;
 
 import com.argo.common.ApiException;
 import com.argo.common.ErrorCode;
+import com.argo.common.PasswordPolicy;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -53,6 +54,10 @@ public class CustomerAuthService {
 		if (password.getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
 			throw new ApiException(ErrorCode.VALIDATION_ERROR,
 					Map.of("password", "validation.passwordTooLong"));
+		}
+		if (!PasswordPolicy.customerOk(password)) {
+			throw new ApiException(ErrorCode.VALIDATION_ERROR,
+					Map.of("password", "validation.passwordWeak"));
 		}
 		if (accounts.findByEmail(mail).isPresent()) {
 			throw new ApiException(ErrorCode.EMAIL_TAKEN);

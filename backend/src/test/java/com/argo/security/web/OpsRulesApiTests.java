@@ -30,7 +30,7 @@ import org.springframework.web.context.WebApplicationContext;
 @Transactional
 class OpsRulesApiTests {
 
-	static final String PW = "password-1234";
+	static final String PW = "Password-1234";
 
 	@Autowired
 	WebApplicationContext wac;

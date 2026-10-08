@@ -73,8 +73,8 @@ class IpGuardFilterTests {
 	}
 
 	private void blockNow(String ip) {
-		staff.create("op-" + ip.replace('.', '-'), "password-1234", StaffRole.OPS);
-		var actor = staff.login("op-" + ip.replace('.', '-'), "password-1234", LoginPortal.OPS);
+		staff.create("op-" + ip.replace('.', '-'), "Password-1234", StaffRole.OPS);
+		var actor = staff.login("op-" + ip.replace('.', '-'), "Password-1234", LoginPortal.OPS);
 		var acc = jdbc.queryForObject("select id from staff_account where username = ?", Long.class, actor.username());
 		// 直接寫入，避免依賴運維 API
 		jdbc.update("insert into ip_block (ip, reason, blocked_by, staff_id) values (?, 'test', 'tester', ?)", ip, acc);

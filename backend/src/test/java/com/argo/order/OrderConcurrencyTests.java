@@ -75,7 +75,8 @@ class OrderConcurrencyTests {
 		pool.shutdown();
 		assertEquals(5, success);
 		assertEquals(0, stock(c));
-		assertEquals(5, jdbc.queryForObject("select count(*) from shop_order", Integer.class));
+		assertEquals(5, jdbc.queryForObject(
+				"select count(*) from shop_order where customer_email = 'buyer@test.local'", Integer.class));
 	}
 
 	@Test

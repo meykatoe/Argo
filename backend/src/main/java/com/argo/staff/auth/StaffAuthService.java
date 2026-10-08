@@ -2,6 +2,7 @@ package com.argo.staff.auth;
 
 import com.argo.common.ApiException;
 import com.argo.common.ErrorCode;
+import com.argo.common.PasswordPolicy;
 import com.argo.staff.audit.AuditAction;
 import com.argo.staff.audit.AuditLogService;
 import java.nio.charset.StandardCharsets;
@@ -24,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class StaffAuthService {
 
-	public static final int MIN_PASSWORD = 10;
 	private static final Pattern USERNAME = Pattern.compile("^[a-z0-9._-]{3,50}$");
 
 	private final StaffAccountRepository accounts;
@@ -58,8 +58,9 @@ public class StaffAuthService {
 		if (!USERNAME.matcher(name).matches()) {
 			throw new IllegalArgumentException("username must be 3-50 chars of a-z 0-9 . _ -");
 		}
-		if (password == null || password.length() < MIN_PASSWORD) {
-			throw new IllegalArgumentException("password must be at least " + MIN_PASSWORD + " chars");
+		if (!PasswordPolicy.staffOk(password)) {
+			throw new IllegalArgumentException(
+					"password must be at least 8 chars with upper, lower and digit");
 		}
 		if (accounts.findByUsername(name).isPresent()) {
 			throw new IllegalArgumentException("username already exists");

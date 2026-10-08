@@ -53,10 +53,10 @@ class AdminCardApiTests {
 				"Character", "1", "1000", null, null, null, null, null, 10.0, 1.0, null),
 				new BigDecimal("0.9"));
 		id = cards.saveAndFlush(c).getId();
-		auth.create("gen1", "password-1234", StaffRole.GENERAL);
-		auth.create("svc1", "password-1234", StaffRole.SERVICE);
-		general = auth.login("gen1", "password-1234", LoginPortal.ADMIN).token();
-		service = auth.login("svc1", "password-1234", LoginPortal.ADMIN).token();
+		auth.create("gen1", "Password-1234", StaffRole.GENERAL);
+		auth.create("svc1", "Password-1234", StaffRole.SERVICE);
+		general = auth.login("gen1", "Password-1234", LoginPortal.ADMIN).token();
+		service = auth.login("svc1", "Password-1234", LoginPortal.ADMIN).token();
 	}
 
 	@Test

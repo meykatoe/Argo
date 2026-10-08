@@ -6,7 +6,7 @@ import FormField from '@/components/FormField.vue'
 import { useAuthStore } from '@/stores/auth'
 import { errorText } from '@/utils/error'
 import { safeRedirect } from '@/utils/redirect'
-import { isEmail, isPasswordLongEnough, isPasswordTooLong } from '@/utils/validators'
+import { isEmail, isPasswordLongEnough, isPasswordMixed, isPasswordTooLong } from '@/utils/validators'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -24,7 +24,9 @@ function validate(): boolean {
     ? 'validation.passwordShort'
     : isPasswordTooLong(form.password)
       ? 'validation.passwordLong'
-      : ''
+      : !isPasswordMixed(form.password)
+        ? 'validation.passwordWeak'
+        : ''
   errors.confirm = form.confirm === form.password ? '' : 'validation.passwordMismatch'
   return Object.values(errors).every((e) => !e)
 }

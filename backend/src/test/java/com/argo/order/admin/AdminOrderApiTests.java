@@ -39,10 +39,10 @@ class AdminOrderApiTests {
 	@BeforeEach
 	void setUp() {
 		mvc = MockMvcBuilders.webAppContextSetup(wac).build();
-		auth.create("ordsvc1", "password-1234", StaffRole.SERVICE);
-		auth.create("ordops1", "password-1234", StaffRole.OPS);
-		service = auth.login("ordsvc1", "password-1234", LoginPortal.ADMIN).token();
-		ops = auth.login("ordops1", "password-1234", LoginPortal.OPS).token();
+		auth.create("ordsvc1", "Password-1234", StaffRole.SERVICE);
+		auth.create("ordops1", "Password-1234", StaffRole.OPS);
+		service = auth.login("ordsvc1", "Password-1234", LoginPortal.ADMIN).token();
+		ops = auth.login("ordops1", "Password-1234", LoginPortal.OPS).token();
 		save("ZT-ORD-0001", "zt-buyer-one@example.test");
 		ShopOrder paid = save("ZT-ORD-0002", "zt-buyer-two@example.test");
 		paid.markPaid();

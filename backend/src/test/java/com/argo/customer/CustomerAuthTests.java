@@ -58,6 +58,12 @@ class CustomerAuthTests {
 	}
 
 	@Test
+	void registerRejectsWeakPassword() {
+		assertEquals("VALIDATION_ERROR", code(() -> auth.register("weak@test.local", "abcdefgh", null)));
+		assertEquals("VALIDATION_ERROR", code(() -> auth.register("weak@test.local", "12345678", null)));
+	}
+
+	@Test
 	void registerStoresHashedPasswordAndLogsIn() {
 		var view = auth.register("  Buyer@Test.Local ", PW, " 小明 ");
 		assertEquals("buyer@test.local", view.email());

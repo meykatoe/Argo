@@ -45,7 +45,7 @@ class StaffAuthTests {
 	@BeforeEach
 	void setUp() {
 		mvc = MockMvcBuilders.webAppContextSetup(wac).build();
-		auth.create("Alice", "password-1234", StaffRole.GENERAL);
+		auth.create("Alice", "Password-1234", StaffRole.GENERAL);
 	}
 
 	private String code(Runnable r) {
@@ -55,21 +55,24 @@ class StaffAuthTests {
 	@Test
 	void passwordIsHashed() {
 		StaffAccount a = accounts.findByUsername("alice").orElseThrow();
-		assertNotEquals("password-1234", a.getPasswordHash());
+		assertNotEquals("Password-1234", a.getPasswordHash());
 		assertTrue(a.getPasswordHash().startsWith("$2"));
 	}
 
 	@Test
 	void createValidatesInput() {
-		assertThrows(IllegalArgumentException.class, () -> auth.create("alice", "password-1234", StaffRole.ADMIN));
-		assertThrows(IllegalArgumentException.class, () -> auth.create("ALICE", "password-1234", StaffRole.ADMIN));
+		assertThrows(IllegalArgumentException.class, () -> auth.create("alice", "Password-1234", StaffRole.ADMIN));
+		assertThrows(IllegalArgumentException.class, () -> auth.create("ALICE", "Password-1234", StaffRole.ADMIN));
 		assertThrows(IllegalArgumentException.class, () -> auth.create("bob", "short", StaffRole.ADMIN));
-		assertThrows(IllegalArgumentException.class, () -> auth.create("a b", "password-1234", StaffRole.ADMIN));
+		assertThrows(IllegalArgumentException.class, () -> auth.create("bob", "password1234", StaffRole.ADMIN));
+		assertThrows(IllegalArgumentException.class, () -> auth.create("bob", "PASSWORD1234", StaffRole.ADMIN));
+		assertThrows(IllegalArgumentException.class, () -> auth.create("bob", "PasswordOnly", StaffRole.ADMIN));
+		assertThrows(IllegalArgumentException.class, () -> auth.create("a b", "Password-1234", StaffRole.ADMIN));
 	}
 
 	@Test
 	void loginIsCaseInsensitiveOnUsername() {
-		var res = auth.login(" ALICE ", "password-1234", LoginPortal.ADMIN);
+		var res = auth.login(" ALICE ", "Password-1234", LoginPortal.ADMIN);
 		assertEquals("alice", res.username());
 		assertEquals(StaffRole.GENERAL, res.role());
 		assertTrue(auth.authenticate(res.token()).isPresent());
@@ -77,7 +80,7 @@ class StaffAuthTests {
 
 	@Test
 	void tokenIsStoredHashedOnly() {
-		var res = auth.login("alice", "password-1234", LoginPortal.ADMIN);
+		var res = auth.login("alice", "Password-1234", LoginPortal.ADMIN);
 		assertFalse(sessions.existsById(res.token()));
 		Long staffId = accounts.findByUsername("alice").orElseThrow().getId();
 		assertEquals(1, jdbc.queryForObject(
@@ -87,7 +90,7 @@ class StaffAuthTests {
 	@Test
 	void wrongPasswordAndUnknownUserLookAlike() {
 		assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN)));
-		assertEquals("LOGIN_FAILED", code(() -> auth.login("nobody", "password-1234", LoginPortal.ADMIN)));
+		assertEquals("LOGIN_FAILED", code(() -> auth.login("nobody", "Password-1234", LoginPortal.ADMIN)));
 	}
 
 	@Test
@@ -98,7 +101,7 @@ class StaffAuthTests {
 		}
 		assertEquals("LOGIN_LOCKED", code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN)));
 		// 鎖定期間連正確密碼也不行
-		assertEquals("LOGIN_LOCKED", code(() -> auth.login("alice", "password-1234", LoginPortal.ADMIN)));
+		assertEquals("LOGIN_LOCKED", code(() -> auth.login("alice", "Password-1234", LoginPortal.ADMIN)));
 	}
 
 	@Test
@@ -116,7 +119,7 @@ class StaffAuthTests {
 		for (int i = 0; i < 3; i++) {
 			code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN));
 		}
-		assertEquals("alice", auth.login("alice", "password-1234", LoginPortal.ADMIN).username());
+		assertEquals("alice", auth.login("alice", "Password-1234", LoginPortal.ADMIN).username());
 		// 重新計算，再錯 3 次仍未鎖定
 		for (int i = 0; i < 3; i++) {
 			assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN)));
@@ -131,7 +134,7 @@ class StaffAuthTests {
 		accounts.flush();
 		jdbc.update("update staff_account set locked_until = now() - interval '1 second' where username = 'alice'");
 		em.clear();
-		assertEquals("alice", auth.login("alice", "password-1234", LoginPortal.ADMIN).username());
+		assertEquals("alice", auth.login("alice", "Password-1234", LoginPortal.ADMIN).username());
 	}
 
 	@Test
@@ -146,15 +149,15 @@ class StaffAuthTests {
 
 	@Test
 	void disabledAccountCannotLoginOrUseSession() {
-		var res = auth.login("alice", "password-1234", LoginPortal.ADMIN);
+		var res = auth.login("alice", "Password-1234", LoginPortal.ADMIN);
 		accounts.findByUsername("alice").orElseThrow().setDisabled(true);
 		assertTrue(auth.authenticate(res.token()).isEmpty());
-		assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "password-1234", LoginPortal.ADMIN)));
+		assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "Password-1234", LoginPortal.ADMIN)));
 	}
 
 	@Test
 	void logoutInvalidatesToken() {
-		var res = auth.login("alice", "password-1234", LoginPortal.ADMIN);
+		var res = auth.login("alice", "Password-1234", LoginPortal.ADMIN);
 		auth.logout(res.token());
 		assertTrue(auth.authenticate(res.token()).isEmpty());
 	}
@@ -163,7 +166,7 @@ class StaffAuthTests {
 	void loginEndpointIsOpenAndMeNeedsToken() throws Exception {
 		mvc.perform(get("/api/admin/auth/me")).andExpect(status().isUnauthorized());
 		String body = mvc.perform(post("/api/admin/auth/login").contentType(MediaType.APPLICATION_JSON)
-				.content("{\"username\":\"alice\",\"password\":\"password-1234\"}"))
+				.content("{\"username\":\"alice\",\"password\":\"Password-1234\"}"))
 				.andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 		String token = body.replaceAll(".*\"token\":\"([^\"]+)\".*", "$1");
 		mvc.perform(get("/api/admin/auth/me").header("Authorization", "Bearer " + token))
