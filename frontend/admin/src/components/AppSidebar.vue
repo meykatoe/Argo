@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import type { MenuNode, Session } from '@/types'
 import { roleName } from '@/utils/role'
@@ -41,6 +41,48 @@ watch(
 )
 
 const initial = computed(() => props.session.username.slice(0, 1).toUpperCase())
+
+// 滑塊位置，單一元素在各列之間滑動
+const nav = ref<HTMLElement | null>(null)
+const slider = ref<{ top: number; height: number } | null>(null)
+const ready = ref(false)
+const hovering = ref(false)
+
+function moveTo(el: Element | null) {
+  if (el instanceof HTMLElement) {
+    slider.value = { top: el.offsetTop, height: el.offsetHeight }
+  } else {
+    slider.value = null
+  }
+}
+
+// 回到目前頁面所在的列
+function rest() {
+  hovering.value = false
+  moveTo(nav.value?.querySelector('a.router-link-exact-active') ?? null)
+}
+
+function onOver(e: Event) {
+  const row = (e.target as HTMLElement).closest('.row')
+  if (row) {
+    hovering.value = true
+    moveTo(row)
+  }
+}
+
+async function settle() {
+  await nextTick()
+  rest()
+}
+
+watch(() => route.path, settle)
+watch(closed, settle)
+watch(() => props.menu, settle, { deep: true })
+onMounted(async () => {
+  await settle()
+  // 第一次定位不播動畫
+  requestAnimationFrame(() => (ready.value = true))
+})
 </script>
 
 <template>
@@ -55,16 +97,23 @@ const initial = computed(() => props.session.username.slice(0, 1).toUpperCase())
       </div>
     </div>
 
-    <nav>
+    <nav ref="nav" @pointerover="onOver" @pointerleave="rest" @focusin="onOver" @focusout="rest">
+      <span
+        v-if="slider"
+        class="slider"
+        :class="{ ready, hover: hovering }"
+        :style="{ transform: `translateY(${slider.top}px)`, height: `${slider.height}px` }"
+        aria-hidden="true"
+      />
       <ul v-if="menu.length > 0" class="list">
         <li v-for="n in menu" :key="n.code">
-          <RouterLink v-if="n.path && n.children.length === 0" :to="n.path" class="item" @click="emit('navigate')">
+          <RouterLink v-if="n.path && n.children.length === 0" :to="n.path" class="row item" @click="emit('navigate')">
             {{ n.title }}
           </RouterLink>
           <template v-else>
             <button
               type="button"
-              class="group"
+              class="row group"
               :aria-expanded="!closed.has(n.code)"
               @click="toggle(n.code)"
             >
@@ -73,7 +122,7 @@ const initial = computed(() => props.session.username.slice(0, 1).toUpperCase())
             </button>
             <ul v-show="!closed.has(n.code)" class="sub">
               <li v-for="c in n.children.filter((x) => x.path)" :key="c.code">
-                <RouterLink :to="c.path!" class="item" @click="emit('navigate')">
+                <RouterLink :to="c.path!" class="row item" @click="emit('navigate')">
                   {{ c.title }}
                 </RouterLink>
               </li>
@@ -145,9 +194,10 @@ const initial = computed(() => props.session.username.slice(0, 1).toUpperCase())
 }
 
 nav {
+  position: relative;
   flex: 1;
   overflow-y: auto;
-  padding: 8px 0;
+  padding: 8px;
 }
 
 .list,
@@ -157,52 +207,79 @@ nav {
   list-style: none;
 }
 
-.group {
+/* 滑塊，停在目前頁面，滑鼠移上去時跟著走 */
+.slider {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  left: 8px;
+  z-index: 0;
+  border-radius: 8px;
+  background: var(--color-primary);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
+  pointer-events: none;
+}
+
+.slider.ready {
+  transition:
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.2s;
+}
+
+.slider.hover {
+  background: rgb(255 255 255 / 12%);
+  box-shadow: none;
+}
+
+/* 父層與子層同樣大小，只用縮排區分 */
+.row {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 10px 20px;
+  height: 40px;
+  margin: 2px 0;
+  padding: 0 12px;
   border: 0;
-  border-radius: 0;
+  border-radius: 8px;
   background: transparent;
-  color: #9ca3af;
-  font-size: 13px;
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1;
   text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
 }
 
-.group:hover {
+.row:hover,
+.row:focus-visible {
   color: #fff;
+  outline: none;
+}
+
+.group {
+  font-weight: 600;
+}
+
+.sub .row {
+  padding-left: 28px;
+}
+
+.item.router-link-exact-active {
+  color: #fff;
+  font-weight: 600;
 }
 
 .arrow {
-  transition: transform 0.15s;
+  transition: transform 0.2s;
 }
 
 .arrow.shut {
   transform: rotate(-90deg);
-}
-
-.item {
-  display: block;
-  padding: 9px 20px 9px 32px;
-  border-left: 3px solid transparent;
-  color: #e5e7eb;
-}
-
-.list > li > .item {
-  padding-left: 20px;
-}
-
-.item:hover {
-  background: rgb(255 255 255 / 6%);
-}
-
-.item.router-link-exact-active {
-  border-left-color: var(--color-primary);
-  background: rgb(255 255 255 / 10%);
-  color: #fff;
-  font-weight: 600;
 }
 
 .none {
@@ -226,5 +303,13 @@ nav {
 
 .logout:hover {
   background: rgb(255 255 255 / 8%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slider.ready,
+  .row,
+  .arrow {
+    transition: none;
+  }
 }
 </style>

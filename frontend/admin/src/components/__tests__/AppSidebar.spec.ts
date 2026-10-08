@@ -86,3 +86,33 @@ describe('AppSidebar', () => {
     expect(w.text()).not.toContain('隱藏權限')
   })
 })
+
+describe('AppSidebar 滑塊', () => {
+  it('目前頁面所在的列有滑塊', async () => {
+    const w = await render('/cards')
+    await new Promise((r) => setTimeout(r, 0))
+    expect(w.find('.slider').exists()).toBe(true)
+    expect(w.find('.slider').classes()).not.toContain('hover')
+  })
+
+  it('滑鼠移到列上滑塊進入預覽，離開後回復', async () => {
+    const w = await render('/cards')
+    await new Promise((r) => setTimeout(r, 0))
+    await w.find('a[href="/series"]').trigger('pointerover')
+    expect(w.find('.slider').classes()).toContain('hover')
+    await w.find('nav').trigger('pointerleave')
+    expect(w.find('.slider').classes()).not.toContain('hover')
+  })
+
+  it('父層與子層使用同一種列樣式', async () => {
+    const w = await render('/cards')
+    const rows = w.findAll('.row')
+    expect(rows).toHaveLength(3)
+  })
+
+  it('不在選單內的頁面沒有滑塊', async () => {
+    const w = await render('/nowhere')
+    await new Promise((r) => setTimeout(r, 0))
+    expect(w.find('.slider').exists()).toBe(false)
+  })
+})
