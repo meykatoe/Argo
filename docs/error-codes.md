@@ -39,6 +39,7 @@
 | 2004 | `EMAIL_TAKEN` | 409 | 註冊的 Email 已被使用 |
 | 2005 | `ADMIN_UNAUTHORIZED` | 401 | 員工未登入或登入已失效 |
 | 2006 | `ADMIN_FORBIDDEN` | 403 | 員工角色沒有此功能的權限 |
+| 2007 | `USERNAME_TAKEN` | 409 | 註冊的帳號已被使用 |
 
 ## 3xxx 卡片與系列
 

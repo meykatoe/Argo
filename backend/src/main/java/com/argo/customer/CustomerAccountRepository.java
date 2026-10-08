@@ -11,8 +11,16 @@ public interface CustomerAccountRepository extends JpaRepository<CustomerAccount
 
 	Optional<CustomerAccount> findByEmail(String email);
 
+	Optional<CustomerAccount> findByUsername(String username);
+
+	boolean existsByUsername(String username);
+
 	// 登入時鎖住該列，同一帳號的嘗試依序處理，失敗次數才不會漏算
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select a from CustomerAccount a where a.email = :email")
 	Optional<CustomerAccount> findByEmailForUpdate(@Param("email") String email);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select a from CustomerAccount a where a.username = :username")
+	Optional<CustomerAccount> findByUsernameForUpdate(@Param("username") String username);
 }

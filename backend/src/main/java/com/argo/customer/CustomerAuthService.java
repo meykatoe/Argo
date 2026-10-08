@@ -49,8 +49,13 @@ public class CustomerAuthService {
 
 	// 註冊後直接登入
 	@Transactional
-	public CustomerAuthView register(String email, String password, String name) {
+	public CustomerAuthView register(String username, String email, String password, String name) {
 		String mail = normalize(email);
+		String user = Usernames.normalize(username);
+		if (!Usernames.valid(user)) {
+			throw new ApiException(ErrorCode.VALIDATION_ERROR,
+					Map.of("username", "validation.usernameInvalid"));
+		}
 		if (password.getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
 			throw new ApiException(ErrorCode.VALIDATION_ERROR,
 					Map.of("password", "validation.passwordTooLong"));
@@ -59,26 +64,42 @@ public class CustomerAuthService {
 			throw new ApiException(ErrorCode.VALIDATION_ERROR,
 					Map.of("password", "validation.passwordWeak"));
 		}
+		if (accounts.existsByUsername(user)) {
+			throw new ApiException(ErrorCode.USERNAME_TAKEN);
+		}
 		if (accounts.findByEmail(mail).isPresent()) {
 			throw new ApiException(ErrorCode.EMAIL_TAKEN);
 		}
 		String display = name == null || name.isBlank() ? null : name.trim();
 		CustomerAccount c;
 		try {
-			c = accounts.saveAndFlush(new CustomerAccount(mail, encoder.encode(password), display));
+			c = accounts.saveAndFlush(new CustomerAccount(mail, user, encoder.encode(password), display));
 		} catch (DataIntegrityViolationException e) {
-			// 同時註冊同一信箱
-			throw new ApiException(ErrorCode.EMAIL_TAKEN);
+			// 同時註冊同一帳號或信箱
+			throw new ApiException(accounts.existsByUsername(user) ? ErrorCode.USERNAME_TAKEN : ErrorCode.EMAIL_TAKEN);
 		}
 		c.recordSuccess(OffsetDateTime.now());
 		return open(c);
 	}
 
+	// 註冊前檢查帳號是否可用
+	@Transactional(readOnly = true)
+	public boolean usernameAvailable(String username) {
+		String user = Usernames.normalize(username);
+		if (!Usernames.valid(user)) {
+			throw new ApiException(ErrorCode.VALIDATION_ERROR, Map.of("username", "validation.usernameInvalid"));
+		}
+		return !accounts.existsByUsername(user);
+	}
+
 	// 失敗要記錄，不可隨例外回滾
 	@Transactional(noRollbackFor = ApiException.class)
-	public CustomerAuthView login(String email, String password) {
+	public CustomerAuthView login(String account, String password) {
 		OffsetDateTime now = OffsetDateTime.now();
-		Optional<CustomerAccount> found = accounts.findByEmailForUpdate(normalize(email));
+		// 含 @ 視為 Email，否則視為帳號
+		String key = normalize(account);
+		Optional<CustomerAccount> found = key.contains("@") ? accounts.findByEmailForUpdate(key)
+				: accounts.findByUsernameForUpdate(key);
 		if (found.isEmpty()) {
 			encoder.matches(password, dummyHash);
 			throw new ApiException(ErrorCode.LOGIN_FAILED);
@@ -123,7 +144,7 @@ public class CustomerAuthService {
 		String token = newToken();
 		OffsetDateTime expires = OffsetDateTime.now().plusDays(sessionDays);
 		sessions.save(new CustomerSession(hash(token), c.getId(), expires));
-		return new CustomerAuthView(token, c.getEmail(), c.getName(), expires);
+		return new CustomerAuthView(token, c.getEmail(), c.getUsername(), c.getName(), expires);
 	}
 
 	// 回應帶上還要等幾秒，前端可顯示分鐘數

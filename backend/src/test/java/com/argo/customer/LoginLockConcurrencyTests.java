@@ -28,7 +28,7 @@ class LoginLockConcurrencyTests {
 	@Test
 	void parallelGuessesAreCountedExactly() throws Exception {
 		String email = "parallel-lock@test.local";
-		auth.register(email, "correct-horse-1", null);
+		auth.register(TestUsers.of(email), email, "correct-horse-1", null);
 		int threads = 12;
 		ExecutorService pool = Executors.newFixedThreadPool(threads);
 		CountDownLatch go = new CountDownLatch(1);

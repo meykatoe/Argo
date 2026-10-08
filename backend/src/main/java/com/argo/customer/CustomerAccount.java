@@ -21,6 +21,9 @@ public class CustomerAccount {
 	@Column(nullable = false, unique = true)
 	private String email;
 
+	// 舊帳號可為空，一律以小寫儲存
+	private String username;
+
 	@Column(nullable = false)
 	private String passwordHash;
 
@@ -44,7 +47,12 @@ public class CustomerAccount {
 	}
 
 	public CustomerAccount(String email, String passwordHash, String name) {
+		this(email, null, passwordHash, name);
+	}
+
+	public CustomerAccount(String email, String username, String passwordHash, String name) {
 		this.email = email;
+		this.username = username;
 		this.passwordHash = passwordHash;
 		this.name = name;
 	}
@@ -55,6 +63,10 @@ public class CustomerAccount {
 
 	public String getEmail() {
 		return email;
+	}
+
+	public String getUsername() {
+		return username;
 	}
 
 	public String getPasswordHash() {

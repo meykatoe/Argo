@@ -34,7 +34,7 @@ import org.springframework.web.context.WebApplicationContext;
 		"argo.ratelimit.checkout-per-minute=2" })
 class IpGuardFilterTests {
 
-	static final String LOGIN = "{\"email\":\"nobody@test.local\",\"password\":\"wrong-password\"}";
+	static final String LOGIN = "{\"account\":\"nobody@test.local\",\"password\":\"wrong-password\"}";
 
 	@Autowired
 	WebApplicationContext wac;

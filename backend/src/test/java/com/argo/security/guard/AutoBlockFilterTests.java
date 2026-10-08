@@ -91,7 +91,7 @@ class AutoBlockFilterTests {
 	@Test
 	void repeatedLoginFailuresGetAutoBlocked() throws Exception {
 		String ip = "203.0.113.133";
-		String body = "{\"email\":\"nobody@test.local\",\"password\":\"wrong-password\"}";
+		String body = "{\"account\":\"nobody@test.local\",\"password\":\"wrong-password\"}";
 		for (int i = 0; i < 3; i++) {
 			mvc.perform(from(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(body), ip))
 					.andExpect(status().isUnauthorized());

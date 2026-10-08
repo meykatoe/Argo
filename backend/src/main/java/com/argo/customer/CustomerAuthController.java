@@ -1,5 +1,6 @@
 package com.argo.customer;
 
+import com.argo.common.Flag;
 import com.argo.common.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -22,12 +24,18 @@ public class CustomerAuthController {
 	// 註冊與登入不經攔截器
 	@PostMapping("/register")
 	public Result<CustomerAuthView> register(@Valid @RequestBody RegisterRequest body) {
-		return Result.ok(auth.register(body.email(), body.password(), body.name()));
+		return Result.ok(auth.register(body.username(), body.email(), body.password(), body.name()));
 	}
 
 	@PostMapping("/login")
 	public Result<CustomerAuthView> login(@Valid @RequestBody CustomerLoginRequest body) {
-		return Result.ok(auth.login(body.email(), body.password()));
+		return Result.ok(auth.login(body.account(), body.password()));
+	}
+
+	// 帳號是否可用，1 可用、0 已被使用
+	@GetMapping("/username-available")
+	public Result<UsernameCheck> usernameAvailable(@RequestParam String username) {
+		return Result.ok(new UsernameCheck(Flag.of(auth.usernameAvailable(username))));
 	}
 
 	@PostMapping("/logout")

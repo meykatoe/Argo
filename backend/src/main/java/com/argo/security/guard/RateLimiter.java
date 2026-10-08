@@ -77,6 +77,10 @@ public class RateLimiter {
 
 	// 這次請求要算哪些類別
 	public static List<Kind> kindsFor(String method, String path) {
+		// 帳號查詢也算驗證類，防止被拿來猜帳號
+		if ("GET".equals(method) && path.equals("/api/auth/username-available")) {
+			return List.of(Kind.GENERAL, Kind.AUTH);
+		}
 		if (!"POST".equals(method)) {
 			return List.of(Kind.GENERAL);
 		}

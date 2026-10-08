@@ -21,6 +21,7 @@ public enum ErrorCode {
 	EMAIL_TAKEN(2004, HttpStatus.CONFLICT, "註冊的 Email 已被使用"),
 	ADMIN_UNAUTHORIZED(2005, HttpStatus.UNAUTHORIZED, "員工未登入或登入已失效"),
 	ADMIN_FORBIDDEN(2006, HttpStatus.FORBIDDEN, "員工角色沒有此功能的權限"),
+	USERNAME_TAKEN(2007, HttpStatus.CONFLICT, "註冊的帳號已被使用"),
 
 	// 卡片與系列
 	CARD_NOT_FOUND(3001, HttpStatus.NOT_FOUND, "找不到卡片"),
