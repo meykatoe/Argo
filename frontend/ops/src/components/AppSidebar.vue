@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import logo from '@brand/favicon.svg'
 import type { MenuNode, Session } from '@/types'
 import { roleName } from '@/utils/role'
 
@@ -87,7 +88,10 @@ onMounted(async () => {
 
 <template>
   <aside class="side" aria-label="側邊選單">
-    <div class="brand">Argo <span>{{ brand }}</span></div>
+    <div class="brand">
+      <img :src="logo" alt="" class="logo" width="36" height="36" />
+      <div>Argo <span>{{ brand }}</span></div>
+    </div>
 
     <div class="user">
       <span class="avatar" aria-hidden="true">{{ initial }}</span>
@@ -150,11 +154,21 @@ onMounted(async () => {
 }
 
 .brand {
-  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.5px;
   border-bottom: 1px solid rgb(255 255 255 / 10%);
+}
+
+.logo {
+  flex: none;
+  border-radius: 8px;
+  background: #fff;
+  padding: 2px;
 }
 
 .brand span {

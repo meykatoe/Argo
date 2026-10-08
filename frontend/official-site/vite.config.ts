@@ -11,6 +11,7 @@ export default defineConfig({
     vueDevTools(),
   ],
   server: {
+    fs: { allow: ['..'] },
     port: 5173,
     proxy: {
       // 開發時轉發後端
@@ -18,9 +19,12 @@ export default defineConfig({
       '/api': { target: 'http://localhost:8080', xfwd: true },
     },
   },
+  // 圖示等共用資源放在 shared
+  publicDir: '../shared/public',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@brand': fileURLToPath(new URL('../shared/public', import.meta.url)),
     },
   },
 })
