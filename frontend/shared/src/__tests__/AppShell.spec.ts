@@ -43,7 +43,7 @@ describe('AppShell', () => {
     expect(getMenu).toHaveBeenCalledWith('tk')
     expect(w.find('.cards-page').text()).toBe('cards tk')
     expect(w.find('.crumbs').text()).toContain('卡牌管理')
-    expect(w.find('[aria-current=page]').text()).toBe('卡牌編輯')
+    expect(w.find('.crumbs [aria-current=page]').text()).toBe('卡牌編輯')
   })
 
   it('首頁導向第一個可用頁面', async () => {

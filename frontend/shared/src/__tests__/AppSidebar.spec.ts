@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import type { MenuNode, Session } from '../types'
 import AppSidebar from '../components/AppSidebar.vue'
@@ -42,7 +42,7 @@ describe('AppSidebar', () => {
     const w = await render('/cards')
     const active = w.findAll('a.router-link-exact-active')
     expect(active).toHaveLength(1)
-    expect(active[0]!.text()).toBe('卡牌編輯')
+    expect(active[0]!.find('.label').text()).toBe('卡牌編輯')
   })
 
   it('群組可收合與展開', async () => {
@@ -114,5 +114,49 @@ describe('AppSidebar 滑塊', () => {
     const w = await render('/nowhere')
     await new Promise((r) => setTimeout(r, 0))
     expect(w.find('.slider').exists()).toBe(false)
+  })
+})
+
+describe('AppSidebar 縮小', () => {
+  beforeEach(() => localStorage.clear())
+  afterEach(() => localStorage.clear())
+
+  it('右上角有縮小按鈕，預設是展開', async () => {
+    const w = await render('/cards')
+    const btn = w.find('button.collapse')
+    expect(btn.attributes('aria-label')).toBe('縮小側邊欄')
+    expect(btn.attributes('aria-expanded')).toBe('true')
+    expect(w.find('aside').classes()).not.toContain('collapsed')
+  })
+
+  it('按下去縮成窄條，再按展開，並記住狀態', async () => {
+    const w = await render('/cards')
+    await w.find('button.collapse').trigger('click')
+    expect(w.find('aside').classes()).toContain('collapsed')
+    expect(w.find('button.collapse').attributes('aria-label')).toBe('展開側邊欄')
+    expect(localStorage.getItem('argo.sidebar.collapsed')).toBe('1')
+    await w.find('button.collapse').trigger('click')
+    expect(w.find('aside').classes()).not.toContain('collapsed')
+    expect(localStorage.getItem('argo.sidebar.collapsed')).toBe('0')
+  })
+
+  it('重新載入時還原上次的狀態', async () => {
+    localStorage.setItem('argo.sidebar.collapsed', '1')
+    const w = await render('/cards')
+    expect(w.find('aside').classes()).toContain('collapsed')
+  })
+
+  it('縮小時每個連結仍有名稱，滑過會顯示提示', async () => {
+    localStorage.setItem('argo.sidebar.collapsed', '1')
+    const w = await render('/cards')
+    const link = w.find('a[href="/cards"]')
+    expect(link.attributes('aria-label')).toBe('卡牌編輯')
+    expect(link.attributes('title')).toBe('卡牌編輯')
+    expect(link.find('.short').text()).toBe('卡')
+  })
+
+  it('展開時不顯示多餘的提示', async () => {
+    const w = await render('/cards')
+    expect(w.find('a[href="/cards"]').attributes('title')).toBeUndefined()
   })
 })
