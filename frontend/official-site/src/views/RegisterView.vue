@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { onBeforeUnmount, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import FormField from '@/components/FormField.vue'
@@ -7,8 +7,10 @@ import { useAuthStore } from '@/stores/auth'
 import { ApiError } from '@/api/http'
 import { errorText } from '@/utils/error'
 import { safeRedirect } from '@/utils/redirect'
-import { usernameAvailable } from '@/api/auth'
+import { resendVerification, usernameAvailable } from '@/api/auth'
 import { isEmail, isPasswordLongEnough, isPasswordMixed, isPasswordTooLong, isUsername } from '@/utils/validators'
+
+const RESEND_SECONDS = 60
 
 const { t } = useI18n()
 const route = useRoute()
@@ -19,6 +21,26 @@ const form = reactive({ username: '', email: '', name: '', password: '', confirm
 const errors = reactive<Record<string, string>>({})
 const busy = ref(false)
 const error = ref('')
+
+// 送出後等使用者驗證信箱
+const step = ref<'form' | 'verify'>('form')
+const sentTo = ref('')
+const code = ref('')
+const codeError = ref('')
+const notice = ref('')
+const cooldown = ref(0)
+let timer: ReturnType<typeof setInterval> | undefined
+
+function startCooldown(seconds: number) {
+  cooldown.value = seconds
+  clearInterval(timer)
+  timer = setInterval(() => {
+    cooldown.value -= 1
+    if (cooldown.value <= 0) clearInterval(timer)
+  }, 1000)
+}
+
+onBeforeUnmount(() => clearInterval(timer))
 
 // 離開帳號欄位時檢查是否已被使用，檢查失敗不擋註冊，送出時後端仍會確認
 async function checkUsername() {
@@ -62,9 +84,11 @@ async function submit() {
   busy.value = true
   try {
     await auth.register(form.username.trim(), form.email.trim(), form.password, form.name.trim())
+    sentTo.value = form.email.trim()
     form.password = ''
     form.confirm = ''
-    router.replace(safeRedirect(route.query.redirect))
+    step.value = 'verify'
+    startCooldown(RESEND_SECONDS)
   } catch (e) {
     // 帳號被搶先註冊時標在帳號欄位上
     if (e instanceof ApiError && e.code === 'USERNAME_TAKEN') {
@@ -76,10 +100,84 @@ async function submit() {
     busy.value = false
   }
 }
+
+async function submitCode() {
+  codeError.value = ''
+  notice.value = ''
+  if (!/^\d{6}$/.test(code.value.trim())) {
+    codeError.value = 'validation.codeFormat'
+    return
+  }
+  if (busy.value) return
+  busy.value = true
+  try {
+    await auth.verifyCode(sentTo.value, code.value.trim())
+    router.replace(safeRedirect(route.query.redirect))
+  } catch (e) {
+    error.value = errorText(e)
+  } finally {
+    busy.value = false
+  }
+}
+
+async function resend() {
+  if (cooldown.value > 0) return
+  error.value = ''
+  notice.value = ''
+  try {
+    await resendVerification(sentTo.value)
+    notice.value = t('auth.resent')
+    code.value = ''
+    startCooldown(RESEND_SECONDS)
+  } catch (e) {
+    if (e instanceof ApiError && e.code === 'RESEND_TOO_SOON') {
+      startCooldown(Number(e.details.retryAfterSeconds) || RESEND_SECONDS)
+    } else {
+      error.value = errorText(e)
+    }
+  }
+}
+
+// 改填別的信箱或資料
+function back() {
+  step.value = 'form'
+  error.value = ''
+  notice.value = ''
+  code.value = ''
+  clearInterval(timer)
+  cooldown.value = 0
+}
 </script>
 
 <template>
-  <section class="auth">
+  <section v-if="step === 'verify'" class="auth">
+    <h1>{{ t('auth.checkMailTitle') }}</h1>
+    <p>{{ t('auth.checkMailBody', { email: sentTo }) }}</p>
+    <form novalidate @submit.prevent="submitCode">
+      <FormField :label="t('auth.codeLabel')" :hint="t('auth.codeHint')" :error="codeError" for="rg-code">
+        <input
+          id="rg-code"
+          v-model="code"
+          maxlength="6"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          @input="codeError = ''"
+        />
+      </FormField>
+      <p v-if="error" class="error" role="alert">{{ error }}</p>
+      <p v-if="notice" class="notice" role="status">{{ notice }}</p>
+      <button type="submit" class="primary" :disabled="busy">{{ t('auth.codeSubmit') }}</button>
+    </form>
+    <p class="alt">
+      <button type="button" class="link" :disabled="cooldown > 0" @click="resend">
+        {{ cooldown > 0 ? t('auth.resendIn', { n: cooldown }) : t('auth.resend') }}
+      </button>
+      ·
+      <button type="button" class="link" @click="back">{{ t('auth.changeEmail') }}</button>
+    </p>
+  </section>
+
+  <section v-else class="auth">
     <h1>{{ t('auth.registerTitle') }}</h1>
     <form novalidate @submit.prevent="submit">
       <FormField :label="t('auth.username')" :hint="t('auth.usernameHint')" :error="errors.username" for="rg-username">
@@ -147,5 +245,24 @@ form {
 
 .alt a {
   color: var(--color-primary);
+}
+
+.notice {
+  margin: 0;
+  color: #067647;
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.link:disabled {
+  color: var(--color-muted);
+  cursor: not-allowed;
 }
 </style>

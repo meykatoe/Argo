@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { i18n } from '@/i18n'
 import { AUTH_KEY } from '@/utils/authToken'
-import AccountView from '../AccountView.vue'
 import ForgotPasswordView from '../ForgotPasswordView.vue'
 import ResetPasswordView from '../ResetPasswordView.vue'
 import VerifyEmailView from '../VerifyEmailView.vue'
@@ -12,12 +11,11 @@ import VerifyEmailView from '../VerifyEmailView.vue'
 const ok = (data: unknown = null) => new Response(JSON.stringify({ code: 200, msg: 'OK', data }))
 const fail = (status: number, msg: string, data: unknown = null) =>
   new Response(JSON.stringify({ code: 2000 + status, msg, data }), { status })
-const orders = { items: [], page: 1, size: 10, totalElements: 0, totalPages: 0 }
 
-function login(emailVerified: 0 | 1) {
+function login() {
   localStorage.setItem(
     AUTH_KEY,
-    JSON.stringify({ token: 'tok', email: 'a@b.co', username: 'ming', name: null, emailVerified, expiresAt: '2099-01-01T00:00:00Z' }),
+    JSON.stringify({ token: 'tok', email: 'a@b.co', username: 'ming', name: null, expiresAt: '2099-01-01T00:00:00Z' }),
   )
 }
 
@@ -29,7 +27,7 @@ async function mountAt(path: string) {
     routes: [
       { path: '/', component: { template: '<i/>' } },
       { path: '/login', name: 'login', component: { template: '<i/>' } },
-      { path: '/account', name: 'account', component: AccountView },
+      { path: '/account', name: 'account', component: { template: '<i/>' } },
       { path: '/forgot-password', name: 'forgotPassword', component: ForgotPasswordView },
       { path: '/reset-password', name: 'resetPassword', component: ResetPasswordView },
       { path: '/verify-email', name: 'verifyEmail', component: VerifyEmailView },
@@ -46,20 +44,20 @@ beforeEach(() => localStorage.clear())
 afterEach(() => vi.unstubAllGlobals())
 
 describe('VerifyEmailView', () => {
-  it('帶令牌送出驗證並顯示成功，同時更新本機狀態', async () => {
-    login(0)
-    const fetchMock = vi.fn().mockResolvedValue(ok())
+  it('帶令牌送出驗證，成功就登入', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ token: 'tok', email: 'a@b.co', username: 'ming', name: null, expiresAt: '2099-01-01T00:00:00Z' }))
     vi.stubGlobal('fetch', fetchMock)
     const w = await mountAt('/verify-email?token=abc')
     expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toEqual({ token: 'abc' })
     expect(w.text()).toContain('Email 已驗證完成')
-    expect(JSON.parse(localStorage.getItem(AUTH_KEY)!).emailVerified).toBe(1)
+    expect(JSON.parse(localStorage.getItem(AUTH_KEY)!).token).toBe('tok')
   })
 
-  it('令牌無效顯示錯誤', async () => {
+  it('令牌無效顯示錯誤且不登入', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fail(400, 'TOKEN_INVALID')))
     const w = await mountAt('/verify-email?token=bad')
     expect(w.find('[role=alert]').text()).toContain('連結無效')
+    expect(localStorage.getItem(AUTH_KEY)).toBeNull()
   })
 
   it('沒有令牌不送出請求', async () => {
@@ -113,7 +111,7 @@ describe('ResetPasswordView', () => {
   })
 
   it('成功後清掉本機登入並提示重新登入', async () => {
-    login(1)
+    login()
     const fetchMock = vi.fn().mockResolvedValue(ok())
     vi.stubGlobal('fetch', fetchMock)
     const w = await mountAt('/reset-password?token=t1')
@@ -134,32 +132,5 @@ describe('ResetPasswordView', () => {
     await w.find('form').trigger('submit')
     await flushPromises()
     expect(w.find('[role=alert]').text()).toContain('連結無效')
-  })
-})
-
-describe('AccountView 驗證提示', () => {
-  it('已驗證不顯示提示', async () => {
-    login(1)
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok(orders)))
-    const w = await mountAt('/account')
-    expect(w.find('.verify').exists()).toBe(false)
-  })
-
-  it('未驗證可重寄，太頻繁顯示等待秒數', async () => {
-    login(0)
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(ok(orders))
-      .mockResolvedValueOnce(ok())
-      .mockResolvedValueOnce(fail(429, 'RESEND_TOO_SOON', { retryAfterSeconds: '42' }))
-    vi.stubGlobal('fetch', fetchMock)
-    const w = await mountAt('/account')
-    const btn = w.find('.verify button')
-    await btn.trigger('click')
-    await flushPromises()
-    expect(w.find('.verify .msg').text()).toContain('驗證信已寄出')
-    await btn.trigger('click')
-    await flushPromises()
-    expect(w.find('.verify .msg').text()).toContain('42')
   })
 })

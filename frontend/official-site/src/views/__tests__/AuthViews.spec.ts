@@ -8,7 +8,7 @@ import AccountView from '../AccountView.vue'
 import LoginView from '../LoginView.vue'
 import RegisterView from '../RegisterView.vue'
 
-const view = { token: 'tok', email: 'a@b.co', username: 'ming', name: '小明', emailVerified: 0, expiresAt: '2099-01-01T00:00:00Z' }
+const view = { token: 'tok', email: 'a@b.co', username: 'ming', name: '小明', expiresAt: '2099-01-01T00:00:00Z' }
 const ok = (data: unknown) => new Response(JSON.stringify({ code: 200, msg: 'OK', data }))
 const fail = (status: number, msg: string) => new Response(JSON.stringify({ code: status, msg, data: null }), { status })
 
@@ -202,15 +202,15 @@ describe('RegisterView', () => {
   })
 
   it('檢查帳號失敗不擋註冊', async () => {
-    const fetchMock = vi.fn().mockRejectedValueOnce(new TypeError('x')).mockResolvedValue(ok(view))
+    const fetchMock = vi.fn().mockRejectedValueOnce(new TypeError('x')).mockResolvedValue(ok(null))
     vi.stubGlobal('fetch', fetchMock)
-    const { w, auth } = await mountAt('/register')
+    const { w } = await mountAt('/register')
     await w.find('#rg-username').trigger('blur')
     await w.find('#rg-username').setValue('ming_01')
     await w.find('#rg-username').trigger('blur')
     await flushPromises()
     await fill(w, 'password-1234', 'password-1234')
-    expect(auth.isLoggedIn).toBe(true)
+    expect(w.find('#rg-code').exists()).toBe(true)
   })
 
   it('註冊時帳號被搶先使用，標在帳號欄位', async () => {
@@ -221,12 +221,72 @@ describe('RegisterView', () => {
     expect(auth.isLoggedIn).toBe(false)
   })
 
-  it('成功後直接登入', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok(view)))
+  it('送出後不登入，改顯示輸入驗證碼的畫面', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok(null))
+    vi.stubGlobal('fetch', fetchMock)
     const { w, auth, router } = await mountAt('/register')
     await fill(w, 'password-1234', 'password-1234')
+    expect(String(fetchMock.mock.calls[0]![0])).toContain('/auth/register')
+    expect(auth.isLoggedIn).toBe(false)
+    expect(router.currentRoute.value.path).toBe('/register')
+    expect(w.text()).toContain('a@b.co')
+    expect(w.find('#rg-code').exists()).toBe(true)
+    expect(w.find('#rg-pw').exists()).toBe(false)
+  })
+
+  it('輸入正確驗證碼後登入並導向 redirect', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(ok(null)).mockResolvedValueOnce(ok(view))
+    vi.stubGlobal('fetch', fetchMock)
+    const { w, auth, router } = await mountAt('/register?redirect=/checkout')
+    await fill(w, 'password-1234', 'password-1234')
+    await w.find('#rg-code').setValue('123456')
+    await w.find('form').trigger('submit')
+    await flushPromises()
+    expect(String(fetchMock.mock.calls[1]![0])).toContain('/auth/verify-code')
+    expect(JSON.parse(fetchMock.mock.calls[1]![1].body)).toEqual({ email: 'a@b.co', code: '123456' })
     expect(auth.isLoggedIn).toBe(true)
-    expect(router.currentRoute.value.path).toBe('/')
+    expect(router.currentRoute.value.path).toBe('/checkout')
+  })
+
+  it('驗證碼格式不對不送出，錯誤的驗證碼顯示提示', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(ok(null)).mockResolvedValueOnce(fail(400, 'CODE_INVALID'))
+    vi.stubGlobal('fetch', fetchMock)
+    const { w, auth } = await mountAt('/register')
+    await fill(w, 'password-1234', 'password-1234')
+    await w.find('#rg-code').setValue('12ab')
+    await w.find('form').trigger('submit')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(w.text()).toContain('驗證碼為 6 位數字')
+    await w.find('#rg-code').setValue('000000')
+    await w.find('form').trigger('submit')
+    await flushPromises()
+    expect(w.find('[role=alert]').text()).toContain('驗證碼錯誤')
+    expect(auth.isLoggedIn).toBe(false)
+  })
+
+  it('重寄有倒數，結束後才能再按；也可回上一步改資料', async () => {
+    vi.useFakeTimers()
+    try {
+      const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(ok(null)))
+      vi.stubGlobal('fetch', fetchMock)
+      const { w } = await mountAt('/register')
+      await fill(w, 'password-1234', 'password-1234')
+      const resendBtn = () => w.findAll('button.link')[0]!
+      expect(resendBtn().attributes('disabled')).toBeDefined()
+      expect(resendBtn().text()).toContain('60')
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(resendBtn().attributes('disabled')).toBeUndefined()
+      await resendBtn().trigger('click')
+      await flushPromises()
+      expect(String(fetchMock.mock.calls[1]![0])).toContain('/auth/resend-verification')
+      expect(JSON.parse(fetchMock.mock.calls[1]![1].body)).toEqual({ email: 'a@b.co' })
+      expect(w.text()).toContain('新的驗證信已寄出')
+      expect(resendBtn().attributes('disabled')).toBeDefined()
+      await w.findAll('button.link')[1]!.trigger('click')
+      expect(w.find('#rg-pw').exists()).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('Email 已註冊顯示提示', async () => {

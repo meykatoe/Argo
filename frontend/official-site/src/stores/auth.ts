@@ -19,19 +19,21 @@ export const useAuthStore = defineStore('auth', () => {
     session.value = s
   }
 
-  const emailVerified = computed(() => session.value?.emailVerified === 1)
-
-  // 在別處完成驗證後更新本機狀態
-  function markVerified() {
-    if (session.value) set({ ...session.value, emailVerified: 1 })
-  }
-
   async function login(account: string, password: string) {
     set(await api.login(account, password))
   }
 
+  // 註冊只會寄驗證信，要驗證後才登入
   async function register(username: string, email: string, password: string, name: string) {
-    set(await api.register(username, email, password, name))
+    await api.register(username, email, password, name)
+  }
+
+  async function verifyLink(token: string) {
+    set(await api.verifyEmail(token))
+  }
+
+  async function verifyCode(email: string, code: string) {
+    set(await api.verifyCode(email, code))
   }
 
   // 伺服器端失敗也要登出本機
@@ -50,11 +52,11 @@ export const useAuthStore = defineStore('auth', () => {
     if (!session.value) return
     try {
       const m = await api.me()
-      set({ ...session.value, email: m.email, username: m.username, name: m.name, emailVerified: m.emailVerified === 1 ? 1 : 0 })
+      set({ ...session.value, email: m.email, username: m.username, name: m.name })
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) set(null)
     }
   }
 
-  return { session, isLoggedIn, displayName, emailVerified, markVerified, login, register, logout, refresh }
+  return { session, isLoggedIn, displayName, login, register, verifyLink, verifyCode, logout, refresh }
 })

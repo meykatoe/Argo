@@ -1,5 +1,3 @@
-import type { Flag } from '@/types/card'
-
 export const AUTH_KEY = 'argo.auth'
 
 export interface AuthSession {
@@ -8,8 +6,6 @@ export interface AuthSession {
   // 舊帳號沒有帳號名稱
   username: string | null
   name: string | null
-  // 1 已驗證 Email
-  emailVerified: Flag
   expiresAt: string
 }
 
@@ -19,7 +15,7 @@ export function readSession(): AuthSession | null {
     const raw = JSON.parse(localStorage.getItem(AUTH_KEY) ?? 'null')
     if (!raw || typeof raw.token !== 'string' || typeof raw.email !== 'string') return null
     if (!(new Date(raw.expiresAt).getTime() > Date.now())) return null
-    return { token: raw.token, email: raw.email, username: raw.username ?? null, name: raw.name ?? null, emailVerified: raw.emailVerified === 1 ? 1 : 0, expiresAt: raw.expiresAt }
+    return { token: raw.token, email: raw.email, username: raw.username ?? null, name: raw.name ?? null, expiresAt: raw.expiresAt }
   } catch {
     return null
   }

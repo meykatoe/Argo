@@ -1,18 +1,17 @@
 import { get, post } from './http'
 import type { Order } from '@/types/order'
 import type { PageResult } from '@/types/card'
-import type { Flag } from '@/types/card'
 import type { AuthSession } from '@/utils/authToken'
 
 export interface Me {
   email: string
   username: string | null
   name: string | null
-  emailVerified: Flag
 }
 
+// 只寄出驗證信，驗證通過才會建立帳號
 export function register(username: string, email: string, password: string, name: string) {
-  return post<AuthSession>('/auth/register', { username, email, password, name: name || null })
+  return post<null>('/auth/register', { username, email, password, name: name || null })
 }
 
 // 帳號名稱或 Email 皆可
@@ -25,12 +24,18 @@ export function usernameAvailable(username: string) {
   return get<{ available: 0 | 1 }>('/auth/username-available', { username })
 }
 
+// 點信中連結驗證，通過即登入
 export function verifyEmail(token: string) {
-  return post<null>('/auth/verify-email', { token })
+  return post<AuthSession>('/auth/verify-email', { token })
 }
 
-export function resendVerification() {
-  return post<null>('/auth/resend-verification', {})
+// 輸入信中 6 位數驗證碼，通過即登入
+export function verifyCode(email: string, code: string) {
+  return post<AuthSession>('/auth/verify-code', { email, code })
+}
+
+export function resendVerification(email: string) {
+  return post<null>('/auth/resend-verification', { email })
 }
 
 // 不論信箱是否註冊過都會成功

@@ -2,7 +2,6 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
-import { verifyEmail } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
 import { errorText } from '@/utils/error'
 
@@ -21,8 +20,7 @@ onMounted(async () => {
     return
   }
   try {
-    await verifyEmail(token)
-    auth.markVerified()
+    await auth.verifyLink(token)
     state.value = 'ok'
   } catch (e) {
     error.value = errorText(e)

@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { myOrders, resendVerification } from '@/api/auth'
+import { myOrders } from '@/api/auth'
 import { ApiError } from '@/api/http'
 import AppPagination from '@/components/AppPagination.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -20,8 +20,6 @@ const page = ref(1)
 const data = ref<PageResult<Order> | null>(null)
 const loading = ref(false)
 const error = ref('')
-const resendMsg = ref('')
-const resending = ref(false)
 
 async function load() {
   loading.value = true
@@ -38,25 +36,6 @@ async function load() {
     error.value = errorText(e)
   } finally {
     loading.value = false
-  }
-}
-
-// 重寄驗證信，太頻繁時顯示要等幾秒
-async function resend() {
-  if (resending.value) return
-  resending.value = true
-  resendMsg.value = ''
-  try {
-    await resendVerification()
-    resendMsg.value = t('account.resendOk')
-  } catch (e) {
-    if (e instanceof ApiError && e.code === 'RESEND_TOO_SOON') {
-      resendMsg.value = t('account.resendWait', { n: Number(e.details.retryAfterSeconds) || 60 })
-    } else {
-      resendMsg.value = errorText(e)
-    }
-  } finally {
-    resending.value = false
   }
 }
 
@@ -91,12 +70,6 @@ onMounted(load)
       <button type="button" class="out" @click="logout">{{ t('nav.logout') }}</button>
     </div>
 
-    <div v-if="!auth.emailVerified" class="verify" role="status">
-      <p>{{ t('account.unverified') }}</p>
-      <button type="button" :disabled="resending" @click="resend">{{ t('account.resend') }}</button>
-      <p v-if="resendMsg" class="msg">{{ resendMsg }}</p>
-    </div>
-
     <h2>{{ t('account.orders') }}</h2>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-else-if="loading && !data" class="hint">{{ t('account.loading') }}</p>
@@ -118,58 +91,6 @@ onMounted(load)
 </template>
 
 <style scoped>
-.verify {
-  margin: 16px 0;
-  padding: 12px 14px;
-  border: 1px solid #fedf89;
-  border-radius: 8px;
-  background: #fffaeb;
-}
-
-.verify p {
-  margin: 0 0 8px;
-}
-
-.verify .msg {
-  margin: 8px 0 0;
-  color: var(--color-muted);
-  font-size: 14px;
-}
-
-.verify button {
-  padding: 6px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: #fff;
-  font: inherit;
-  cursor: pointer;
-}
-
-.account {
-  max-width: 720px;
-}
-
-.head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.who {
-  margin: 0;
-  color: var(--color-muted);
-}
-
-.out {
-  padding: 6px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: #fff;
-  font: inherit;
-  cursor: pointer;
-}
-
 .orders {
   margin: 0 0 16px;
   padding: 0;
