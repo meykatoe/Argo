@@ -111,7 +111,8 @@ class OpsAuditApiTests {
 		ApiException b = assertThrows(ApiException.class, () -> auth.login("adm1", PW, LoginPortal.OPS));
 		assertEquals("LOGIN_FAILED", b.getCode());
 		assertEquals(2, jdbc.queryForObject(
-				"select count(*) from staff_audit_log where detail->>'reason' = 'WRONG_PORTAL'", Integer.class));
+				"select count(*) from staff_audit_log where detail->>'reason' = 'WRONG_PORTAL' "
+						+ "and username in ('ops1', 'adm1')", Integer.class));
 		mvc.perform(post("/api/ops/auth/login").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"username\":\"gen1\",\"password\":\"" + PW + "\"}"))
 				.andExpect(status().isUnauthorized());
