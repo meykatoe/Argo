@@ -22,6 +22,8 @@ public enum ErrorCode {
 	ADMIN_UNAUTHORIZED(2005, HttpStatus.UNAUTHORIZED, "員工未登入或登入已失效"),
 	ADMIN_FORBIDDEN(2006, HttpStatus.FORBIDDEN, "員工角色沒有此功能的權限"),
 	USERNAME_TAKEN(2007, HttpStatus.CONFLICT, "註冊的帳號已被使用"),
+	TOKEN_INVALID(2008, HttpStatus.BAD_REQUEST, "驗證或重設連結無效、已使用或已過期"),
+	RESEND_TOO_SOON(2009, HttpStatus.TOO_MANY_REQUESTS, "重寄過於頻繁，data.retryAfterSeconds 為等待秒數"),
 
 	// 卡片與系列
 	CARD_NOT_FOUND(3001, HttpStatus.NOT_FOUND, "找不到卡片"),

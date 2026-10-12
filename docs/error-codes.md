@@ -40,6 +40,8 @@
 | 2005 | `ADMIN_UNAUTHORIZED` | 401 | 員工未登入或登入已失效 |
 | 2006 | `ADMIN_FORBIDDEN` | 403 | 員工角色沒有此功能的權限 |
 | 2007 | `USERNAME_TAKEN` | 409 | 註冊的帳號已被使用 |
+| 2008 | `TOKEN_INVALID` | 400 | 驗證或重設連結無效、已使用或已過期 |
+| 2009 | `RESEND_TOO_SOON` | 429 | 重寄過於頻繁，data.retryAfterSeconds 為等待秒數 |
 
 ## 3xxx 卡片與系列
 

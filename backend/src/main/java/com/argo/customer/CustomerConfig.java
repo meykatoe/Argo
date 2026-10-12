@@ -16,6 +16,7 @@ public class CustomerConfig implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new CustomerAuthInterceptor(auth))
-				.addPathPatterns("/api/me/**", "/api/auth/logout", "/api/auth/me");
+				.addPathPatterns("/api/me/**", "/api/auth/logout", "/api/auth/me",
+						"/api/auth/resend-verification");
 	}
 }

@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class CustomerAuthController {
 
 	private final CustomerAuthService auth;
+	private final CustomerEmailService emails;
 
-	public CustomerAuthController(CustomerAuthService auth) {
+	public CustomerAuthController(CustomerAuthService auth, CustomerEmailService emails) {
 		this.auth = auth;
+		this.emails = emails;
 	}
 
 	// 註冊與登入不經攔截器
@@ -36,6 +38,20 @@ public class CustomerAuthController {
 	@GetMapping("/username-available")
 	public Result<UsernameCheck> usernameAvailable(@RequestParam String username) {
 		return Result.ok(new UsernameCheck(Flag.of(auth.usernameAvailable(username))));
+	}
+
+	// 點信中連結驗證，不需登入
+	@PostMapping("/verify-email")
+	public Result<Void> verifyEmail(@Valid @RequestBody TokenRequest body) {
+		emails.verify(body.token());
+		return Result.ok();
+	}
+
+	// 重寄驗證信，需登入
+	@PostMapping("/resend-verification")
+	public Result<Void> resendVerification(HttpServletRequest req) {
+		emails.resendVerification((CustomerAccount) req.getAttribute(CustomerAuthInterceptor.CUSTOMER_ATTR));
+		return Result.ok();
 	}
 
 	@PostMapping("/logout")

@@ -2,14 +2,10 @@ package com.argo.customer;
 
 import com.argo.common.ApiException;
 import com.argo.common.ErrorCode;
+import com.argo.common.Flag;
 import com.argo.common.PasswordPolicy;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.OffsetDateTime;
-import java.util.Base64;
-import java.util.HexFormat;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -28,8 +24,8 @@ public class CustomerAuthService {
 
 	private final CustomerAccountRepository accounts;
 	private final CustomerSessionRepository sessions;
+	private final CustomerEmailService emails;
 	private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
-	private final SecureRandom random = new SecureRandom();
 	// 帳號不存在時也做一次比對，避免時間差洩漏
 	private final String dummyHash = encoder.encode("dummy-password");
 	private final int sessionDays;
@@ -37,11 +33,13 @@ public class CustomerAuthService {
 	private final int lockMinutes;
 
 	public CustomerAuthService(CustomerAccountRepository accounts, CustomerSessionRepository sessions,
+			CustomerEmailService emails,
 			@Value("${argo.customer.session-days:14}") int sessionDays,
 			@Value("${argo.customer.max-failures:5}") int maxFailures,
 			@Value("${argo.customer.lock-minutes:15}") int lockMinutes) {
 		this.accounts = accounts;
 		this.sessions = sessions;
+		this.emails = emails;
 		this.sessionDays = sessionDays;
 		this.maxFailures = maxFailures;
 		this.lockMinutes = lockMinutes;
@@ -79,6 +77,7 @@ public class CustomerAuthService {
 			throw new ApiException(accounts.existsByUsername(user) ? ErrorCode.USERNAME_TAKEN : ErrorCode.EMAIL_TAKEN);
 		}
 		c.recordSuccess(OffsetDateTime.now());
+		emails.sendVerification(c);
 		return open(c);
 	}
 
@@ -127,7 +126,7 @@ public class CustomerAuthService {
 		if (token == null || token.isBlank()) {
 			return Optional.empty();
 		}
-		return sessions.findById(hash(token))
+		return sessions.findById(Tokens.hash(token))
 				.filter(s -> s.getExpiresAt().isAfter(OffsetDateTime.now()))
 				.flatMap(s -> accounts.findById(s.getCustomerId()))
 				.filter(c -> !c.isDisabled());
@@ -136,15 +135,16 @@ public class CustomerAuthService {
 	@Transactional
 	public void logout(String token) {
 		if (token != null) {
-			sessions.deleteById(hash(token));
+			sessions.deleteById(Tokens.hash(token));
 		}
 	}
 
 	private CustomerAuthView open(CustomerAccount c) {
-		String token = newToken();
+		String token = Tokens.create();
 		OffsetDateTime expires = OffsetDateTime.now().plusDays(sessionDays);
-		sessions.save(new CustomerSession(hash(token), c.getId(), expires));
-		return new CustomerAuthView(token, c.getEmail(), c.getUsername(), c.getName(), expires);
+		sessions.save(new CustomerSession(Tokens.hash(token), c.getId(), expires));
+		return new CustomerAuthView(token, c.getEmail(), c.getUsername(), c.getName(),
+				Flag.of(c.isEmailVerified()), expires);
 	}
 
 	// 回應帶上還要等幾秒，前端可顯示分鐘數
@@ -157,18 +157,5 @@ public class CustomerAuthService {
 		return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
 	}
 
-	private String newToken() {
-		byte[] bytes = new byte[32];
-		random.nextBytes(bytes);
-		return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-	}
 
-	private static String hash(String token) {
-		try {
-			byte[] d = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
-			return HexFormat.of().formatHex(d);
-		} catch (NoSuchAlgorithmException e) {
-			throw new IllegalStateException(e);
-		}
-	}
 }

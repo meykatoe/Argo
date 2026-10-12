@@ -43,6 +43,8 @@ public class CustomerAccount {
 
 	private OffsetDateTime lastLoginAt;
 
+	private OffsetDateTime emailVerifiedAt;
+
 	protected CustomerAccount() {
 	}
 
@@ -83,6 +85,16 @@ public class CustomerAccount {
 
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
+	}
+
+	public boolean isEmailVerified() {
+		return emailVerifiedAt != null;
+	}
+
+	public void verifyEmail(OffsetDateTime now) {
+		if (emailVerifiedAt == null) {
+			this.emailVerifiedAt = now;
+		}
 	}
 
 	public boolean isLocked(OffsetDateTime now) {
