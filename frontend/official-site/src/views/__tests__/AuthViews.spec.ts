@@ -298,6 +298,47 @@ describe('RegisterView', () => {
   })
 })
 
+describe('AccountView 認領訪客訂單', () => {
+  const emptyPage = { items: [], page: 1, size: 10, total: 0, totalPages: 0 }
+
+  it('有可認領的訂單才顯示，按下後認領並重新載入', async () => {
+    localStorage.setItem('argo.auth', JSON.stringify(view))
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const u = String(url)
+      if (u.includes('/me/orders/claimable')) return Promise.resolve(ok({ count: 2 }))
+      if (u.includes('/me/orders/claim')) return Promise.resolve(ok({ count: 2 }))
+      return Promise.resolve(ok(emptyPage))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { w } = await mountAt('/account')
+    expect(w.find('.claim').text()).toContain('2 筆')
+    expect(w.find('.claim').text()).toContain('a@b.co')
+    await w.find('.claim button').trigger('click')
+    await flushPromises()
+    const urls = fetchMock.mock.calls.map((c) => String(c[0]))
+    expect(urls.some((u) => u.includes('/me/orders/claim?') && fetchMock.mock.calls[urls.indexOf(u)]![1].method === 'POST')).toBe(true)
+    expect(urls.filter((u) => u.includes('/me/orders?')).length).toBe(2)
+    expect(w.find('.claim').exists()).toBe(false)
+  })
+
+  it('沒有可認領的訂單不顯示', async () => {
+    localStorage.setItem('argo.auth', JSON.stringify(view))
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) =>
+      Promise.resolve(String(url).includes('/claimable') ? ok({ count: 0 }) : ok(emptyPage))))
+    const { w } = await mountAt('/account')
+    expect(w.find('.claim').exists()).toBe(false)
+  })
+
+  it('查詢可認領數失敗時不影響頁面', async () => {
+    localStorage.setItem('argo.auth', JSON.stringify(view))
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) =>
+      Promise.resolve(String(url).includes('/claimable') ? fail(500, 'ERROR') : ok(emptyPage))))
+    const { w } = await mountAt('/account')
+    expect(w.find('.claim').exists()).toBe(false)
+    expect(w.text()).toContain('我的訂單')
+  })
+})
+
 describe('AccountView', () => {
   const order = {
     orderNo: 'AR261005-ABC234', status: 'PENDING_PAYMENT', currency: 'USD', total: 9, createdAt: '2026-10-05T03:00:00Z',

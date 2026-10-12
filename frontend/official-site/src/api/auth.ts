@@ -60,6 +60,15 @@ export function me() {
   return get<Me>('/auth/me')
 }
 
+// 同 Email 還沒綁帳號的訪客訂單數
+export function claimableOrders() {
+  return get<{ count: number }>('/me/orders/claimable')
+}
+
+export function claimOrders() {
+  return post<{ count: number }>('/me/orders/claim', {})
+}
+
 export function myOrders(page = 1, size = 10) {
   return get<PageResult<Order>>('/me/orders', { page, size })
 }

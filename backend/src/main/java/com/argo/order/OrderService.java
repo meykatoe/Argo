@@ -126,6 +126,17 @@ public class OrderService {
 		return PageResult.of(result, this::view);
 	}
 
+	// 顧客 Email 已驗證，可把同 Email 的訪客訂單認領到帳號
+	@Transactional(readOnly = true)
+	public long claimableCount(String email) {
+		return orders.countByCustomerIdIsNullAndCustomerEmail(email.trim().toLowerCase());
+	}
+
+	@Transactional
+	public int claimGuestOrders(Long customerId, String email) {
+		return orders.claimGuestOrders(customerId, email.trim().toLowerCase());
+	}
+
 	@Transactional(readOnly = true)
 	public OrderView get(String orderNo, String email) {
 		return view(orders.findByOrderNo(orderNo)

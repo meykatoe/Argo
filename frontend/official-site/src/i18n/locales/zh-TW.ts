@@ -125,6 +125,8 @@ const zhTW = {
     loading: "載入中…",
     noOrders: "還沒有訂單。登入後下的訂單會顯示在這裡。",
     itemCount: "共 {n} 項商品",
+    claimable: "有 {n} 筆用 {email} 下的訪客訂單還沒加入你的帳號。",
+    claim: "加入我的帳號",
   },
   checkout: {
     title: "結帳",

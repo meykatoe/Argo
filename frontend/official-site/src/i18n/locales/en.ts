@@ -127,6 +127,8 @@ const en: MessageSchema = {
     loading: "Loading…",
     noOrders: "No orders yet. Orders placed while logged in will show up here.",
     itemCount: "{n} item(s)",
+    claimable: "{n} guest order(s) placed with {email} are not linked to your account yet.",
+    claim: "Add to my account",
   },
   checkout: {
     title: "Checkout",

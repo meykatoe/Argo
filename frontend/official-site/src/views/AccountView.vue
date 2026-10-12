@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { myOrders } from '@/api/auth'
+import { claimableOrders, claimOrders, myOrders } from '@/api/auth'
 import { ApiError } from '@/api/http'
 import AppPagination from '@/components/AppPagination.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -20,6 +20,9 @@ const page = ref(1)
 const data = ref<PageResult<Order> | null>(null)
 const loading = ref(false)
 const error = ref('')
+const claimable = ref(0)
+const claimBusy = ref(false)
+const claimError = ref('')
 
 async function load() {
   loading.value = true
@@ -36,6 +39,31 @@ async function load() {
     error.value = errorText(e)
   } finally {
     loading.value = false
+  }
+}
+
+// 查不到就當作沒有，不影響訂單列表
+async function loadClaimable() {
+  try {
+    claimable.value = (await claimableOrders()).count
+  } catch {
+    claimable.value = 0
+  }
+}
+
+async function claim() {
+  if (claimBusy.value) return
+  claimBusy.value = true
+  claimError.value = ''
+  try {
+    await claimOrders()
+    claimable.value = 0
+    page.value = 1
+    await load()
+  } catch (e) {
+    claimError.value = errorText(e)
+  } finally {
+    claimBusy.value = false
   }
 }
 
@@ -57,7 +85,10 @@ async function logout() {
 
 const time = (iso: string) => new Date(iso).toLocaleString(locale.value, { hour12: false })
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadClaimable()
+})
 </script>
 
 <template>
@@ -68,6 +99,12 @@ onMounted(load)
         <p class="who">{{ auth.displayName }}<template v-if="auth.session?.username"> · @{{ auth.session.username }}</template> · {{ auth.session?.email }}</p>
       </div>
       <button type="button" class="out" @click="logout">{{ t('nav.logout') }}</button>
+    </div>
+
+    <div v-if="claimable > 0" class="claim" role="status">
+      <p>{{ t('account.claimable', { n: claimable, email: auth.session?.email }) }}</p>
+      <button type="button" :disabled="claimBusy" @click="claim">{{ t('account.claim') }}</button>
+      <p v-if="claimError" class="error" role="alert">{{ claimError }}</p>
     </div>
 
     <h2>{{ t('account.orders') }}</h2>
@@ -91,6 +128,27 @@ onMounted(load)
 </template>
 
 <style scoped>
+.claim {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.claim p {
+  margin: 0 0 8px;
+}
+
+.claim button {
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
 .orders {
   margin: 0 0 16px;
   padding: 0;

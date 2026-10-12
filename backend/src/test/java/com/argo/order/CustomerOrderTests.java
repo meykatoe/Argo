@@ -140,4 +140,53 @@ class CustomerOrderTests {
 		mvc.perform(get("/api/me/orders").header("Authorization", "Bearer " + me.token()))
 				.andExpect(jsonPath("$.data.total").value(0));
 	}
+
+	private ResultActions orderAs(String email, String bearer) throws Exception {
+		var req = post("/api/orders").contentType(MediaType.APPLICATION_JSON)
+				.content(BODY.formatted(a.getId()).replace("buyer@test.local", email));
+		if (bearer != null) {
+			req.header("Authorization", "Bearer " + bearer);
+		}
+		return mvc.perform(req);
+	}
+
+	@Test
+	void claimMovesOnlyGuestOrdersOfTheSameEmail() throws Exception {
+		var me = customers.createVerified(TestUsers.of("cl1@test.local"), "cl1@test.local", PW, null);
+		var other = customers.createVerified(TestUsers.of("cl2@test.local"), "cl2@test.local", PW, null);
+		String g1 = orderNo(orderAs("cl1@test.local", null));
+		String g2 = orderNo(orderAs("CL1@test.local", null));
+		String otherGuest = orderNo(orderAs("cl3@test.local", null));
+		String othersOrder = orderNo(orderAs("cl1@test.local", other.token()));
+		String auth = "Bearer " + me.token();
+
+		mvc.perform(get("/api/me/orders/claimable").header("Authorization", auth)).andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.count").value(2));
+		mvc.perform(post("/api/me/orders/claim").header("Authorization", auth)).andExpect(status().isOk())
+				.andExpect(jsonPath("$.code").value(200)).andExpect(jsonPath("$.data.count").value(2));
+
+		Long id = jdbc.queryForObject("select id from customer_account where email = 'cl1@test.local'", Long.class);
+		assertEquals(id, customerOf(g1));
+		assertEquals(id, customerOf(g2));
+		assertNull(customerOf(otherGuest));
+		assertEquals(jdbc.queryForObject("select id from customer_account where email = 'cl2@test.local'", Long.class),
+				customerOf(othersOrder));
+		mvc.perform(get("/api/me/orders").header("Authorization", auth))
+				.andExpect(jsonPath("$.data.total").value(2));
+	}
+
+	@Test
+	void claimIsRepeatableAndNeedsLogin() throws Exception {
+		var me = customers.createVerified(TestUsers.of("cl4@test.local"), "cl4@test.local", PW, null);
+		String auth = "Bearer " + me.token();
+		mvc.perform(post("/api/me/orders/claim").header("Authorization", auth))
+				.andExpect(jsonPath("$.data.count").value(0));
+		orderAs("cl4@test.local", null);
+		mvc.perform(post("/api/me/orders/claim").header("Authorization", auth))
+				.andExpect(jsonPath("$.data.count").value(1));
+		mvc.perform(post("/api/me/orders/claim").header("Authorization", auth))
+				.andExpect(jsonPath("$.data.count").value(0));
+		mvc.perform(post("/api/me/orders/claim")).andExpect(status().isUnauthorized());
+		mvc.perform(get("/api/me/orders/claimable")).andExpect(status().isUnauthorized());
+	}
 }
