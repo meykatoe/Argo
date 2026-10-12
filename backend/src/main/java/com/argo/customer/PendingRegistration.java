@@ -28,24 +28,50 @@ class PendingRegistration {
 	private OffsetDateTime expiresAt;
 
 	@Column(nullable = false)
+	private String codeHash;
+
+	@Column(nullable = false)
+	private OffsetDateTime codeExpiresAt;
+
+	@Column(nullable = false)
+	private int codeAttempts;
+
+	@Column(nullable = false)
 	private OffsetDateTime createdAt = OffsetDateTime.now();
 
 	protected PendingRegistration() {
 	}
 
 	PendingRegistration(String tokenHash, String username, String email, String passwordHash, String name,
-			OffsetDateTime expiresAt) {
+			OffsetDateTime expiresAt, String codeHash, OffsetDateTime codeExpiresAt) {
 		this.tokenHash = tokenHash;
 		this.username = username;
 		this.email = email;
 		this.passwordHash = passwordHash;
 		this.name = name;
 		this.expiresAt = expiresAt;
+		this.codeHash = codeHash;
+		this.codeExpiresAt = codeExpiresAt;
 	}
 
-	// 換新令牌重寄，資料不變
-	PendingRegistration withToken(String newTokenHash, OffsetDateTime newExpiresAt) {
-		return new PendingRegistration(newTokenHash, username, email, passwordHash, name, newExpiresAt);
+	// 換新令牌與驗證碼重寄，資料不變，錯誤次數歸零
+	PendingRegistration renewed(String newTokenHash, OffsetDateTime newExpiresAt, String newCodeHash,
+			OffsetDateTime newCodeExpiresAt) {
+		return new PendingRegistration(newTokenHash, username, email, passwordHash, name, newExpiresAt, newCodeHash,
+				newCodeExpiresAt);
+	}
+
+	// 回傳目前累計的錯誤次數
+	int recordCodeFailure() {
+		return ++codeAttempts;
+	}
+
+	String getCodeHash() {
+		return codeHash;
+	}
+
+	OffsetDateTime getCodeExpiresAt() {
+		return codeExpiresAt;
 	}
 
 	String getUsername() {

@@ -42,6 +42,7 @@
 | 2007 | `USERNAME_TAKEN` | 409 | 註冊的帳號已被使用 |
 | 2008 | `TOKEN_INVALID` | 400 | 驗證或重設連結無效、已使用或已過期 |
 | 2009 | `RESEND_TOO_SOON` | 429 | 重寄過於頻繁，data.retryAfterSeconds 為等待秒數 |
+| 2010 | `CODE_INVALID` | 400 | 驗證碼錯誤、已過期或錯誤次數過多而作廢，需重新寄送 |
 
 ## 3xxx 卡片與系列
 

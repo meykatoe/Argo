@@ -54,6 +54,7 @@ class EmailVerifyTests {
 	String id;
 	String username;
 	String email;
+	String lastCode;
 
 	@BeforeEach
 	void setUp() {
@@ -87,6 +88,9 @@ class EmailVerifyTests {
 		Matcher m = Pattern.compile("verify-email\\?token=([\\w-]+)").matcher(body.getValue());
 		assertTrue(m.find());
 		String t = m.group(1);
+		Matcher c = Pattern.compile("驗證碼 (\\d{6})").matcher(body.getValue());
+		assertTrue(c.find());
+		lastCode = c.group(1);
 		reset(mailer);
 		return t;
 	}
@@ -202,5 +206,100 @@ class EmailVerifyTests {
 		mailedToken();
 		verifyWith("not-the-link").andExpect(status().isBadRequest());
 		assertEquals(0, accounts.findAll().stream().filter(a -> email.equals(a.getEmail())).count());
+	}
+
+	private ResultActions verifyCode(String code) throws Exception {
+		return json("/api/auth/verify-code", "{\"email\":\"" + email + "\",\"code\":\"" + code + "\"}");
+	}
+
+	private String wrongCode() {
+		return lastCode.equals("000000") ? "000001" : "000000";
+	}
+
+	@Test
+	void codeCreatesAccountAndLogsIn() throws Exception {
+		register();
+		mailedToken();
+		String body = verifyCode(lastCode).andExpect(status().isOk()).andExpect(jsonPath("$.data.email").value(email))
+				.andReturn().getResponse().getContentAsString();
+		String token = body.replaceAll(".*\"token\":\"([^\"]+)\".*", "$1");
+		mvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + token)).andExpect(status().isOk());
+		verifyCode(lastCode).andExpect(status().isBadRequest()).andExpect(jsonPath("$.msg").value("CODE_INVALID"))
+				.andExpect(jsonPath("$.code").value(2010));
+	}
+
+	@Test
+	void codeAndLinkAreAlternatives() throws Exception {
+		register();
+		String link = mailedToken();
+		verifyWith(link).andExpect(status().isOk());
+		verifyCode(lastCode).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void wrongCodeIsRejectedAndCountedUntilVoided() throws Exception {
+		register();
+		String link = mailedToken();
+		String good = lastCode;
+		for (int i = 0; i < 4; i++) {
+			verifyCode(wrongCode()).andExpect(status().isBadRequest());
+		}
+		em.flush();
+		em.clear();
+		assertEquals(4, jdbc.queryForObject("select code_attempts from customer_pending_registration where email = ?",
+				Integer.class, email));
+		// 第五次錯誤整筆作廢，連正確驗證碼與連結都失效
+		verifyCode(wrongCode()).andExpect(status().isBadRequest());
+		verifyCode(good).andExpect(status().isBadRequest());
+		verifyWith(link).andExpect(status().isBadRequest());
+		assertTrue(accounts.findByEmail(email).isEmpty());
+	}
+
+	@Test
+	void expiredCodeIsRejectedButLinkStillWorks() throws Exception {
+		register();
+		String link = mailedToken();
+		em.flush();
+		jdbc.update("update customer_pending_registration set code_expires_at = now() - interval '1 minute' "
+				+ "where email = ?", email);
+		em.clear();
+		verifyCode(lastCode).andExpect(status().isBadRequest());
+		verifyWith(link).andExpect(status().isOk());
+	}
+
+	@Test
+	void resendIssuesNewCodeAndResetsAttempts() throws Exception {
+		register();
+		mailedToken();
+		String oldCode = lastCode;
+		verifyCode(wrongCode()).andExpect(status().isBadRequest());
+		backdatePending();
+		resend();
+		mailedToken();
+		String fresh = lastCode;
+		em.flush();
+		assertEquals(0, jdbc.queryForObject("select code_attempts from customer_pending_registration where email = ?",
+				Integer.class, email));
+		if (!oldCode.equals(fresh)) {
+			verifyCode(oldCode).andExpect(status().isBadRequest());
+		}
+		verifyCode(fresh).andExpect(status().isOk());
+	}
+
+	@Test
+	void codeFormatAndUnknownEmailAreRefused() throws Exception {
+		verifyCode("12345").andExpect(status().isBadRequest()).andExpect(jsonPath("$.msg").value("VALIDATION_ERROR"));
+		verifyCode("abcdef").andExpect(status().isBadRequest()).andExpect(jsonPath("$.msg").value("VALIDATION_ERROR"));
+		verifyCode("123456").andExpect(status().isBadRequest()).andExpect(jsonPath("$.msg").value("CODE_INVALID"));
+	}
+
+	@Test
+	void codeIsBoundToItsOwnEmail() throws Exception {
+		register();
+		mailedToken();
+		String other = "other-" + id + "@example.com";
+		json("/api/auth/verify-code", "{\"email\":\"" + other + "\",\"code\":\"" + lastCode + "\"}")
+				.andExpect(status().isBadRequest());
+		assertTrue(accounts.findByEmail(email).isEmpty());
 	}
 }

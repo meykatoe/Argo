@@ -67,6 +67,14 @@ public class CustomerAuthService {
 		return create(p.getUsername(), p.getEmail(), p.getPasswordHash(), p.getName());
 	}
 
+	// 輸入信中的 6 位數驗證碼，效果同點連結；錯誤次數要保留
+	@Transactional(noRollbackFor = ApiException.class)
+	public CustomerAuthView completeRegistrationByCode(String email, String code) {
+		PendingRegistration p = emails.consumeCode(normalize(email), code);
+		ensureFree(p.getUsername(), p.getEmail());
+		return create(p.getUsername(), p.getEmail(), p.getPasswordHash(), p.getName());
+	}
+
 	// 略過信箱驗證直接建立，只給測試與管理用途，不可接到公開端點
 	@Transactional
 	public CustomerAuthView createVerified(String username, String email, String password, String name) {

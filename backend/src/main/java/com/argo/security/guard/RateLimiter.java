@@ -85,7 +85,7 @@ public class RateLimiter {
 			return List.of(Kind.GENERAL);
 		}
 		if (path.equals("/api/auth/login") || path.equals("/api/auth/register")
-				|| path.equals("/api/auth/verify-email") || path.equals("/api/auth/resend-verification")
+				|| path.equals("/api/auth/verify-email") || path.equals("/api/auth/verify-code") || path.equals("/api/auth/resend-verification")
 				|| path.equals("/api/auth/forgot-password") || path.equals("/api/auth/reset-password")
 				|| path.equals("/api/admin/auth/login") || path.equals("/api/ops/auth/login")) {
 			return List.of(Kind.GENERAL, Kind.AUTH);

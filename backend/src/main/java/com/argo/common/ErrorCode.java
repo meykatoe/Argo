@@ -24,6 +24,7 @@ public enum ErrorCode {
 	USERNAME_TAKEN(2007, HttpStatus.CONFLICT, "註冊的帳號已被使用"),
 	TOKEN_INVALID(2008, HttpStatus.BAD_REQUEST, "驗證或重設連結無效、已使用或已過期"),
 	RESEND_TOO_SOON(2009, HttpStatus.TOO_MANY_REQUESTS, "重寄過於頻繁，data.retryAfterSeconds 為等待秒數"),
+	CODE_INVALID(2010, HttpStatus.BAD_REQUEST, "驗證碼錯誤、已過期或錯誤次數過多而作廢，需重新寄送"),
 
 	// 卡片與系列
 	CARD_NOT_FOUND(3001, HttpStatus.NOT_FOUND, "找不到卡片"),

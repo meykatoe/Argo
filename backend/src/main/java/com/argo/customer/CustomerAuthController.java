@@ -47,6 +47,12 @@ public class CustomerAuthController {
 		return Result.ok(auth.completeRegistration(body.token()));
 	}
 
+	// 輸入驗證碼驗證，與點連結擇一
+	@PostMapping("/verify-code")
+	public Result<CustomerAuthView> verifyCode(@Valid @RequestBody VerifyCodeRequest body) {
+		return Result.ok(auth.completeRegistrationByCode(body.email(), body.code()));
+	}
+
 	// 重寄驗證信，沒有待驗證資料也回成功
 	@PostMapping("/resend-verification")
 	public Result<Void> resendVerification(@Valid @RequestBody EmailRequest body) {
