@@ -50,6 +50,9 @@ async function submit() {
       <button type="submit" class="primary" :disabled="busy">{{ t('auth.loginSubmit') }}</button>
     </form>
     <p class="alt">
+      <RouterLink :to="{ name: 'forgotPassword' }">{{ t('auth.forgotLink') }}</RouterLink>
+    </p>
+    <p class="alt">
       {{ t('auth.noAccount') }}
       <RouterLink :to="{ name: 'register', query: route.query }">{{ t('auth.goRegister') }}</RouterLink>
     </p>

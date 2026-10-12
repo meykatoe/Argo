@@ -8,7 +8,7 @@ import AccountView from '../AccountView.vue'
 import LoginView from '../LoginView.vue'
 import RegisterView from '../RegisterView.vue'
 
-const view = { token: 'tok', email: 'a@b.co', username: 'ming', name: '小明', expiresAt: '2099-01-01T00:00:00Z' }
+const view = { token: 'tok', email: 'a@b.co', username: 'ming', name: '小明', emailVerified: 0, expiresAt: '2099-01-01T00:00:00Z' }
 const ok = (data: unknown) => new Response(JSON.stringify({ code: 200, msg: 'OK', data }))
 const fail = (status: number, msg: string) => new Response(JSON.stringify({ code: status, msg, data: null }), { status })
 
@@ -19,6 +19,7 @@ function makeRouter() {
       { path: '/', component: { template: '<i/>' } },
       { path: '/login', name: 'login', component: LoginView },
       { path: '/register', name: 'register', component: RegisterView },
+      { path: '/forgot-password', name: 'forgotPassword', component: { template: '<i/>' } },
       { path: '/account', name: 'account', component: AccountView },
       { path: '/checkout', component: { template: '<i/>' } },
       { path: '/orders/:orderNo', name: 'orderDetail', component: { template: '<i/>' } },

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AUTH_KEY, authToken } from '@/utils/authToken'
 import { useAuthStore } from '../auth'
 
-const view = { token: 'tok', email: 'a@b.co', username: 'ming', name: '小明', expiresAt: '2099-01-01T00:00:00Z' }
+const view = { token: 'tok', email: 'a@b.co', username: 'ming', name: '小明', emailVerified: 0, expiresAt: '2099-01-01T00:00:00Z' }
 const ok = (data: unknown) => new Response(JSON.stringify({ code: 200, msg: 'OK', data }))
 const fail = (status: number, msg: string) => new Response(JSON.stringify({ code: status, msg, data: null }), { status })
 

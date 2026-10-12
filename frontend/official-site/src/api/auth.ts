@@ -1,12 +1,14 @@
 import { get, post } from './http'
 import type { Order } from '@/types/order'
 import type { PageResult } from '@/types/card'
+import type { Flag } from '@/types/card'
 import type { AuthSession } from '@/utils/authToken'
 
 export interface Me {
   email: string
   username: string | null
   name: string | null
+  emailVerified: Flag
 }
 
 export function register(username: string, email: string, password: string, name: string) {
@@ -21,6 +23,23 @@ export function login(account: string, password: string) {
 // 1 可用、0 已被使用
 export function usernameAvailable(username: string) {
   return get<{ available: 0 | 1 }>('/auth/username-available', { username })
+}
+
+export function verifyEmail(token: string) {
+  return post<null>('/auth/verify-email', { token })
+}
+
+export function resendVerification() {
+  return post<null>('/auth/resend-verification', {})
+}
+
+// 不論信箱是否註冊過都會成功
+export function forgotPassword(email: string) {
+  return post<null>('/auth/forgot-password', { email })
+}
+
+export function resetPassword(token: string, password: string) {
+  return post<null>('/auth/reset-password', { token, password })
 }
 
 export function logout() {

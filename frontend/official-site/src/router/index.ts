@@ -8,6 +8,9 @@ const router = createRouter({
     { path: '/', name: 'home', component: HomeView },
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue') },
     { path: '/register', name: 'register', component: () => import('@/views/RegisterView.vue') },
+    { path: '/forgot-password', name: 'forgotPassword', component: () => import('@/views/ForgotPasswordView.vue') },
+    { path: '/reset-password', name: 'resetPassword', component: () => import('@/views/ResetPasswordView.vue') },
+    { path: '/verify-email', name: 'verifyEmail', component: () => import('@/views/VerifyEmailView.vue') },
     {
       path: '/account',
       name: 'account',

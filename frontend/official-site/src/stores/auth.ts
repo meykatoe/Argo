@@ -19,6 +19,13 @@ export const useAuthStore = defineStore('auth', () => {
     session.value = s
   }
 
+  const emailVerified = computed(() => session.value?.emailVerified === 1)
+
+  // 在別處完成驗證後更新本機狀態
+  function markVerified() {
+    if (session.value) set({ ...session.value, emailVerified: 1 })
+  }
+
   async function login(account: string, password: string) {
     set(await api.login(account, password))
   }
@@ -43,11 +50,11 @@ export const useAuthStore = defineStore('auth', () => {
     if (!session.value) return
     try {
       const m = await api.me()
-      set({ ...session.value, email: m.email, username: m.username, name: m.name })
+      set({ ...session.value, email: m.email, username: m.username, name: m.name, emailVerified: m.emailVerified === 1 ? 1 : 0 })
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) set(null)
     }
   }
 
-  return { session, isLoggedIn, displayName, login, register, logout, refresh }
+  return { session, isLoggedIn, displayName, emailVerified, markVerified, login, register, logout, refresh }
 })
