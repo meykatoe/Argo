@@ -2,7 +2,6 @@ package com.argo.customer;
 
 import com.argo.common.ApiException;
 import com.argo.common.ErrorCode;
-import com.argo.common.Flag;
 import com.argo.common.PasswordPolicy;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -45,33 +44,70 @@ public class CustomerAuthService {
 		this.lockMinutes = lockMinutes;
 	}
 
-	// 註冊後直接登入
+	// 只暫存資料並寄驗證連結，點連結驗證通過才建立帳號
 	@Transactional
-	public CustomerAuthView register(String username, String email, String password, String name) {
+	public void register(String username, String email, String password, String name) {
 		String mail = normalize(email);
 		String user = Usernames.normalize(username);
+		validate(user, password);
+		ensureFree(user, mail);
+		emails.startRegistration(user, mail, encoder.encode(password), displayName(name));
+	}
+
+	@Transactional
+	public void resendRegistration(String email) {
+		emails.resendRegistration(normalize(email));
+	}
+
+	// 驗證通過建立帳號並直接登入
+	@Transactional
+	public CustomerAuthView completeRegistration(String token) {
+		PendingRegistration p = emails.consumePending(token);
+		ensureFree(p.getUsername(), p.getEmail());
+		return create(p.getUsername(), p.getEmail(), p.getPasswordHash(), p.getName());
+	}
+
+	// 略過信箱驗證直接建立，只給測試與管理用途，不可接到公開端點
+	@Transactional
+	public CustomerAuthView createVerified(String username, String email, String password, String name) {
+		String mail = normalize(email);
+		String user = Usernames.normalize(username);
+		validate(user, password);
+		ensureFree(user, mail);
+		return create(user, mail, encoder.encode(password), displayName(name));
+	}
+
+	private void validate(String user, String password) {
 		if (!Usernames.valid(user)) {
 			throw new ApiException(ErrorCode.VALIDATION_ERROR,
 					Map.of("username", "validation.usernameInvalid"));
 		}
 		checkPassword(password);
+	}
+
+	private void ensureFree(String user, String mail) {
 		if (accounts.existsByUsername(user)) {
 			throw new ApiException(ErrorCode.USERNAME_TAKEN);
 		}
 		if (accounts.findByEmail(mail).isPresent()) {
 			throw new ApiException(ErrorCode.EMAIL_TAKEN);
 		}
-		String display = name == null || name.isBlank() ? null : name.trim();
+	}
+
+	private CustomerAuthView create(String user, String mail, String passwordHash, String display) {
 		CustomerAccount c;
 		try {
-			c = accounts.saveAndFlush(new CustomerAccount(mail, user, encoder.encode(password), display));
+			c = accounts.saveAndFlush(new CustomerAccount(mail, user, passwordHash, display));
 		} catch (DataIntegrityViolationException e) {
 			// 同時註冊同一帳號或信箱
 			throw new ApiException(accounts.existsByUsername(user) ? ErrorCode.USERNAME_TAKEN : ErrorCode.EMAIL_TAKEN);
 		}
 		c.recordSuccess(OffsetDateTime.now());
-		emails.sendVerification(c);
 		return open(c);
+	}
+
+	private static String displayName(String name) {
+		return name == null || name.isBlank() ? null : name.trim();
 	}
 
 	private static void checkPassword(String password) {
@@ -156,8 +192,7 @@ public class CustomerAuthService {
 		String token = Tokens.create();
 		OffsetDateTime expires = OffsetDateTime.now().plusDays(sessionDays);
 		sessions.save(new CustomerSession(Tokens.hash(token), c.getId(), expires));
-		return new CustomerAuthView(token, c.getEmail(), c.getUsername(), c.getName(),
-				Flag.of(c.isEmailVerified()), expires);
+		return new CustomerAuthView(token, c.getEmail(), c.getUsername(), c.getName(), expires);
 	}
 
 	// 回應帶上還要等幾秒，前端可顯示分鐘數

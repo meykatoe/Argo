@@ -85,7 +85,7 @@ class CustomerOrderTests {
 
 	@Test
 	void loggedInOrderIsLinkedToTheAccount() throws Exception {
-		var me = customers.register(TestUsers.of("c1@test.local"), "c1@test.local", PW, null);
+		var me = customers.createVerified(TestUsers.of("c1@test.local"), "c1@test.local", PW, null);
 		String no = orderNo(order(me.token()).andExpect(status().isCreated()));
 		Long id = jdbc.queryForObject("select id from customer_account where email = 'c1@test.local'", Long.class);
 		assertEquals(id, customerOf(no));
@@ -99,8 +99,8 @@ class CustomerOrderTests {
 
 	@Test
 	void myOrdersListsOnlyMyOwnNewestFirst() throws Exception {
-		var me = customers.register(TestUsers.of("c2@test.local"), "c2@test.local", PW, null);
-		var other = customers.register(TestUsers.of("c3@test.local"), "c3@test.local", PW, null);
+		var me = customers.createVerified(TestUsers.of("c2@test.local"), "c2@test.local", PW, null);
+		var other = customers.createVerified(TestUsers.of("c3@test.local"), "c3@test.local", PW, null);
 		String first = orderNo(order(me.token()));
 		String second = orderNo(order(me.token()));
 		order(other.token());
@@ -116,7 +116,7 @@ class CustomerOrderTests {
 
 	@Test
 	void myOrdersPaginationIsBounded() throws Exception {
-		var me = customers.register(TestUsers.of("c4@test.local"), "c4@test.local", PW, null);
+		var me = customers.createVerified(TestUsers.of("c4@test.local"), "c4@test.local", PW, null);
 		mvc.perform(get("/api/me/orders").param("size", "51").header("Authorization", "Bearer " + me.token()))
 				.andExpect(status().isBadRequest());
 		mvc.perform(get("/api/me/orders").param("page", "0").header("Authorization", "Bearer " + me.token()))
@@ -127,7 +127,7 @@ class CustomerOrderTests {
 
 	@Test
 	void guestLookupByEmailStillWorksForLinkedOrders() throws Exception {
-		var me = customers.register(TestUsers.of("c5@test.local"), "c5@test.local", PW, null);
+		var me = customers.createVerified(TestUsers.of("c5@test.local"), "c5@test.local", PW, null);
 		String no = orderNo(order(me.token()));
 		mvc.perform(get("/api/orders/" + no).param("email", "buyer@test.local")).andExpect(status().isOk());
 	}
@@ -135,7 +135,7 @@ class CustomerOrderTests {
 	@Test
 	void registeringWithAnOrdersEmailDoesNotClaimOldGuestOrders() throws Exception {
 		String no = orderNo(order(null));
-		var me = customers.register(TestUsers.of("buyer@test.local"), "buyer@test.local", PW, null);
+		var me = customers.createVerified(TestUsers.of("buyer@test.local"), "buyer@test.local", PW, null);
 		assertNull(customerOf(no));
 		mvc.perform(get("/api/me/orders").header("Authorization", "Bearer " + me.token()))
 				.andExpect(jsonPath("$.data.total").value(0));

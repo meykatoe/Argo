@@ -15,19 +15,22 @@ public class CustomerEmailService {
 
 	private final CustomerAccountRepository accounts;
 	private final CustomerEmailTokenRepository tokens;
+	private final PendingRegistrationRepository pending;
 	private final Mailer mailer;
 	private final String siteUrl;
 	private final int verifyHours;
 	private final int resendSeconds;
 	private final int resetMinutes;
 
-	CustomerEmailService(CustomerAccountRepository accounts, CustomerEmailTokenRepository tokens, Mailer mailer,
+	CustomerEmailService(CustomerAccountRepository accounts, CustomerEmailTokenRepository tokens,
+			PendingRegistrationRepository pending, Mailer mailer,
 			@Value("${argo.site-url}") String siteUrl,
 			@Value("${argo.customer.verify-hours:24}") int verifyHours,
 			@Value("${argo.customer.resend-seconds:60}") int resendSeconds,
 			@Value("${argo.customer.reset-minutes:60}") int resetMinutes) {
 		this.accounts = accounts;
 		this.tokens = tokens;
+		this.pending = pending;
 		this.mailer = mailer;
 		this.siteUrl = siteUrl.replaceAll("/+$", "");
 		this.verifyHours = verifyHours;
@@ -35,34 +38,52 @@ public class CustomerEmailService {
 		this.resetMinutes = resetMinutes;
 	}
 
-	// 註冊時呼叫，同一交易內
+	// 暫存註冊資料並寄驗證連結，冷卻中不重寄
 	@Transactional
-	public void sendVerification(CustomerAccount c) {
-		if (c.isEmailVerified()) {
-			return;
-		}
-		String token = issue(c, EmailTokenPurpose.VERIFY, Duration.ofHours(verifyHours));
-		mailer.send(c.getEmail(), "Argo 請驗證您的 Email",
-				"您好，請點選下列連結完成 Email 驗證（" + verifyHours + " 小時內有效）：\n" + siteUrl
-						+ "/verify-email?token=" + token + "\n\n若不是您本人註冊，請忽略此信。");
+	void startRegistration(String username, String email, String passwordHash, String name) {
+		checkCooldown(email);
+		pending.deleteByEmail(email);
+		sendPending(new PendingRegistration(null, username, email, passwordHash, name, null));
 	}
 
-	// 重寄有冷卻時間
+	// 重寄驗證連結；沒有待驗證資料時靜默結束，不透露信箱狀態
 	@Transactional
-	public void resendVerification(CustomerAccount c) {
-		if (c.isEmailVerified()) {
-			return;
-		}
+	void resendRegistration(String email) {
+		pending.findFirstByEmailOrderByCreatedAtDesc(email).ifPresent(p -> {
+			checkCooldown(email);
+			pending.deleteByEmail(email);
+			sendPending(p);
+		});
+	}
+
+	// 驗證通過取出暫存資料並作廢，帳號由呼叫端建立
+	@Transactional
+	PendingRegistration consumePending(String token) {
 		OffsetDateTime now = OffsetDateTime.now();
-		tokens.findFirstByCustomerIdAndPurposeOrderByCreatedAtDesc(c.getId(), EmailTokenPurpose.VERIFY)
-				.map(t -> t.getCreatedAt().plusSeconds(resendSeconds))
-				.filter(now::isBefore)
-				.ifPresent(next -> {
+		String hash = Tokens.hash(token);
+		PendingRegistration p = pending.findById(hash).filter(x -> x.getExpiresAt().isAfter(now))
+				.orElseThrow(() -> new ApiException(ErrorCode.TOKEN_INVALID));
+		pending.deleteByEmail(p.getEmail());
+		pending.deleteExpired(now);
+		return p;
+	}
+
+	private void checkCooldown(String email) {
+		OffsetDateTime now = OffsetDateTime.now();
+		pending.findFirstByEmailOrderByCreatedAtDesc(email).map(p -> p.getCreatedAt().plusSeconds(resendSeconds))
+				.filter(now::isBefore).ifPresent(next -> {
 					long wait = Math.max(1, Duration.between(now, next).toSeconds() + 1);
 					throw new ApiException(ErrorCode.RESEND_TOO_SOON,
 							Map.of("retryAfterSeconds", String.valueOf(wait)));
 				});
-		sendVerification(c);
+	}
+
+	private void sendPending(PendingRegistration p) {
+		String token = Tokens.create();
+		pending.save(p.withToken(Tokens.hash(token), OffsetDateTime.now().plusHours(verifyHours)));
+		mailer.send(p.getEmail(), "Argo 請驗證您的 Email",
+				"您好，請點選下列連結完成 Email 驗證並建立帳號（" + verifyHours + " 小時內有效）：\n" + siteUrl
+						+ "/verify-email?token=" + token + "\n\n若不是您本人註冊，請忽略此信，不會建立任何帳號。");
 	}
 
 	// 不論信箱是否存在都靜默結束，避免被拿來探測；冷卻中也不再寄
@@ -95,22 +116,7 @@ public class CustomerEmailService {
 				.filter(a -> !a.isDisabled())
 				.orElseThrow(() -> new ApiException(ErrorCode.TOKEN_INVALID));
 		tokens.deleteByCustomer(c.getId(), EmailTokenPurpose.RESET);
-		c.verifyEmail(now);
 		return c;
-	}
-
-	// 令牌只能用一次
-	@Transactional
-	public void verify(String token) {
-		OffsetDateTime now = OffsetDateTime.now();
-		CustomerEmailToken t = tokens.findByTokenHashAndPurpose(Tokens.hash(token), EmailTokenPurpose.VERIFY)
-				.filter(x -> x.getExpiresAt().isAfter(now))
-				.orElseThrow(() -> new ApiException(ErrorCode.TOKEN_INVALID));
-		CustomerAccount c = accounts.findById(t.getCustomerId())
-				.orElseThrow(() -> new ApiException(ErrorCode.TOKEN_INVALID));
-		c.verifyEmail(now);
-		tokens.deleteByCustomer(c.getId(), EmailTokenPurpose.VERIFY);
-		tokens.deleteExpired(now);
 	}
 
 	private String issue(CustomerAccount c, EmailTokenPurpose purpose, Duration ttl) {

@@ -63,7 +63,7 @@ class PasswordResetTests {
 		id = UUID.randomUUID().toString().substring(0, 8);
 		username = "pr-" + id;
 		email = "pr-" + id + "@example.com";
-		oldSession = auth.register(username, email, PW, null).token();
+		oldSession = auth.createVerified(username, email, PW, null).token();
 		reset(mailer);
 	}
 
@@ -102,7 +102,7 @@ class PasswordResetTests {
 	}
 
 	@Test
-	void resetMarksEmailVerifiedAndClearsLock() throws Exception {
+	void resetClearsLock() throws Exception {
 		for (int i = 0; i < 6; i++) {
 			try {
 				auth.login(username, "wrong-pass-9");
@@ -113,8 +113,7 @@ class PasswordResetTests {
 		assertEquals("LOGIN_LOCKED", assertThrows(ApiException.class, () -> auth.login(username, PW)).getCode());
 		forgot(email);
 		resetWith(mailedToken(), NEW_PW).andExpect(status().isOk());
-		CustomerAuthView v = auth.login(username, NEW_PW);
-		assertEquals(1, v.emailVerified());
+		assertEquals(email, auth.login(username, NEW_PW).email());
 	}
 
 	@Test

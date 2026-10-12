@@ -43,8 +43,6 @@ public class CustomerAccount {
 
 	private OffsetDateTime lastLoginAt;
 
-	private OffsetDateTime emailVerifiedAt;
-
 	protected CustomerAccount() {
 	}
 
@@ -92,16 +90,6 @@ public class CustomerAccount {
 		this.passwordHash = passwordHash;
 		this.failedAttempts = 0;
 		this.lockedUntil = null;
-	}
-
-	public boolean isEmailVerified() {
-		return emailVerifiedAt != null;
-	}
-
-	public void verifyEmail(OffsetDateTime now) {
-		if (emailVerifiedAt == null) {
-			this.emailVerifiedAt = now;
-		}
 	}
 
 	public boolean isLocked(OffsetDateTime now) {

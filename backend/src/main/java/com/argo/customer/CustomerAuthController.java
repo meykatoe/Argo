@@ -25,8 +25,9 @@ public class CustomerAuthController {
 
 	// 註冊與登入不經攔截器
 	@PostMapping("/register")
-	public Result<CustomerAuthView> register(@Valid @RequestBody RegisterRequest body) {
-		return Result.ok(auth.register(body.username(), body.email(), body.password(), body.name()));
+	public Result<Void> register(@Valid @RequestBody RegisterRequest body) {
+		auth.register(body.username(), body.email(), body.password(), body.name());
+		return Result.ok();
 	}
 
 	@PostMapping("/login")
@@ -40,23 +41,22 @@ public class CustomerAuthController {
 		return Result.ok(new UsernameCheck(Flag.of(auth.usernameAvailable(username))));
 	}
 
-	// 點信中連結驗證，不需登入
+	// 點信中連結驗證，通過才建立帳號並登入
 	@PostMapping("/verify-email")
-	public Result<Void> verifyEmail(@Valid @RequestBody TokenRequest body) {
-		emails.verify(body.token());
-		return Result.ok();
+	public Result<CustomerAuthView> verifyEmail(@Valid @RequestBody TokenRequest body) {
+		return Result.ok(auth.completeRegistration(body.token()));
 	}
 
-	// 重寄驗證信，需登入
+	// 重寄驗證信，沒有待驗證資料也回成功
 	@PostMapping("/resend-verification")
-	public Result<Void> resendVerification(HttpServletRequest req) {
-		emails.resendVerification((CustomerAccount) req.getAttribute(CustomerAuthInterceptor.CUSTOMER_ATTR));
+	public Result<Void> resendVerification(@Valid @RequestBody EmailRequest body) {
+		auth.resendRegistration(body.email());
 		return Result.ok();
 	}
 
 	// 一律回成功，不透露信箱是否註冊過
 	@PostMapping("/forgot-password")
-	public Result<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest body) {
+	public Result<Void> forgotPassword(@Valid @RequestBody EmailRequest body) {
 		emails.sendReset(body.email());
 		return Result.ok();
 	}
