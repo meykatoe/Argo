@@ -11,4 +11,9 @@ public interface CustomerSessionRepository extends JpaRepository<CustomerSession
 	@Modifying
 	@Query("delete from CustomerSession s where s.expiresAt < :now")
 	int deleteExpired(@Param("now") OffsetDateTime now);
+
+	// 先寫入再清快取，已刪的登入才不會被讀到
+	@Modifying(flushAutomatically = true, clearAutomatically = true)
+	@Query("delete from CustomerSession s where s.customerId = :id")
+	int deleteByCustomer(@Param("id") Long customerId);
 }

@@ -54,6 +54,19 @@ public class CustomerAuthController {
 		return Result.ok();
 	}
 
+	// 一律回成功，不透露信箱是否註冊過
+	@PostMapping("/forgot-password")
+	public Result<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest body) {
+		emails.sendReset(body.email());
+		return Result.ok();
+	}
+
+	@PostMapping("/reset-password")
+	public Result<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest body) {
+		auth.resetPassword(body.token(), body.password());
+		return Result.ok();
+	}
+
 	@PostMapping("/logout")
 	public Result<Void> logout(HttpServletRequest req) {
 		auth.logout(CustomerAuthInterceptor.bearer(req));

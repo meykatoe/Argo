@@ -78,7 +78,9 @@ class RateLimiterTests {
 		assertEquals(List.of(Kind.GENERAL), RateLimiter.kindsFor("GET", "/api/cards"));
 		assertEquals(List.of(Kind.GENERAL), RateLimiter.kindsFor("GET", "/api/auth/login"));
 		assertEquals(List.of(Kind.GENERAL, Kind.AUTH), RateLimiter.kindsFor("GET", "/api/auth/username-available"));
-		for (String p : new String[] { "/api/auth/login", "/api/auth/register", "/api/admin/auth/login", "/api/ops/auth/login" }) {
+		for (String p : new String[] { "/api/auth/login", "/api/auth/register", "/api/admin/auth/login", "/api/ops/auth/login",
+				"/api/auth/verify-email", "/api/auth/resend-verification", "/api/auth/forgot-password",
+				"/api/auth/reset-password" }) {
 			assertEquals(List.of(Kind.GENERAL, Kind.AUTH), RateLimiter.kindsFor("POST", p), p);
 		}
 		for (String p : new String[] { "/api/orders", "/api/orders/AR1-ABC/pay", "/api/orders/AR1-ABC/cancel" }) {

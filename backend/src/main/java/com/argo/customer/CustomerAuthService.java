@@ -54,14 +54,7 @@ public class CustomerAuthService {
 			throw new ApiException(ErrorCode.VALIDATION_ERROR,
 					Map.of("username", "validation.usernameInvalid"));
 		}
-		if (password.getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
-			throw new ApiException(ErrorCode.VALIDATION_ERROR,
-					Map.of("password", "validation.passwordTooLong"));
-		}
-		if (!PasswordPolicy.customerOk(password)) {
-			throw new ApiException(ErrorCode.VALIDATION_ERROR,
-					Map.of("password", "validation.passwordWeak"));
-		}
+		checkPassword(password);
 		if (accounts.existsByUsername(user)) {
 			throw new ApiException(ErrorCode.USERNAME_TAKEN);
 		}
@@ -79,6 +72,26 @@ public class CustomerAuthService {
 		c.recordSuccess(OffsetDateTime.now());
 		emails.sendVerification(c);
 		return open(c);
+	}
+
+	private static void checkPassword(String password) {
+		if (password.getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
+			throw new ApiException(ErrorCode.VALIDATION_ERROR,
+					Map.of("password", "validation.passwordTooLong"));
+		}
+		if (!PasswordPolicy.customerOk(password)) {
+			throw new ApiException(ErrorCode.VALIDATION_ERROR,
+					Map.of("password", "validation.passwordWeak"));
+		}
+	}
+
+	// 重設後所有登入作廢，要重新登入
+	@Transactional
+	public void resetPassword(String token, String password) {
+		checkPassword(password);
+		CustomerAccount c = emails.consumeReset(token);
+		c.resetPassword(encoder.encode(password));
+		sessions.deleteByCustomer(c.getId());
 	}
 
 	// 註冊前檢查帳號是否可用

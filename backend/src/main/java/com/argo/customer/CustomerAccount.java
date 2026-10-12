@@ -87,6 +87,13 @@ public class CustomerAccount {
 		this.disabled = disabled;
 	}
 
+	// 重設密碼同時解除鎖定
+	public void resetPassword(String passwordHash) {
+		this.passwordHash = passwordHash;
+		this.failedAttempts = 0;
+		this.lockedUntil = null;
+	}
+
 	public boolean isEmailVerified() {
 		return emailVerifiedAt != null;
 	}
