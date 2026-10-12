@@ -6,6 +6,7 @@ import { getCardsByIds } from '@/api/card'
 import { ApiError } from '@/api/http'
 import { createOrder } from '@/api/order'
 import FormField from '@/components/FormField.vue'
+import PriceTag from '@/components/PriceTag.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import type { CardSummary } from '@/types/card'
@@ -223,7 +224,11 @@ onMounted(load)
         <ul>
           <li v-for="l in lines" :key="l.item.id" :class="{ off: !l.ok }">
             <span class="n">{{ l.card?.cardName ?? '—' }} × {{ l.item.qty }}</span>
-            <span>{{ l.card ? formatPrice(l.card.salePrice * l.item.qty) : '' }}</span>
+            <PriceTag
+              v-if="l.card"
+              :sale-price="l.card.salePrice * l.item.qty"
+              :list-price="l.card.listPrice ? l.card.listPrice * l.item.qty : undefined"
+            />
           </li>
         </ul>
         <div class="total">

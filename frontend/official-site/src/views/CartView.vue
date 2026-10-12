@@ -7,6 +7,7 @@ import { useCartStore } from '@/stores/cart'
 import type { CardSummary } from '@/types/card'
 import { errorText } from '@/utils/error'
 import { formatPrice, isAvailable, isOffShelf } from '@/utils/format'
+import PriceTag from '@/components/PriceTag.vue'
 
 const { t, locale } = useI18n()
 const cart = useCartStore()
@@ -132,7 +133,9 @@ onMounted(load)
             </button>
           </div>
           <div v-if="l.status === 'ok' && l.card" class="sum">
-            <div class="unit">{{ formatPrice(l.card.salePrice) }}</div>
+            <div class="unit">
+              <PriceTag :sale-price="l.card.salePrice" :list-price="l.card.listPrice" />
+            </div>
             <div class="subtotal">
               {{ t('cart.subtotal') }} {{ formatPrice(l.card.salePrice * l.item.qty) }}
             </div>
