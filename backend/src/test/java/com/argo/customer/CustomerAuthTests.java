@@ -188,6 +188,20 @@ class CustomerAuthTests {
 	}
 
 	@Test
+	void oldFailuresOutsideWindowAreForgotten() {
+		auth.createVerified(TestUsers.of("d5@test.local"), "d5@test.local", PW, null);
+		for (int i = 0; i < 3; i++) {
+			code(() -> auth.login("d5@test.local", "wrong-password"));
+		}
+		em.flush();
+		jdbc.update("update customer_account set last_failed_at = now() - interval '16 minutes' where email = 'd5@test.local'");
+		em.clear();
+		// 舊失敗歸零，不會被鎖
+		assertEquals("LOGIN_FAILED", code(() -> auth.login("d5@test.local", "wrong-password")));
+		assertEquals("d5@test.local", auth.login("d5@test.local", PW).email());
+	}
+
+	@Test
 	void lockEndsAfterFifteenMinutes() {
 		auth.createVerified(TestUsers.of("d4@test.local"), "d4@test.local", PW, null);
 		for (int i = 0; i < 4; i++) {

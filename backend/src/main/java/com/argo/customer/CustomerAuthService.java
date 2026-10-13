@@ -30,18 +30,21 @@ public class CustomerAuthService {
 	private final int sessionDays;
 	private final int maxFailures;
 	private final int lockMinutes;
+	private final java.time.Duration failureWindow;
 
 	public CustomerAuthService(CustomerAccountRepository accounts, CustomerSessionRepository sessions,
 			CustomerEmailService emails,
 			@Value("${argo.customer.session-days:14}") int sessionDays,
 			@Value("${argo.customer.max-failures:5}") int maxFailures,
-			@Value("${argo.customer.lock-minutes:15}") int lockMinutes) {
+			@Value("${argo.customer.lock-minutes:15}") int lockMinutes,
+			@Value("${argo.customer.failure-window-minutes:15}") int windowMinutes) {
 		this.accounts = accounts;
 		this.sessions = sessions;
 		this.emails = emails;
 		this.sessionDays = sessionDays;
 		this.maxFailures = maxFailures;
 		this.lockMinutes = lockMinutes;
+		this.failureWindow = java.time.Duration.ofMinutes(windowMinutes);
 	}
 
 	// 只暫存資料並寄驗證連結，點連結驗證通過才建立帳號
@@ -166,7 +169,7 @@ public class CustomerAuthService {
 		}
 		boolean ok = encoder.matches(password, c.getPasswordHash());
 		// 超過允許次數就鎖定，這一次也直接告知已鎖定
-		if (!ok && c.recordFailure(maxFailures, now.plusMinutes(lockMinutes))) {
+		if (!ok && c.recordFailure(maxFailures, now.plusMinutes(lockMinutes), now, failureWindow)) {
 			throw locked(c, now);
 		}
 		if (!ok || c.isDisabled()) {

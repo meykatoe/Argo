@@ -38,6 +38,8 @@ public class CustomerAccount {
 
 	private OffsetDateTime lockedUntil;
 
+	private OffsetDateTime lastFailedAt;
+
 	@Column(nullable = false)
 	private OffsetDateTime createdAt = OffsetDateTime.now();
 
@@ -90,6 +92,7 @@ public class CustomerAccount {
 		this.passwordHash = passwordHash;
 		this.failedAttempts = 0;
 		this.lockedUntil = null;
+		this.lastFailedAt = null;
 	}
 
 	public boolean isLocked(OffsetDateTime now) {
@@ -97,7 +100,13 @@ public class CustomerAccount {
 	}
 
 	// 允許失敗 allowed 次，超過就鎖定，回傳這次是否剛被鎖定
-	public boolean recordFailure(int allowed, OffsetDateTime lockUntil) {
+	public boolean recordFailure(int allowed, OffsetDateTime lockUntil, OffsetDateTime now,
+			java.time.Duration window) {
+		// 舊失敗不計
+		if (lastFailedAt != null && lastFailedAt.plus(window).isBefore(now)) {
+			this.failedAttempts = 0;
+		}
+		this.lastFailedAt = now;
 		this.failedAttempts++;
 		if (failedAttempts > allowed) {
 			this.lockedUntil = lockUntil;
@@ -118,6 +127,7 @@ public class CustomerAccount {
 	public void recordSuccess(OffsetDateTime now) {
 		this.failedAttempts = 0;
 		this.lockedUntil = null;
+		this.lastFailedAt = null;
 		this.lastLoginAt = now;
 	}
 }

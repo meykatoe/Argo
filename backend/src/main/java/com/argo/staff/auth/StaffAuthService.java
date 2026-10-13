@@ -37,18 +37,21 @@ public class StaffAuthService {
 	private final int sessionHours;
 	private final int maxFailures;
 	private final int lockMinutes;
+	private final java.time.Duration failureWindow;
 
 	public StaffAuthService(StaffAccountRepository accounts, StaffSessionRepository sessions,
 			AuditLogService audit,
 			@Value("${argo.admin.session-hours:8}") int sessionHours,
 			@Value("${argo.admin.max-failures:5}") int maxFailures,
-			@Value("${argo.admin.lock-minutes:15}") int lockMinutes) {
+			@Value("${argo.admin.lock-minutes:15}") int lockMinutes,
+			@Value("${argo.admin.failure-window-minutes:15}") int windowMinutes) {
 		this.accounts = accounts;
 		this.sessions = sessions;
 		this.audit = audit;
 		this.sessionHours = sessionHours;
 		this.maxFailures = maxFailures;
 		this.lockMinutes = lockMinutes;
+		this.failureWindow = java.time.Duration.ofMinutes(windowMinutes);
 	}
 
 	// 由人工指令建立，不對外開放
@@ -88,7 +91,7 @@ public class StaffAuthService {
 		boolean ok = encoder.matches(password, staff.getPasswordHash());
 		if (!ok) {
 			// 超過允許次數就鎖定，這一次也直接告知已鎖定
-			if (staff.recordFailure(maxFailures, now.plusMinutes(lockMinutes))) {
+			if (staff.recordFailure(maxFailures, now.plusMinutes(lockMinutes), now, failureWindow)) {
 				audit.record(staff, null, AuditAction.LOGIN_LOCKED, false, null, null,
 						Map.of("reason", "TOO_MANY_FAILURES", "lockMinutes", lockMinutes));
 				throw locked(staff, now);

@@ -127,6 +127,19 @@ class StaffAuthTests {
 	}
 
 	@Test
+	void oldFailuresOutsideWindowAreForgotten() {
+		for (int i = 0; i < 3; i++) {
+			code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN));
+		}
+		accounts.flush();
+		jdbc.update("update staff_account set last_failed_at = now() - interval '16 minutes' where username = 'alice'");
+		em.clear();
+		// 舊失敗歸零，不會被鎖
+		assertEquals("LOGIN_FAILED", code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN)));
+		assertEquals("alice", auth.login("alice", "Password-1234", LoginPortal.ADMIN).username());
+	}
+
+	@Test
 	void lockEndsAfterFifteenMinutes() {
 		for (int i = 0; i < 4; i++) {
 			code(() -> auth.login("alice", "wrong-password", LoginPortal.ADMIN));
