@@ -26,6 +26,12 @@ describe('audit utils', () => {
     expect(actionLabel('SOMETHING_NEW')).toBe('SOMETHING_NEW')
   })
 
+  it('權限與選單變更有中文名稱與摘要', () => {
+    expect(actionLabel('PERMISSION_GRANTED')).toBe('授權功能')
+    expect(summarize(log({ action: 'PERMISSION_REVOKED', targetId: 'card.edit', detail: { role: 'SERVICE' } }))).toBe('客服：card.edit')
+    expect(summarize(log({ action: 'MENU_DISABLED', targetId: 'card.edit' }))).toBe('card.edit')
+  })
+
   it('折扣修改摘要包含前後變化', () => {
     const s = summarize(
       log({

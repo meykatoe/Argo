@@ -20,6 +20,10 @@ export const ACTION_LABELS: Record<AuditAction, string> = {
   IP_RULE_UPDATED: '修改自動封鎖規則',
   IP_ALLOWLIST_ADDED: '新增白名單',
   IP_ALLOWLIST_REMOVED: '移除白名單',
+  PERMISSION_GRANTED: '授權功能',
+  PERMISSION_REVOKED: '撤銷授權',
+  MENU_ENABLED: '啟用選單',
+  MENU_DISABLED: '停用選單',
   AUDIT_LOG_VIEWED: '查看稽核紀錄',
 }
 
@@ -72,6 +76,12 @@ export function summarize(log: AuditLog): string {
       return REASONS[str(d.reason)] ?? str(d.reason)
     case 'ACCESS_DENIED':
       return `${str(d.method)} ${str(log.targetId)}`.trim()
+    case 'PERMISSION_GRANTED':
+    case 'PERMISSION_REVOKED':
+      return `${roleLabel(str(d.role) || null)}：${str(log.targetId)}`
+    case 'MENU_ENABLED':
+    case 'MENU_DISABLED':
+      return str(log.targetId)
     case 'ACCOUNT_CREATED':
       return `${str(log.targetId)}（${roleLabel(str(d.role) || null)}）`
     default:

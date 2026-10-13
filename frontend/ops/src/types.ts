@@ -20,6 +20,10 @@ export type AuditAction =
   | 'IP_RULE_UPDATED'
   | 'IP_ALLOWLIST_ADDED'
   | 'IP_ALLOWLIST_REMOVED'
+  | 'PERMISSION_GRANTED'
+  | 'PERMISSION_REVOKED'
+  | 'MENU_ENABLED'
+  | 'MENU_DISABLED'
   | 'AUDIT_LOG_VIEWED'
 
 export interface AuditLog {
@@ -122,4 +126,22 @@ export interface Monitor {
   failing: MonitorEndpoint[]
   alerts: MonitorAlert[]
   history: MonitorPoint[]
+}
+
+export interface PermissionNode {
+  code: string
+  title: string
+  path: string | null
+  portal: 'ADMIN' | 'OPS'
+  parentCode: string | null
+  sortOrder: number
+  enabled: Flag
+  group: Flag
+  protectedNode: boolean
+  roles: StaffRole[]
+}
+
+export interface PermissionOverview {
+  roles: StaffRole[]
+  nodes: PermissionNode[]
 }

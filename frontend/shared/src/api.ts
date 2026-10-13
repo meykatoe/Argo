@@ -24,7 +24,7 @@ export type Params = Record<string, string | number | boolean | undefined>
 
 export async function request<T>(
   token: string | null,
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   path: string,
   params: Params = {},
   body?: unknown,

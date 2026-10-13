@@ -1,5 +1,5 @@
 import { request } from '@shared/api'
-import type { AuditAction, AuditLog, IpActivity, IpBlock, MenuNode, Monitor, PageResult, Session } from '@/types'
+import type { AuditAction, AuditLog, IpActivity, IpBlock, MenuNode, Monitor, PageResult, PermissionOverview, Session } from '@/types'
 
 export { ApiError, type Result } from '@shared/api'
 
@@ -57,4 +57,16 @@ export function unblockIp(token: string, ip: string): Promise<void> {
 
 export function getMonitor(token: string, minutes: number): Promise<Monitor> {
   return request(token, 'GET', '/ops/monitor', { minutes })
+}
+
+export function getPermissions(token: string): Promise<PermissionOverview> {
+  return request(token, 'GET', '/ops/permissions')
+}
+
+export function setGrant(token: string, code: string, role: string, granted: boolean): Promise<PermissionOverview> {
+  return request(token, 'PUT', `/ops/permissions/${code}/roles/${role}`, {}, { granted: granted ? 1 : 0 })
+}
+
+export function setMenuEnabled(token: string, code: string, enabled: boolean): Promise<PermissionOverview> {
+  return request(token, 'PATCH', `/ops/permissions/${code}`, {}, { enabled: enabled ? 1 : 0 })
 }
