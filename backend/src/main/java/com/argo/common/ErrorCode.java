@@ -25,6 +25,10 @@ public enum ErrorCode {
 	TOKEN_INVALID(2008, HttpStatus.BAD_REQUEST, "驗證或重設連結無效、已使用或已過期"),
 	RESEND_TOO_SOON(2009, HttpStatus.TOO_MANY_REQUESTS, "重寄過於頻繁，data.retryAfterSeconds 為等待秒數"),
 	CODE_INVALID(2010, HttpStatus.BAD_REQUEST, "驗證碼錯誤、已過期或錯誤次數過多而作廢，需重新寄送"),
+	MENU_NOT_FOUND(2011, HttpStatus.NOT_FOUND, "找不到選單節點"),
+	MENU_NOT_GRANTABLE(2012, HttpStatus.BAD_REQUEST, "群組節點不能授權，只有功能節點可以"),
+	ROLE_PORTAL_MISMATCH(2013, HttpStatus.BAD_REQUEST, "角色不屬於該節點所在的後台入口"),
+	PERMISSION_PROTECTED(2014, HttpStatus.BAD_REQUEST, "受保護的節點不可停用或撤銷運維授權，避免鎖死權限管理"),
 
 	// 卡片與系列
 	CARD_NOT_FOUND(3001, HttpStatus.NOT_FOUND, "找不到卡片"),

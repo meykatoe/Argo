@@ -18,4 +18,11 @@ public interface AdminMenuRepository extends JpaRepository<AdminMenu, Long> {
 
 	@Query("select count(m) > 0 from AdminMenu m join m.roles r where r = :role and m.code = :code and m.enabled = :#{true}")
 	boolean hasPermission(@Param("role") StaffRole role, @Param("code") String code);
+
+	@Query("select m from AdminMenu m order by m.portal, m.sortOrder, m.id")
+	List<AdminMenu> findAllOrdered();
+
+	java.util.Optional<AdminMenu> findByCode(String code);
+
+	boolean existsByParentId(Long parentId);
 }

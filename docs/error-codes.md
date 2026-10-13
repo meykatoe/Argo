@@ -43,6 +43,10 @@
 | 2008 | `TOKEN_INVALID` | 400 | 驗證或重設連結無效、已使用或已過期 |
 | 2009 | `RESEND_TOO_SOON` | 429 | 重寄過於頻繁，data.retryAfterSeconds 為等待秒數 |
 | 2010 | `CODE_INVALID` | 400 | 驗證碼錯誤、已過期或錯誤次數過多而作廢，需重新寄送 |
+| 2011 | `MENU_NOT_FOUND` | 404 | 找不到選單節點 |
+| 2012 | `MENU_NOT_GRANTABLE` | 400 | 群組節點不能授權，只有功能節點可以 |
+| 2013 | `ROLE_PORTAL_MISMATCH` | 400 | 角色不屬於該節點所在的後台入口 |
+| 2014 | `PERMISSION_PROTECTED` | 400 | 受保護的節點不可停用或撤銷運維授權，避免鎖死權限管理 |
 
 ## 3xxx 卡片與系列
 

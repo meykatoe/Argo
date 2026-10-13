@@ -79,4 +79,20 @@ public class AdminMenu {
 	public int getSortOrder() {
 		return sortOrder;
 	}
+
+	public LoginPortal getPortal() {
+		return portal;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public Set<StaffRole> getRoles() {
+		return roles;
+	}
 }
