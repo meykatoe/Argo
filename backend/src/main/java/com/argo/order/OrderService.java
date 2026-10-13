@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -44,12 +45,14 @@ public class OrderService {
 	private final String currency;
 	private final BigDecimal shippingFee;
 	private final long expireMinutes;
+	private final ApplicationEventPublisher events;
 
 	public OrderService(ShopOrderRepository orders, PaymentRepository payments, CardRepository cards,
 			CardSetRepository sets, CardTranslationRepository translations, OrderNumberGenerator numbers,
 			@Value("${argo.order.currency}") String currency,
 			@Value("${argo.order.shipping-fee}") BigDecimal shippingFee,
-			@Value("${argo.order.expire-minutes}") long expireMinutes) {
+			@Value("${argo.order.expire-minutes}") long expireMinutes,
+			ApplicationEventPublisher events) {
 		this.orders = orders;
 		this.payments = payments;
 		this.cards = cards;
@@ -59,6 +62,7 @@ public class OrderService {
 		this.currency = currency;
 		this.shippingFee = shippingFee.setScale(2, RoundingMode.HALF_UP);
 		this.expireMinutes = expireMinutes;
+		this.events = events;
 	}
 
 	@Transactional
@@ -112,6 +116,7 @@ public class OrderService {
 		order.setShipping(s.recipientName().trim(), s.recipientPhone().trim(), s.postalCode().trim(),
 				s.city().trim(), s.address().trim());
 		orders.save(order);
+		events.publishEvent(OrderNotice.of(OrderNotice.Kind.CREATED, order));
 		return view(order);
 	}
 
@@ -188,6 +193,7 @@ public class OrderService {
 		order.getItems().stream()
 				.sorted(Comparator.comparing(OrderItem::getCardId))
 				.forEach(i -> cards.incrementStock(i.getCardId(), i.getQuantity()));
+		events.publishEvent(OrderNotice.of(OrderNotice.Kind.CANCELLED, order));
 	}
 
 	OrderView view(ShopOrder order) {

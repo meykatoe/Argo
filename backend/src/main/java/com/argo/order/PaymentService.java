@@ -3,6 +3,7 @@ package com.argo.order;
 import com.argo.common.ApiException;
 import com.argo.common.ErrorCode;
 import java.time.YearMonth;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,11 +14,14 @@ public class PaymentService {
 	private final OrderService orderService;
 	private final PaymentRepository payments;
 	private final PaymentGateway gateway;
+	private final ApplicationEventPublisher events;
 
-	public PaymentService(OrderService orderService, PaymentRepository payments, PaymentGateway gateway) {
+	public PaymentService(OrderService orderService, PaymentRepository payments, PaymentGateway gateway,
+			ApplicationEventPublisher events) {
 		this.orderService = orderService;
 		this.payments = payments;
 		this.gateway = gateway;
+		this.events = events;
 	}
 
 	// 付款失敗也要保留紀錄，所以業務錯誤不回滾
@@ -44,6 +48,7 @@ public class PaymentService {
 			throw new ApiException(result.failure());
 		}
 		order.markPaid();
+		events.publishEvent(OrderNotice.of(OrderNotice.Kind.PAID, order));
 		return orderService.view(order);
 	}
 

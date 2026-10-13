@@ -3,6 +3,7 @@ package com.argo.order.admin;
 import com.argo.common.ApiException;
 import com.argo.common.ErrorCode;
 import com.argo.common.PageResult;
+import com.argo.order.OrderNotice;
 import com.argo.order.OrderService;
 import com.argo.order.OrderStatus;
 import com.argo.order.PaymentRepository;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -32,13 +34,16 @@ public class AdminOrderService {
 
 	private final OrderService orderService;
 	private final AuditLogService audit;
+	private final ApplicationEventPublisher events;
 
 	public AdminOrderService(ShopOrderRepository orders, PaymentRepository payments,
-			OrderService orderService, AuditLogService audit) {
+			OrderService orderService, AuditLogService audit,
+			ApplicationEventPublisher events) {
 		this.orders = orders;
 		this.payments = payments;
 		this.orderService = orderService;
 		this.audit = audit;
+		this.events = events;
 	}
 
 	@Transactional(readOnly = true)
@@ -62,6 +67,7 @@ public class AdminOrderService {
 		require(o, OrderStatus.PAID);
 		String tracking = blankToNull(trackingNo);
 		o.markShipped(tracking);
+		events.publishEvent(OrderNotice.of(OrderNotice.Kind.SHIPPED, o));
 		Map<String, Object> detail = new LinkedHashMap<>();
 		detail.put("hasTracking", tracking == null ? 0 : 1);
 		audit.record(actor, null, AuditAction.ORDER_SHIPPED, true, "ORDER", orderNo, detail);
