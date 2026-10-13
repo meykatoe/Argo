@@ -37,7 +37,7 @@ export async function request<T>(
       query.set(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value))
     }
   }
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = { 'X-Argo-App': __ARGO_APP__ }
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }

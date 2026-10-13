@@ -10,6 +10,8 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
+  // 標頭用
+  define: { __ARGO_APP__: JSON.stringify('official-site') },
   server: {
     fs: { allow: ['..'] },
     port: 5173,

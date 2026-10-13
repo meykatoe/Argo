@@ -23,6 +23,12 @@ describe('http', () => {
     expect(fn.mock.calls[0]![0]).toBe('/api/cards?keyword=luffy&page=2&lang=zh-TW')
   })
 
+  it('一律帶前端名稱', async () => {
+    const fn = mockFetch(200, ok([]))
+    await get('/sets')
+    expect(fn.mock.calls[0]![1].headers['X-Argo-App']).toBe('official-site')
+  })
+
   it('一律帶語言參數', async () => {
     const fn = mockFetch(200, ok([]))
     await get('/sets')
@@ -43,7 +49,7 @@ describe('http', () => {
     const [url, init] = fn.mock.calls[0]!
     expect(url).toBe('/api/orders?lang=zh-TW')
     expect(init.method).toBe('POST')
-    expect(init.headers).toEqual({ 'Content-Type': 'application/json' })
+    expect(init.headers).toEqual({ 'X-Argo-App': 'official-site', 'Content-Type': 'application/json' })
     expect(init.body).toBe('{"a":1}')
   })
 

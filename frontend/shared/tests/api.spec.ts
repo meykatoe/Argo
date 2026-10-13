@@ -36,6 +36,13 @@ describe('request', () => {
     expect(JSON.parse(init.body)).toEqual({ a: 1 })
   })
 
+  it('一律帶前端名稱，共用測試在後台環境執行', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 200, msg: 'OK', data: null })))
+    vi.stubGlobal('fetch', fetchMock)
+    await request(null, 'GET', '/x')
+    expect(fetchMock.mock.calls[0]![1].headers['X-Argo-App']).toBe('admin')
+  })
+
   it('失敗時 msg 成為錯誤代碼並帶上細節', async () => {
     respond(429, { code: 429, msg: 'LOGIN_LOCKED', data: { retryAfterSeconds: '5' } })
     const err = (await request(null, 'GET', '/x').catch((e) => e)) as ApiError

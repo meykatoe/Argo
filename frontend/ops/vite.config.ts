@@ -5,6 +5,8 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
+  // 標頭用
+  define: { __ARGO_APP__: JSON.stringify('ops') },
   server: {
     fs: { allow: ['..'] },
     port: 5175,

@@ -52,12 +52,12 @@ async function request<T>(
 }
 
 // 有登入就帶上令牌
-function buildHeaders(hasBody: boolean): Record<string, string> | undefined {
-  const headers: Record<string, string> = {}
+function buildHeaders(hasBody: boolean): Record<string, string> {
+  const headers: Record<string, string> = { 'X-Argo-App': __ARGO_APP__ }
   if (hasBody) headers['Content-Type'] = 'application/json'
   const token = authToken()
   if (token) headers['Authorization'] = `Bearer ${token}`
-  return Object.keys(headers).length ? headers : undefined
+  return headers
 }
 
 export function get<T>(path: string, params: Params = {}): Promise<T> {

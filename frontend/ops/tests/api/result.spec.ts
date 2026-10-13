@@ -8,6 +8,13 @@ function respond(status: number, body: unknown) {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('Result 格式', () => {
+  it('請求帶上前端名稱 ops', async () => {
+    const fn = vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 200, msg: 'OK', data: null })))
+    vi.stubGlobal('fetch', fn)
+    await logout('t')
+    expect(fn.mock.calls[0]![1].headers['X-Argo-App']).toBe('ops')
+  })
+
   it('成功時只回傳 data', async () => {
     respond(200, { code: 200, msg: 'OK', data: { token: 't' } })
     expect(await login('a', 'b')).toEqual({ token: 't' })
