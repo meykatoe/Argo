@@ -56,3 +56,70 @@ export interface IpBlock {
   createdAt: string
   expiresAt: string | null
 }
+
+export type MonitorLevel = 'NORMAL' | 'WARNING' | 'DANGER'
+
+export interface MonitorAlert {
+  code: string
+  level: MonitorLevel
+  app: string | null
+  value: number
+  threshold: number
+}
+
+export interface MonitorSystem {
+  cpuPercent: number
+  heapPercent: number
+  heapUsedMb: number
+  heapMaxMb: number
+  threads: number
+  poolActive: number
+  poolMax: number
+  poolPending: number
+  poolPercent: number
+  gcPercent: number
+  uptimeSeconds: number
+}
+
+export interface MonitorApp {
+  app: string
+  requests: number
+  perMinute: number
+  errors5xx: number
+  errorRate: number
+  avgMs: number
+  p95Ms: number
+  p99Ms: number
+  maxMs: number
+}
+
+export interface MonitorEndpoint {
+  app: string
+  method: string
+  path: string
+  requests: number
+  errors5xx: number
+  errorRate: number
+  avgMs: number
+  p95Ms: number
+  maxMs: number
+}
+
+export interface MonitorPoint {
+  at: number
+  cpu: number
+  heap: number
+  pool: number
+  gc: number
+}
+
+export interface Monitor {
+  level: MonitorLevel
+  windowMinutes: number
+  system: MonitorSystem
+  apps: MonitorApp[]
+  slowest: MonitorEndpoint[]
+  failing: MonitorEndpoint[]
+  alerts: MonitorAlert[]
+  history: MonitorPoint[]
+}

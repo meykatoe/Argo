@@ -1,5 +1,5 @@
 import { request } from '@shared/api'
-import type { AuditAction, AuditLog, IpActivity, IpBlock, MenuNode, PageResult, Session } from '@/types'
+import type { AuditAction, AuditLog, IpActivity, IpBlock, MenuNode, Monitor, PageResult, Session } from '@/types'
 
 export { ApiError, type Result } from '@shared/api'
 
@@ -53,4 +53,8 @@ export function blockIp(token: string, ip: string, reason: string, hours: number
 
 export function unblockIp(token: string, ip: string): Promise<void> {
   return request(token, 'DELETE', '/ops/ip-blocks', { ip })
+}
+
+export function getMonitor(token: string, minutes: number): Promise<Monitor> {
+  return request(token, 'GET', '/ops/monitor', { minutes })
 }
