@@ -1,6 +1,9 @@
 package com.argo.arch;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.base.DescribedPredicate.*;
+import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -65,6 +68,11 @@ class ArchitectureTests {
 
 	@ArchTest
 	static final ArchRule orderLayer = forbid("order", "security", "config");
+
+	// 訂單只能經由 card 的服務，不可直接讀倉儲
+	@ArchTest
+	static final ArchRule orderNotUsingCardRepos = noClasses().that().resideInAPackage("com.argo.order..")
+			.should().dependOnClassesThat(resideInAPackage("com.argo.card..").and(nameMatching(".*Repository")));
 
 	// 只有後台管理可用員工權限
 	@ArchTest

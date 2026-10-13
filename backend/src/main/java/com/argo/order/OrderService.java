@@ -1,24 +1,16 @@
 package com.argo.order;
 
-import com.argo.card.Card;
-import com.argo.card.CardRepository;
-import com.argo.card.CardSet;
-import com.argo.card.CardSetRepository;
+import com.argo.card.CardStockService;
 import com.argo.common.ApiException;
 import com.argo.common.ErrorCode;
 import com.argo.common.PageResult;
-import com.argo.card.i18n.CardTranslation;
-import com.argo.card.i18n.CardTranslationRepository;
 import com.argo.card.i18n.Locales;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,26 +30,22 @@ public class OrderService {
 
 	private final ShopOrderRepository orders;
 	private final PaymentRepository payments;
-	private final CardRepository cards;
-	private final CardSetRepository sets;
-	private final CardTranslationRepository translations;
+	private final CardStockService stock;
 	private final OrderNumberGenerator numbers;
 	private final String currency;
 	private final BigDecimal shippingFee;
 	private final long expireMinutes;
 	private final ApplicationEventPublisher events;
 
-	public OrderService(ShopOrderRepository orders, PaymentRepository payments, CardRepository cards,
-			CardSetRepository sets, CardTranslationRepository translations, OrderNumberGenerator numbers,
+	public OrderService(ShopOrderRepository orders, PaymentRepository payments, CardStockService stock,
+			OrderNumberGenerator numbers,
 			@Value("${argo.order.currency}") String currency,
 			@Value("${argo.order.shipping-fee}") BigDecimal shippingFee,
 			@Value("${argo.order.expire-minutes}") long expireMinutes,
 			ApplicationEventPublisher events) {
 		this.orders = orders;
 		this.payments = payments;
-		this.cards = cards;
-		this.sets = sets;
-		this.translations = translations;
+		this.stock = stock;
 		this.numbers = numbers;
 		this.currency = currency;
 		this.shippingFee = shippingFee.setScale(2, RoundingMode.HALF_UP);
@@ -78,33 +66,12 @@ public class OrderService {
 			}
 		}
 
-		Map<Long, Card> found = cards.findAllById(wanted.keySet()).stream()
-				.collect(Collectors.toMap(Card::getId, Function.identity()));
-		Map<String, CardTranslation> trs = translationsFor(locale, found.values());
-
 		ShopOrder order = new ShopOrder(newOrderNo(), currency, locale);
 		order.assignCustomer(customerId);
 		BigDecimal subtotal = BigDecimal.ZERO;
-		// 依編號排序處理，避免死鎖
-		for (Map.Entry<Long, Integer> e : wanted.entrySet()) {
-			Card card = found.get(e.getKey());
-			Map<String, String> detail = Map.of("cardId", String.valueOf(e.getKey()));
-			if (card == null) {
-				throw new ApiException(ErrorCode.ITEM_NOT_FOUND, detail);
-			}
-			// 系列下架的卡不可購買
-			boolean onSale = sets.findById(card.getSetId()).map(CardSet::isOnSale).orElse(false);
-			if (!onSale || card.getStock() <= 0 || card.getSalePrice().signum() <= 0) {
-				throw new ApiException(ErrorCode.ITEM_UNAVAILABLE, detail);
-			}
-			// 單一語句扣庫存，擋住同時下單
-			if (cards.decrementStock(card.getId(), e.getValue()) == 0) {
-				throw new ApiException(ErrorCode.INSUFFICIENT_STOCK, detail);
-			}
-			CardTranslation tr = trs.get(card.getCardSetId());
-			OrderItem item = new OrderItem(card.getId(), card.getCardSetId(),
-					tr != null ? tr.getCardName() : card.getCardName(), card.getCardName(),
-					card.getImageUrl(), card.getSalePrice(), e.getValue());
+		for (CardStockService.Reserved r : stock.reserve(wanted, locale)) {
+			OrderItem item = new OrderItem(r.cardId(), r.cardSetId(), r.name(), r.originalName(),
+					r.imageUrl(), r.unitPrice(), r.quantity());
 			order.addItem(item);
 			subtotal = subtotal.add(item.getSubtotal());
 		}
@@ -192,7 +159,7 @@ public class OrderService {
 		order.markCancelled(reason);
 		order.getItems().stream()
 				.sorted(Comparator.comparing(OrderItem::getCardId))
-				.forEach(i -> cards.incrementStock(i.getCardId(), i.getQuantity()));
+				.forEach(i -> stock.release(i.getCardId(), i.getQuantity()));
 		events.publishEvent(OrderNotice.of(OrderNotice.Kind.CANCELLED, order));
 	}
 
@@ -209,15 +176,6 @@ public class OrderService {
 			}
 		}
 		throw new IllegalStateException("無法產生訂單編號");
-	}
-
-	private Map<String, CardTranslation> translationsFor(String locale, java.util.Collection<Card> list) {
-		if (Locales.isDefault(locale) || list.isEmpty()) {
-			return Map.of();
-		}
-		List<String> ids = list.stream().map(Card::getCardSetId).distinct().toList();
-		return translations.findByLocaleAndCardSetIdIn(locale, ids).stream()
-				.collect(Collectors.toMap(CardTranslation::getCardSetId, Function.identity()));
 	}
 
 	private static ApiException notFound() {
