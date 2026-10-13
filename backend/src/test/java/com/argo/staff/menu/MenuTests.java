@@ -56,7 +56,7 @@ class MenuTests {
 				codes(menus.menuFor(StaffRole.ADMIN, LoginPortal.ADMIN)));
 		assertEquals(List.of("order", "order.list", "order.manage"), codes(menus.menuFor(StaffRole.SERVICE, LoginPortal.ADMIN)));
 		assertEquals(List.of("audit", "audit.logs", "security", "security.ips", "security.ips.block",
-				"security.rules", "security.rules.edit"),
+				"security.rules", "security.rules.edit", "system", "system.monitor"),
 				codes(menus.menuFor(StaffRole.OPS, LoginPortal.OPS)));
 		assertEquals(List.of(), codes(menus.menuFor(StaffRole.ADMIN, LoginPortal.OPS)));
 		assertEquals(List.of(), codes(menus.menuFor(StaffRole.OPS, LoginPortal.ADMIN)));

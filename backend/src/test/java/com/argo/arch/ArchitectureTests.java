@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 class ArchitectureTests {
 
 	private static final List<String> PACKAGES = List.of("common", "staff", "customer", "card", "card.admin",
-			"order", "order.admin", "security", "security.net", "security.block", "security.guard", "security.web", "config");
+			"order", "order.admin", "monitor", "security", "security.net", "security.block", "security.guard", "security.web", "config");
 
 	// 依賴指向方向，箭頭左邊不可用右邊
 	private static ArchRule forbid(String from, String... to) {
@@ -74,6 +74,13 @@ class ArchitectureTests {
 
 	@ArchTest
 	static final ArchRule securityLayer = forbid("security", "customer", "card", "order", "config");
+
+	@ArchTest
+	static final ArchRule monitorLayer = forbid("monitor", "customer", "card", "order", "security", "config");
+
+	@ArchTest
+	static final ArchRule nobodyUsesMonitor = noClasses().that().resideOutsideOfPackage("com.argo.monitor..")
+			.should().dependOnClassesThat(resideInAnyPackage(prefixed("monitor")));
 
 	@ArchTest
 	static final ArchRule nobodyUsesConfig = noClasses().that().resideOutsideOfPackage("com.argo.config..")
