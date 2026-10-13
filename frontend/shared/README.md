@@ -9,6 +9,6 @@
   - `utils/`：選單、角色名稱、錯誤文字（`createErrorTexts`）。
   - `config.ts`：`StaffConfig`，兩個後台的差異（名稱、頁面、API、錯誤文字）都由它傳入。
   - `assets/main.css`：後台共用樣式。
-- `src/__tests__/`：共用程式碼的測試，由業務後台的 vitest 一併執行。
+- `tests/`：共用程式碼的測試，由業務後台的 vitest 一併執行。
 
 共用程式碼裡的 `vue`、`vue-router` 由各專案自己的 `node_modules` 解析（`resolve.dedupe` 與 tsconfig `paths`）。共用程式碼不可使用 `@/`，那是各專案自己的 `src`。

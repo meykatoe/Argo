@@ -8,7 +8,7 @@ export default mergeConfig(
     test: {
       environment: 'jsdom',
       // 共用程式碼的測試也在這裡跑
-      include: ['src/**/*.spec.ts', '../shared/src/**/*.spec.ts'],
+      include: ['tests/**/*.spec.ts', '../shared/tests/**/*.spec.ts'],
       exclude: [...configDefaults.exclude, 'e2e/**'],
       root: fileURLToPath(new URL('./', import.meta.url)),
     },
