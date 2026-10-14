@@ -51,6 +51,7 @@ public enum ErrorCode {
 	CARD_DECLINED(5003, HttpStatus.PAYMENT_REQUIRED, "發卡行拒絕交易"),
 	INSUFFICIENT_FUNDS(5004, HttpStatus.PAYMENT_REQUIRED, "信用卡餘額不足"),
 	PROCESSING_ERROR(5005, HttpStatus.PAYMENT_REQUIRED, "付款處理發生錯誤"),
+	PAYMENT_UNAVAILABLE(5006, HttpStatus.NOT_FOUND, "目前的付款模式不提供此操作"),
 
 	// IP 防護
 	IP_BLOCKED(6001, HttpStatus.FORBIDDEN, "來源 IP 已被封鎖"),

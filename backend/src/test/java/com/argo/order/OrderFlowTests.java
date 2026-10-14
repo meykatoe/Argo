@@ -2,7 +2,7 @@ package com.argo.order;
 
 import static com.argo.order.OrderTestSupport.EMAIL;
 import static com.argo.order.OrderTestSupport.card;
-import static com.argo.order.OrderTestSupport.pay;
+import static com.argo.order.OrderTestSupport.start;
 import static com.argo.order.OrderTestSupport.request;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -113,57 +113,66 @@ class OrderFlowTests {
 	}
 
 	@Test
-	void payWithGoodCard() {
+	void startRecordsPendingPaymentInTwd() {
 		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
-		OrderView paid = payments.pay(o.orderNo(), pay("4242 4242 4242 4242"));
+		assertNotNull(o.totalTwd());
+		assertEquals(o.totalTwd(), Math.round(o.total().doubleValue() * o.fxRate().doubleValue()));
+		PayStart s = payments.start(o.orderNo(), EMAIL);
+		assertEquals("FAKE", s.mode());
+		assertTrue(s.tradeNo().matches("^[A-Za-z0-9]{1,20}$"));
+		assertEquals("PENDING", orders.get(o.orderNo(), EMAIL).payment().status());
+		assertEquals(OrderStatus.PENDING_PAYMENT, orders.get(o.orderNo(), EMAIL).status());
+		// 每次嘗試的交易編號不同
+		assertTrue(!s.tradeNo().equals(payments.start(o.orderNo(), EMAIL).tradeNo()));
+	}
+
+	@Test
+	void fakeSuccessMarksPaid() {
+		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
+		OrderView paid = payments.completeFake(o.orderNo(), EMAIL, start(payments, o.orderNo()), true);
 		assertEquals(OrderStatus.PAID, paid.status());
 		assertNotNull(paid.paidAt());
 		assertEquals("SUCCEEDED", paid.payment().status());
-		assertEquals("4242", paid.payment().cardLast4());
-		// 資料庫不應有完整卡號
-		Integer leaked = jdbc.queryForObject(
-				"select count(*) from payment where card_last4 <> '4242' or length(card_last4) <> 4"
-						+ " and order_id = (select id from shop_order where order_no = ?)",
-				Integer.class, o.orderNo());
-		assertEquals(0, leaked);
 	}
 
 	@Test
-	void declinedCardKeepsOrderPendingAndAllowsRetry() {
+	void fakeFailureKeepsOrderPendingAndAllowsRetry() {
 		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
-		assertEquals("CARD_DECLINED", code(() -> payments.pay(o.orderNo(), pay("4000000000000002"))));
-		OrderView after = orders.get(o.orderNo(), EMAIL);
-		assertEquals(OrderStatus.PENDING_PAYMENT, after.status());
-		assertEquals("FAILED", after.payment().status());
-		assertEquals("CARD_DECLINED", after.payment().failureCode());
-		assertEquals(OrderStatus.PAID, payments.pay(o.orderNo(), pay("4242424242424242")).status());
+		OrderView failed = payments.completeFake(o.orderNo(), EMAIL, start(payments, o.orderNo()), false);
+		assertEquals(OrderStatus.PENDING_PAYMENT, failed.status());
+		assertEquals("FAILED", failed.payment().status());
+		assertEquals("FAKE_DECLINED", failed.payment().failureCode());
+		assertEquals(OrderStatus.PAID,
+				payments.completeFake(o.orderNo(), EMAIL, start(payments, o.orderNo()), true).status());
 	}
 
 	@Test
-	void otherFailureCodes() {
+	void repeatedCompletionIsIgnored() {
 		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
-		assertEquals("INSUFFICIENT_FUNDS", code(() -> payments.pay(o.orderNo(), pay("4000000000009995"))));
-		assertEquals("PROCESSING_ERROR", code(() -> payments.pay(o.orderNo(), pay("4000000000000119"))));
+		String trade = start(payments, o.orderNo());
+		payments.completeFake(o.orderNo(), EMAIL, trade, true);
+		OrderView again = payments.completeFake(o.orderNo(), EMAIL, trade, false);
+		assertEquals(OrderStatus.PAID, again.status());
+		assertEquals("SUCCEEDED", again.payment().status());
 	}
 
 	@Test
-	void rejectsBadCards() {
+	void startChecksEmailAndState() {
 		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
-		assertEquals("INVALID_CARD", code(() -> payments.pay(o.orderNo(), pay("4242424242424241"))));
-		assertEquals("INVALID_CARD", code(() -> payments.pay(o.orderNo(), pay("1234"))));
-		var expired = new PayRequest(EMAIL, new PayRequest.Card("4242424242424242", 1, 2020, "123", "W"));
-		assertEquals("CARD_EXPIRED", code(() -> payments.pay(o.orderNo(), expired)));
-		var wrongMail = new PayRequest("x@test.local", new PayRequest.Card("4242424242424242", 12, 2099, "123", "W"));
-		assertEquals("ORDER_NOT_FOUND", code(() -> payments.pay(o.orderNo(), wrongMail)));
+		assertEquals("ORDER_NOT_FOUND", code(() -> payments.start(o.orderNo(), "x@test.local")));
 		assertNull(orders.get(o.orderNo(), EMAIL).payment());
+		payments.completeFake(o.orderNo(), EMAIL, start(payments, o.orderNo()), true);
+		assertEquals("ORDER_NOT_PAYABLE", code(() -> payments.start(o.orderNo(), EMAIL)));
+		assertEquals("ORDER_NOT_CANCELLABLE", code(() -> orders.cancel(o.orderNo(), EMAIL)));
 	}
 
 	@Test
-	void cannotPayTwice() {
-		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
-		payments.pay(o.orderNo(), pay("4242424242424242"));
-		assertEquals("ORDER_NOT_PAYABLE", code(() -> payments.pay(o.orderNo(), pay("4242424242424242"))));
-		assertEquals("ORDER_NOT_CANCELLABLE", code(() -> orders.cancel(o.orderNo(), EMAIL)));
+	void fakeCompleteNeedsOwnTradeNo() {
+		OrderView o1 = orders.create(request(a.getId(), 1L), "en", null);
+		OrderView o2 = orders.create(request(a.getId(), 1L), "en", null);
+		String trade1 = start(payments, o1.orderNo());
+		assertEquals("ORDER_NOT_FOUND", code(() -> payments.completeFake(o2.orderNo(), EMAIL, trade1, true)));
+		assertEquals("ORDER_NOT_FOUND", code(() -> payments.completeFake(o1.orderNo(), EMAIL, "nope", true)));
 	}
 
 	@Test
@@ -174,7 +183,7 @@ class OrderFlowTests {
 		assertEquals(OrderStatus.CANCELLED, c.status());
 		assertEquals("CUSTOMER", c.cancelReason());
 		assertEquals(5, stock(a));
-		assertEquals("ORDER_NOT_PAYABLE", code(() -> payments.pay(o.orderNo(), pay("4242424242424242"))));
+		assertEquals("ORDER_NOT_PAYABLE", code(() -> payments.start(o.orderNo(), EMAIL)));
 		assertEquals("ORDER_NOT_CANCELLABLE", code(() -> orders.cancel(o.orderNo(), EMAIL)));
 	}
 
@@ -195,7 +204,7 @@ class OrderFlowTests {
 		OrderView o = orders.create(request(a.getId(), 2L), "en", null);
 		jdbc.update("update shop_order set created_at = now() - interval '2 hours' where order_no = ?", o.orderNo());
 		em.clear();
-		assertEquals("ORDER_EXPIRED", code(() -> payments.pay(o.orderNo(), pay("4242424242424242"))));
+		assertEquals("ORDER_EXPIRED", code(() -> payments.start(o.orderNo(), EMAIL)));
 		assertEquals(OrderStatus.CANCELLED, orders.get(o.orderNo(), EMAIL).status());
 		assertEquals(5, stock(a));
 	}

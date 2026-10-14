@@ -46,8 +46,8 @@ public class OrderController {
 	}
 
 	@PostMapping("/{orderNo}/pay")
-	public Result<OrderView> pay(@PathVariable String orderNo, @Valid @RequestBody PayRequest req) {
-		return Result.ok(payments.pay(orderNo, req));
+	public Result<PayStart> pay(@PathVariable String orderNo, @Valid @RequestBody EmailRequest req) {
+		return Result.ok(payments.start(orderNo, req.email()));
 	}
 
 	@PostMapping("/{orderNo}/cancel")

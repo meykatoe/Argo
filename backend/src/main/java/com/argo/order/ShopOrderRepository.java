@@ -25,6 +25,10 @@ public interface ShopOrderRepository
 	@Query("select o from ShopOrder o where o.orderNo = :orderNo")
 	Optional<ShopOrder> findByOrderNoForUpdate(@Param("orderNo") String orderNo);
 
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select o from ShopOrder o where o.id = :id")
+	Optional<ShopOrder> findByIdForUpdate(@Param("id") Long id);
+
 	// 顧客自己的訂單，新的在前
 	Page<ShopOrder> findByCustomerId(Long customerId, Pageable pageable);
 

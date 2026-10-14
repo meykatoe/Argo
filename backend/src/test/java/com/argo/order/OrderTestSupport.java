@@ -41,7 +41,8 @@ final class OrderTestSupport {
 				new CreateOrderRequest.Shipping("王小明", "0912345678", "100", "台北市", "中正區重慶南路一段 122 號"));
 	}
 
-	static PayRequest pay(String number) {
-		return new PayRequest(EMAIL, new PayRequest.Card(number, 12, 2099, "123", "WANG"));
+	// 開發模式下走完一次付款，回傳交易編號
+	static String start(PaymentService payments, String orderNo) {
+		return payments.start(orderNo, EMAIL).tradeNo();
 	}
 }

@@ -1,7 +1,7 @@
 package com.argo.order;
 
 import static com.argo.order.OrderTestSupport.card;
-import static com.argo.order.OrderTestSupport.pay;
+import static com.argo.order.OrderTestSupport.start;
 import static com.argo.order.OrderTestSupport.request;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -92,14 +92,14 @@ class OrderNoticeEventTests {
 	@Test
 	void successfulPaymentPublishesPaid() {
 		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
-		payments.pay(o.orderNo(), pay("4242424242424242"));
+		payments.completeFake(o.orderNo(), "buyer@test.local", start(payments, o.orderNo()), true);
 		assertEquals(List.of(OrderNotice.Kind.CREATED, OrderNotice.Kind.PAID), kinds());
 	}
 
 	@Test
 	void declinedPaymentPublishesNothingNew() {
 		OrderView o = orders.create(request(a.getId(), 1L), "en", null);
-		assertThrows(ApiException.class, () -> payments.pay(o.orderNo(), pay("4000000000000002")));
+		payments.completeFake(o.orderNo(), "buyer@test.local", start(payments, o.orderNo()), false);
 		assertEquals(List.of(OrderNotice.Kind.CREATED), kinds());
 	}
 

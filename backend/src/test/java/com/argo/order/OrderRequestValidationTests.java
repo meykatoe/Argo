@@ -52,13 +52,4 @@ class OrderRequestValidationTests {
 		assertEquals(1, validator.validate(req(List.of(new CreateOrderRequest.Item(1L, 100)),
 				customer("a@b.co", "0912345678"), shipping("0912345678", "100"))).size());
 	}
-
-	@Test
-	void payRequestChecks() {
-		var good = new PayRequest("a@b.co", new PayRequest.Card("4242424242424242", 12, 2099, "123", "W"));
-		assertTrue(validator.validate(good).isEmpty());
-		var bad = new PayRequest("a@b.co", new PayRequest.Card("4242", 13, 2099, "12", "W"));
-		assertEquals(2, validator.validate(bad).size());
-		assertEquals("Card[****]", good.card().toString());
-	}
 }

@@ -23,6 +23,7 @@ class ResultConventionTests {
 	void everyApiEndpointReturnsResult() {
 		List<HandlerMethod> ours = mapping.getHandlerMethods().values().stream()
 				.filter(h -> h.getBeanType().getName().startsWith("com.argo."))
+				.filter(h -> !h.getBeanType().isAnnotationPresent(RawResponse.class))
 				.toList();
 		assertFalse(ours.isEmpty());
 		List<String> bad = ours.stream().filter(h -> !Result.class.equals(h.getMethod().getReturnType()))

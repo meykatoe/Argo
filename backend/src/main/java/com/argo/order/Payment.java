@@ -13,6 +13,7 @@ import java.time.OffsetDateTime;
 @Table(name = "payment")
 public class Payment {
 
+	public static final String PENDING = "PENDING";
 	public static final String SUCCEEDED = "SUCCEEDED";
 	public static final String FAILED = "FAILED";
 
@@ -41,22 +42,56 @@ public class Payment {
 
 	private String failureCode;
 
+	private String tradeNo;
+
 	@Column(nullable = false)
 	private OffsetDateTime createdAt = OffsetDateTime.now();
+
+	@Column(nullable = false)
+	private OffsetDateTime updatedAt = OffsetDateTime.now();
 
 	protected Payment() {
 	}
 
-	public Payment(Long orderId, String method, String status, BigDecimal amount, String currency,
-			String cardLast4, String transactionId, String failureCode) {
-		this.orderId = orderId;
-		this.method = method;
-		this.status = status;
-		this.amount = amount;
-		this.currency = currency;
-		this.cardLast4 = cardLast4;
+	public static Payment pending(Long orderId, String method, String tradeNo, BigDecimal amount,
+			String currency) {
+		Payment p = new Payment();
+		p.orderId = orderId;
+		p.method = method;
+		p.status = PENDING;
+		p.amount = amount;
+		p.currency = currency;
+		p.tradeNo = tradeNo;
+		return p;
+	}
+
+	public void succeed(String transactionId, String cardLast4) {
+		this.status = SUCCEEDED;
 		this.transactionId = transactionId;
+		this.cardLast4 = cardLast4;
+		this.updatedAt = OffsetDateTime.now();
+	}
+
+	public void fail(String failureCode) {
+		this.status = FAILED;
 		this.failureCode = failureCode;
+		this.updatedAt = OffsetDateTime.now();
+	}
+
+	public String getMethod() {
+		return method;
+	}
+
+	public Long getOrderId() {
+		return orderId;
+	}
+
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
+	public String getTradeNo() {
+		return tradeNo;
 	}
 
 	public String getStatus() {

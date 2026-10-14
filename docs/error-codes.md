@@ -78,6 +78,7 @@
 | 5003 | `CARD_DECLINED` | 402 | 發卡行拒絕交易 |
 | 5004 | `INSUFFICIENT_FUNDS` | 402 | 信用卡餘額不足 |
 | 5005 | `PROCESSING_ERROR` | 402 | 付款處理發生錯誤 |
+| 5006 | `PAYMENT_UNAVAILABLE` | 404 | 目前的付款模式不提供此操作 |
 
 ## 6xxx IP 防護
 
