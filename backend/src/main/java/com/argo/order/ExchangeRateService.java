@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 public class ExchangeRateService {
 
 	private static final Logger log = LoggerFactory.getLogger(ExchangeRateService.class);
+	private static final Duration RETRY = Duration.ofMinutes(1);
 	private static final BigDecimal MAX_RATE = BigDecimal.valueOf(1000);
 
 	// 換算結果：匯率與整數新台幣
@@ -28,6 +29,7 @@ public class ExchangeRateService {
 
 	private BigDecimal cached;
 	private Instant fetchedAt;
+	private Instant retryAt;
 
 	@Autowired
 	public ExchangeRateService(RateSource source, @Value("${argo.fx.ttl-minutes:60}") long ttlMinutes,
@@ -53,6 +55,10 @@ public class ExchangeRateService {
 		if (cached != null && now.isBefore(fetchedAt.plus(ttl))) {
 			return cached;
 		}
+		// 從未成功過時，失敗後一分鐘內不重試
+		if (cached == null && retryAt != null && now.isBefore(retryAt)) {
+			return fallback;
+		}
 		try {
 			BigDecimal fresh = source.usdToTwd();
 			if (fresh.signum() <= 0 || fresh.compareTo(MAX_RATE) > 0) {
@@ -63,6 +69,7 @@ public class ExchangeRateService {
 		} catch (RuntimeException e) {
 			log.warn("fx fetch failed, using {}: {}", cached != null ? "last rate" : "fallback", e.toString());
 			if (cached == null) {
+				retryAt = now.plus(RETRY);
 				return fallback;
 			}
 			fetchedAt = now;

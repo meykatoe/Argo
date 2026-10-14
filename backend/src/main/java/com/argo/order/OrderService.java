@@ -36,13 +36,14 @@ public class OrderService {
 	private final BigDecimal shippingFee;
 	private final long expireMinutes;
 	private final ApplicationEventPublisher events;
+	private final ExchangeRateService fx;
 
 	public OrderService(ShopOrderRepository orders, PaymentRepository payments, CardStockService stock,
 			OrderNumberGenerator numbers,
 			@Value("${argo.order.currency}") String currency,
 			@Value("${argo.order.shipping-fee}") BigDecimal shippingFee,
 			@Value("${argo.order.expire-minutes}") long expireMinutes,
-			ApplicationEventPublisher events) {
+			ApplicationEventPublisher events, ExchangeRateService fx) {
 		this.orders = orders;
 		this.payments = payments;
 		this.stock = stock;
@@ -51,6 +52,7 @@ public class OrderService {
 		this.shippingFee = shippingFee.setScale(2, RoundingMode.HALF_UP);
 		this.expireMinutes = expireMinutes;
 		this.events = events;
+		this.fx = fx;
 	}
 
 	@Transactional
@@ -77,6 +79,9 @@ public class OrderService {
 		}
 
 		order.setAmounts(subtotal, shippingFee);
+		// 綠界只收新台幣，匯率在下單時鎖定
+		var quote = fx.toTwd(order.getTotal());
+		order.setTwd(quote.rate(), quote.twd());
 		var c = req.customer();
 		order.setCustomer(c.name().trim(), c.email().trim().toLowerCase(), c.phone().trim());
 		var s = req.shipping();

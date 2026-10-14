@@ -119,6 +119,8 @@
 					<systemPropertyVariables>
 						<!-- 測試時不自動批次寫入 IP 紀錄，避免測試資料被真的提交 -->
 						<argo.security.flush-millis>3600000</argo.security.flush-millis>
+						<!-- 測試不連外部匯率 API，固定走備援匯率 -->
+						<argo.fx.base-url>http://127.0.0.1:9</argo.fx.base-url>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>

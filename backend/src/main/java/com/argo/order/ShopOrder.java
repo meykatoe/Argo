@@ -71,6 +71,11 @@ public class ShopOrder {
 	@Column(nullable = false)
 	private String lang;
 
+	// 下單當下匯率與新台幣金額
+	private BigDecimal fxRate;
+
+	private Long totalTwd;
+
 	// 訪客訂單為空
 	private Long customerId;
 
@@ -111,6 +116,19 @@ public class ShopOrder {
 		this.subtotal = subtotal;
 		this.shippingFee = shippingFee;
 		this.total = subtotal.add(shippingFee);
+	}
+
+	public void setTwd(BigDecimal fxRate, long totalTwd) {
+		this.fxRate = fxRate;
+		this.totalTwd = totalTwd;
+	}
+
+	public BigDecimal getFxRate() {
+		return fxRate;
+	}
+
+	public Long getTotalTwd() {
+		return totalTwd;
 	}
 
 	public void assignCustomer(Long customerId) {

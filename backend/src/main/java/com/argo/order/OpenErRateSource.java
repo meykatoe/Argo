@@ -1,8 +1,11 @@
 package com.argo.order;
 
 import java.math.BigDecimal;
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -16,7 +19,11 @@ public class OpenErRateSource implements RateSource {
 	private final RestClient client;
 
 	public OpenErRateSource(@Value("${argo.fx.base-url}") String baseUrl) {
-		this.client = RestClient.builder().baseUrl(baseUrl).build();
+		// 逾時要短，避免拖慢下單
+		HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
+		JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(http);
+		factory.setReadTimeout(Duration.ofSeconds(3));
+		this.client = RestClient.builder().baseUrl(baseUrl).requestFactory(factory).build();
 	}
 
 	@Override
