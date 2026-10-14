@@ -25,6 +25,8 @@ export interface Order {
   subtotal: number
   shippingFee: number
   total: number
+  totalTwd: number | null
+  fxRate: number | null
   createdAt: string
   expiresAt: string
   paidAt: string | null
@@ -54,13 +56,9 @@ export interface CreateOrderBody {
   }
 }
 
-export interface PayBody {
-  email: string
-  card: {
-    number: string
-    expMonth: number
-    expYear: number
-    cvc: string
-    holderName: string
-  }
+export interface PayStart {
+  mode: 'ECPAY' | 'FAKE'
+  tradeNo: string
+  action: string | null
+  fields: Record<string, string> | null
 }

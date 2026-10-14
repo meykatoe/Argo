@@ -25,6 +25,8 @@ const router = createRouter({
       name: 'orderDetail',
       component: () => import('@/views/OrderDetailView.vue'),
     },
+    { path: '/pay/result', name: 'payResult', component: () => import('@/views/PayResultView.vue') },
+    { path: '/pay/fake', name: 'payFake', component: () => import('@/views/PayFakeView.vue') },
     {
       path: '/cards',
       name: 'cards',

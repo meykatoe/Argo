@@ -8,6 +8,8 @@ import { getOrderEmail, saveOrderEmail } from '@/utils/orderAccess'
 import OrderDetailView from '@/views/OrderDetailView.vue'
 
 vi.mock('@/api/order', () => ({ getOrder: vi.fn(), payOrder: vi.fn(), cancelOrder: vi.fn() }))
+vi.mock('@/utils/ecpayForm', () => ({ submitForm: vi.fn() }))
+import { submitForm } from '@/utils/ecpayForm'
 import { cancelOrder, getOrder, payOrder } from '@/api/order'
 
 function order(extra: Partial<Order> = {}): Order {
@@ -18,6 +20,8 @@ function order(extra: Partial<Order> = {}): Order {
     subtotal: 3,
     shippingFee: 0,
     total: 3,
+    totalTwd: 96,
+    fxRate: 32,
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 20 * 60_000).toISOString(),
     paidAt: null,
@@ -58,6 +62,7 @@ async function mountOrder(withEmail = true) {
     history: createMemoryHistory(),
     routes: [
       { path: '/orders', component: { template: '<i/>' } },
+      { path: '/pay/fake', name: 'payFake', component: { template: '<i/>' } },
       { path: '/orders/:orderNo', name: 'orderDetail', component: OrderDetailView },
     ],
   })
@@ -68,19 +73,12 @@ async function mountOrder(withEmail = true) {
   return w
 }
 
-async function fillCard(w: Wrapper, number = '4242424242424242') {
-  await w.find('#p-number').setValue(number)
-  await w.find('#p-month').setValue('12')
-  await w.find('#p-year').setValue('2099')
-  await w.find('#p-cvc').setValue('123')
-  await w.find('#p-holder').setValue('WANG')
-}
-
 describe('OrderDetailView', () => {
   beforeEach(() => {
     vi.mocked(getOrder).mockReset()
     vi.mocked(payOrder).mockReset()
     vi.mocked(cancelOrder).mockReset()
+    vi.mocked(submitForm).mockReset()
   })
   afterEach(() => {
     mounted.splice(0).forEach((w) => w.unmount())
@@ -102,7 +100,7 @@ describe('OrderDetailView', () => {
     expect(w.text()).toContain('AR261005-ABC234')
   })
 
-  it('待付款顯示明細、倒數與付款表單', async () => {
+  it('待付款顯示明細、倒數與新台幣金額', async () => {
     vi.mocked(getOrder).mockResolvedValue(order())
     const w = await mountOrder()
     expect(w.text()).toContain('待付款')
@@ -110,61 +108,63 @@ describe('OrderDetailView', () => {
     expect(w.text()).toContain('US$ 3.00')
     expect(w.text()).toContain('免運')
     expect(w.text()).toMatch(/請於 \d{2}:\d{2} 內完成付款/)
-    expect(w.find('#p-number').exists()).toBe(true)
+    expect(w.text()).toContain('NT$ 96')
+    expect(w.text()).toContain('1 USD = 32 TWD')
+    expect(w.find('input').exists()).toBe(false)
   })
 
-  it('卡片資料不正確不會送出', async () => {
+  it('綠界模式送出表單', async () => {
     vi.mocked(getOrder).mockResolvedValue(order())
+    vi.mocked(payOrder).mockResolvedValue({
+      mode: 'ECPAY',
+      tradeNo: 'AR26100501',
+      action: 'https://pay.test/aio',
+      fields: { MerchantID: '1' },
+    })
     const w = await mountOrder()
-    await fillCard(w, '4242424242424241')
-    await w.find('form.pay').trigger('submit')
-    expect(payOrder).not.toHaveBeenCalled()
-    expect(w.text()).toContain('卡號不正確')
+    await w.find('button.primary').trigger('click')
+    await flushPromises()
+    expect(payOrder).toHaveBeenCalledWith('AR261005-ABC234', 'ming@example.com')
+    expect(submitForm).toHaveBeenCalledWith('https://pay.test/aio', { MerchantID: '1' })
+    expect(w.find('button.primary').attributes('disabled')).toBeDefined()
   })
 
-  it('已過期的卡不會送出', async () => {
+  it('模擬模式導向模擬頁', async () => {
     vi.mocked(getOrder).mockResolvedValue(order())
+    vi.mocked(payOrder).mockResolvedValue({ mode: 'FAKE', tradeNo: 'AR26100501', action: null, fields: null })
     const w = await mountOrder()
-    await fillCard(w)
-    await w.find('#p-year').setValue('2020')
-    await w.find('form.pay').trigger('submit')
-    expect(payOrder).not.toHaveBeenCalled()
-    expect(w.text()).toContain('卡片已過期')
+    await w.find('button.primary').trigger('click')
+    await flushPromises()
+    expect(submitForm).not.toHaveBeenCalled()
+    expect(w.vm.$router.currentRoute.value.fullPath).toBe('/pay/fake?order=AR261005-ABC234&trade=AR26100501')
   })
 
-  it('付款成功顯示成功畫面並隱藏表單', async () => {
+  it('開始付款失敗顯示原因並可再試', async () => {
     vi.mocked(getOrder).mockResolvedValue(order())
-    vi.mocked(payOrder).mockResolvedValue(
+    vi.mocked(payOrder).mockRejectedValue(new ApiError(500, 'UNKNOWN'))
+    const w = await mountOrder()
+    await w.find('button.primary').trigger('click')
+    await flushPromises()
+    expect(w.find('[role="alert"]').exists()).toBe(true)
+    expect(w.find('button.primary').attributes('disabled')).toBeUndefined()
+  })
+
+  it('上次付款失敗會提示', async () => {
+    vi.mocked(getOrder).mockResolvedValue(
+      order({ payment: { status: 'FAILED', cardLast4: null, failureCode: 'ECPAY_1', createdAt: '' } }),
+    )
+    const w = await mountOrder()
+    expect(w.text()).toContain('上一次付款沒有成功')
+  })
+
+  it('已付款顯示成功畫面並隱藏付款區', async () => {
+    vi.mocked(getOrder).mockResolvedValue(
       order({ status: 'PAID', paidAt: new Date().toISOString(), payment: { status: 'SUCCEEDED', cardLast4: '4242', failureCode: null, createdAt: '' } }),
     )
     const w = await mountOrder()
-    await w.find('#p-number').setValue('4242 4242 4242 4242')
-    await w.find('#p-month').setValue('12')
-    await w.find('#p-year').setValue('2099')
-    await w.find('#p-cvc').setValue('123')
-    await w.find('#p-holder').setValue('WANG')
-    await w.find('form.pay').trigger('submit')
-    await flushPromises()
-
-    const [no, body] = vi.mocked(payOrder).mock.calls[0]!
-    expect(no).toBe('AR261005-ABC234')
-    expect(body.card).toEqual({ number: '4242424242424242', expMonth: 12, expYear: 2099, cvc: '123', holderName: 'WANG' })
-    expect(body.email).toBe('ming@example.com')
     expect(w.text()).toContain('付款成功')
     expect(w.text()).toContain('末四碼 4242')
-    expect(w.find('#p-number').exists()).toBe(false)
-  })
-
-  it('卡片被拒絕時顯示原因並保留表單', async () => {
-    vi.mocked(getOrder).mockResolvedValue(order())
-    vi.mocked(payOrder).mockRejectedValue(new ApiError(402, 'CARD_DECLINED'))
-    const w = await mountOrder()
-    await fillCard(w, '4000000000000002')
-    await w.find('form.pay').trigger('submit')
-    await flushPromises()
-    expect(w.text()).toContain('信用卡被拒絕')
-    expect(w.find('#p-number').exists()).toBe(true)
-    expect(w.find('form.pay button[type="submit"]').attributes('disabled')).toBeUndefined()
+    expect(w.find('button.primary').exists()).toBe(false)
   })
 
   it('付款逾期會重新載入訂單', async () => {
@@ -173,12 +173,11 @@ describe('OrderDetailView', () => {
       .mockResolvedValueOnce(order({ status: 'CANCELLED', cancelReason: 'EXPIRED' }))
     vi.mocked(payOrder).mockRejectedValue(new ApiError(410, 'ORDER_EXPIRED'))
     const w = await mountOrder()
-    await fillCard(w)
-    await w.find('form.pay').trigger('submit')
+    await w.find('button.primary').trigger('click')
     await flushPromises()
     expect(getOrder).toHaveBeenCalledTimes(2)
     expect(w.text()).toContain('付款逾時，訂單已自動取消')
-    expect(w.find('#p-number').exists()).toBe(false)
+    expect(w.find('button.primary').exists()).toBe(false)
   })
 
   it('可以取消訂單', async () => {

@@ -1,26 +1,21 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ApiError } from '@/api/http'
 import { cancelOrder, getOrder, payOrder } from '@/api/order'
 import FormField from '@/components/FormField.vue'
 import type { Order } from '@/types/order'
 import { useCountdown } from '@/utils/countdown'
 import { errorText } from '@/utils/error'
-import { formatMoney } from '@/utils/format'
+import { submitForm } from '@/utils/ecpayForm'
+import { formatMoney, formatTwd } from '@/utils/format'
 import { forgetOrderEmail, getOrderEmail, saveOrderEmail } from '@/utils/orderAccess'
-import {
-  formatCardNumber,
-  isCardExpired,
-  isCardNumber,
-  isCvc,
-  isEmail,
-  normalizeCardNumber,
-} from '@/utils/validators'
+import { isEmail } from '@/utils/validators'
 
 const { t, locale } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const orderNo = computed(() => route.params.orderNo as string)
 
 const email = ref(getOrderEmail(orderNo.value))
@@ -30,13 +25,9 @@ const order = ref<Order | null>(null)
 const loading = ref(false)
 const loadError = ref('')
 
-const card = reactive({ number: '', month: '', year: '', cvc: '', holder: '' })
-const cardErrors = reactive<Record<string, string>>({})
 const paying = ref(false)
 const payError = ref('')
 const cancelling = ref(false)
-
-const showTestCards = import.meta.env.DEV
 
 const cancelText = computed(() => {
   switch (order.value?.cancelReason) {
@@ -85,44 +76,21 @@ function submitEmail() {
   load()
 }
 
-function onNumberInput(e: Event) {
-  card.number = formatCardNumber((e.target as HTMLInputElement).value)
-}
-
-function validateCard(): boolean {
-  const month = Number(card.month)
-  const year = Number(card.year)
-  cardErrors.number = isCardNumber(card.number) ? '' : 'validation.cardNumber'
-  cardErrors.month = Number.isInteger(month) && month >= 1 && month <= 12 ? '' : 'validation.month'
-  cardErrors.year = Number.isInteger(year) && year >= 2000 && year <= 2200 ? '' : 'validation.year'
-  if (!cardErrors.month && !cardErrors.year && isCardExpired(month, year)) {
-    cardErrors.year = 'validation.cardExpired'
-  }
-  cardErrors.cvc = isCvc(card.cvc) ? '' : 'validation.cvc'
-  cardErrors.holder = card.holder.trim() ? '' : 'validation.required'
-  return Object.values(cardErrors).every((e) => !e)
-}
-
-function clearCard() {
-  card.number = card.month = card.year = card.cvc = card.holder = ''
-}
-
 async function pay() {
   payError.value = ''
-  if (!order.value || !validateCard()) return
+  if (!order.value) return
   paying.value = true
+  let leaving = false
   try {
-    order.value = await payOrder(orderNo.value, {
-      email: email.value,
-      card: {
-        number: normalizeCardNumber(card.number),
-        expMonth: Number(card.month),
-        expYear: Number(card.year),
-        cvc: card.cvc,
-        holderName: card.holder.trim(),
-      },
-    })
-    clearCard()
+    const start = await payOrder(orderNo.value, email.value)
+    if (start.mode === 'FAKE') {
+      leaving = true
+      await router.push({ name: 'payFake', query: { order: orderNo.value, trade: start.tradeNo } })
+    } else if (start.action && start.fields) {
+      // 送出後整頁跳轉，按鈕保持停用
+      leaving = true
+      submitForm(start.action, start.fields)
+    }
   } catch (e) {
     payError.value = errorText(e)
     // 訂單狀態已變，重新取得
@@ -130,7 +98,7 @@ async function pay() {
       load()
     }
   } finally {
-    paying.value = false
+    if (!leaving) paying.value = false
   }
 }
 
@@ -140,7 +108,6 @@ async function cancel() {
   payError.value = ''
   try {
     order.value = await cancelOrder(orderNo.value, email.value)
-    clearCard()
   } catch (e) {
     payError.value = errorText(e)
     load()
@@ -155,8 +122,6 @@ function formatTime(iso: string) {
 
 watch(locale, load)
 onMounted(load)
-// 離開頁面不留卡片資料
-onBeforeUnmount(clearCard)
 </script>
 
 <template>
@@ -233,47 +198,26 @@ onBeforeUnmount(clearCard)
           <p v-if="order.paidAt" class="small">{{ t('order.paidAt') }} {{ formatTime(order.paidAt) }}</p>
         </div>
 
-        <form v-if="pending" class="pay" novalidate @submit.prevent="pay">
+        <div v-if="pending" class="pay">
           <h2>{{ t('payment.title') }}</h2>
           <p class="timer" :class="{ late: expired }">
             {{ expired ? t('order.expired') : t('order.expiresIn', { time: countdown.label.value }) }}
           </p>
-          <p v-if="showTestCards" class="test">{{ t('payment.testHint') }}</p>
-
-          <FormField :label="t('payment.cardNumber')" :error="cardErrors.number" for="p-number">
-            <input
-              id="p-number"
-              :value="card.number"
-              inputmode="numeric"
-              autocomplete="cc-number"
-              placeholder="4242 4242 4242 4242"
-              @input="onNumberInput"
-            />
-          </FormField>
-          <div class="row">
-            <FormField :label="t('payment.month')" :error="cardErrors.month" for="p-month">
-              <input id="p-month" v-model="card.month" inputmode="numeric" maxlength="2" autocomplete="cc-exp-month" />
-            </FormField>
-            <FormField :label="t('payment.year')" :error="cardErrors.year" for="p-year">
-              <input id="p-year" v-model="card.year" inputmode="numeric" maxlength="4" autocomplete="cc-exp-year" />
-            </FormField>
-            <FormField :label="t('payment.cvc')" :error="cardErrors.cvc" for="p-cvc">
-              <input id="p-cvc" v-model="card.cvc" inputmode="numeric" maxlength="4" autocomplete="cc-csc" />
-            </FormField>
-          </div>
-          <FormField :label="t('payment.holder')" :error="cardErrors.holder" for="p-holder">
-            <input id="p-holder" v-model="card.holder" autocomplete="cc-name" />
-          </FormField>
+          <p v-if="order.totalTwd" class="twd">{{ formatTwd(order.totalTwd) }}</p>
+          <p v-if="order.totalTwd && order.fxRate" class="small">
+            {{ t('payment.rate', { rate: order.fxRate, amount: formatTwd(order.totalTwd) }) }}
+          </p>
+          <p v-if="order.payment?.status === 'FAILED'" class="error">{{ t('payment.lastFailed') }}</p>
 
           <p v-if="payError" class="error" role="alert">{{ payError }}</p>
-          <button type="submit" class="primary" :disabled="paying || cancelling || expired">
-            {{ paying ? t('payment.paying') : t('payment.pay', { amount: money(order.total) }) }}
+          <button type="button" class="primary" :disabled="paying || cancelling || expired || !order.totalTwd" @click="pay">
+            {{ paying ? t('payment.paying') : t('payment.pay', { amount: formatTwd(order.totalTwd ?? 0) }) }}
           </button>
           <p class="small">{{ t('payment.secure') }}</p>
           <button type="button" class="ghost" :disabled="paying || cancelling" @click="cancel">
             {{ t('order.cancel') }}
           </button>
-        </form>
+        </div>
       </div>
     </template>
 
@@ -421,28 +365,19 @@ onBeforeUnmount(clearCard)
   font-size: 18px;
 }
 
-.row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
 .timer {
   margin: 0;
   color: #92400e;
 }
 
-.timer.late {
-  color: var(--color-primary);
+.twd {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
 }
 
-.test {
-  margin: 0;
-  padding: 8px 10px;
-  border-radius: 6px;
-  background: #eff6ff;
-  color: #1e40af;
-  font-size: 12px;
+.timer.late {
+  color: var(--color-primary);
 }
 
 .primary {

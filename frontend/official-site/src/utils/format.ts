@@ -35,3 +35,7 @@ const SYMBOLS: Record<string, string> = { USD: 'US$', TWD: 'NT$' }
 export function formatMoney(value: number, currency: string): string {
   return `${SYMBOLS[currency] ?? currency} ${value.toFixed(2)}`
 }
+
+export function formatTwd(value: number): string {
+  return `NT$ ${value.toLocaleString('en-US')}`
+}
