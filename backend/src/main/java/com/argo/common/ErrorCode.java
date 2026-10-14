@@ -46,11 +46,6 @@ public enum ErrorCode {
 	ORDER_STATE_CONFLICT(4009, HttpStatus.CONFLICT, "訂單目前狀態不可執行此操作"),
 
 	// 付款
-	INVALID_CARD(5001, HttpStatus.BAD_REQUEST, "信用卡號不正確"),
-	CARD_EXPIRED(5002, HttpStatus.BAD_REQUEST, "信用卡已過期"),
-	CARD_DECLINED(5003, HttpStatus.PAYMENT_REQUIRED, "發卡行拒絕交易"),
-	INSUFFICIENT_FUNDS(5004, HttpStatus.PAYMENT_REQUIRED, "信用卡餘額不足"),
-	PROCESSING_ERROR(5005, HttpStatus.PAYMENT_REQUIRED, "付款處理發生錯誤"),
 	PAYMENT_UNAVAILABLE(5006, HttpStatus.NOT_FOUND, "目前的付款模式不提供此操作"),
 
 	// IP 防護
