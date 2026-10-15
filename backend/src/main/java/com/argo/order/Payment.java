@@ -17,6 +17,10 @@ public class Payment {
 	public static final String SUCCEEDED = "SUCCEEDED";
 	public static final String FAILED = "FAILED";
 
+	public static final String REFUND_NONE = "NONE";
+	public static final String REFUND_REQUIRED = "REQUIRED";
+	public static final String REFUND_REFUNDED = "REFUNDED";
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -43,6 +47,13 @@ public class Payment {
 	private String failureCode;
 
 	private String tradeNo;
+
+	@Column(nullable = false)
+	private String refundStatus = REFUND_NONE;
+
+	private OffsetDateTime refundedAt;
+
+	private Long refundedBy;
 
 	@Column(nullable = false)
 	private OffsetDateTime createdAt = OffsetDateTime.now();
@@ -78,6 +89,18 @@ public class Payment {
 		this.updatedAt = OffsetDateTime.now();
 	}
 
+	public void requireRefund() {
+		this.refundStatus = REFUND_REQUIRED;
+		this.updatedAt = OffsetDateTime.now();
+	}
+
+	public void markRefunded(Long staffId) {
+		this.refundStatus = REFUND_REFUNDED;
+		this.refundedAt = OffsetDateTime.now();
+		this.refundedBy = staffId;
+		this.updatedAt = this.refundedAt;
+	}
+
 	public String getMethod() {
 		return method;
 	}
@@ -104,6 +127,18 @@ public class Payment {
 
 	public String getFailureCode() {
 		return failureCode;
+	}
+
+	public String getRefundStatus() {
+		return refundStatus;
+	}
+
+	public OffsetDateTime getRefundedAt() {
+		return refundedAt;
+	}
+
+	public Long getRefundedBy() {
+		return refundedBy;
 	}
 
 	public OffsetDateTime getCreatedAt() {
