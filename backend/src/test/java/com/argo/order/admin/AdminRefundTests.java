@@ -96,6 +96,15 @@ class AdminRefundTests {
 	}
 
 	@Test
+	void markRefundedKeepsPaidTime() throws Exception {
+		Payment p = payment("AR-RFT-0005", "ARRFT000501", true);
+		var paid = p.getUpdatedAt();
+		mvc.perform(post("/api/ops/refunds/" + p.getId() + "/refunded").header("Authorization", ops))
+				.andExpect(status().isOk());
+		assertEquals(paid.toInstant(), payments.findById(p.getId()).orElseThrow().getUpdatedAt().toInstant());
+	}
+
+	@Test
 	void notRequiredPaymentIsRefused() throws Exception {
 		Payment p = payment("AR-RFT-0004", "ARRFT000401", false);
 		mvc.perform(post("/api/ops/refunds/" + p.getId() + "/refunded").header("Authorization", ops))

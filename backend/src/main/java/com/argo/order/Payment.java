@@ -98,7 +98,6 @@ public class Payment {
 		this.refundStatus = REFUND_REFUNDED;
 		this.refundedAt = OffsetDateTime.now();
 		this.refundedBy = staffId;
-		this.updatedAt = this.refundedAt;
 	}
 
 	public Long getId() {
