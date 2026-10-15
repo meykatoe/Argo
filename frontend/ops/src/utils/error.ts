@@ -11,5 +11,7 @@ export const { errorText, lockedMessage } = createErrorTexts({
   MENU_NOT_GRANTABLE: '群組不能授權，請授權底下的功能',
   ROLE_PORTAL_MISMATCH: '這個角色不屬於該後台入口',
   PERMISSION_PROTECTED: '這是權限管理本身，不能停用或撤銷運維，否則會鎖死自己',
+  REFUND_NOT_FOUND: '找不到這筆付款，請重新整理後再試',
+  REFUND_NOT_REQUIRED: '這筆付款不需要退款',
   BAD_REQUEST: '查詢條件有誤',
 })

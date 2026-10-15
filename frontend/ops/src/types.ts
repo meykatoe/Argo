@@ -24,6 +24,7 @@ export type AuditAction =
   | 'PERMISSION_REVOKED'
   | 'MENU_ENABLED'
   | 'MENU_DISABLED'
+  | 'REFUND_MARKED'
   | 'AUDIT_LOG_VIEWED'
 
 export interface AuditLog {
@@ -144,4 +145,18 @@ export interface PermissionNode {
 export interface PermissionOverview {
   roles: StaffRole[]
   nodes: PermissionNode[]
+}
+
+export type RefundStatus = 'REQUIRED' | 'REFUNDED'
+
+export interface RefundRow {
+  id: number
+  orderNo: string | null
+  orderStatus: string | null
+  tradeNo: string
+  amount: number
+  currency: string
+  refundStatus: 'NONE' | RefundStatus
+  paidAt: string
+  refundedAt: string | null
 }

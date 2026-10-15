@@ -24,6 +24,7 @@ export const ACTION_LABELS: Record<AuditAction, string> = {
   PERMISSION_REVOKED: '撤銷授權',
   MENU_ENABLED: '啟用選單',
   MENU_DISABLED: '停用選單',
+  REFUND_MARKED: '標記已退款',
   AUDIT_LOG_VIEWED: '查看稽核紀錄',
 }
 
@@ -79,6 +80,8 @@ export function summarize(log: AuditLog): string {
     case 'PERMISSION_GRANTED':
     case 'PERMISSION_REVOKED':
       return `${roleLabel(str(d.role) || null)}：${str(log.targetId)}`
+    case 'REFUND_MARKED':
+      return `${str(d.orderNo)} ${str(d.currency)} ${str(d.amount)}`.trim()
     case 'MENU_ENABLED':
     case 'MENU_DISABLED':
       return str(log.targetId)

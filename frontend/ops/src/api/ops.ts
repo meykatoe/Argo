@@ -1,5 +1,5 @@
 import { request } from '@shared/api'
-import type { AuditAction, AuditLog, IpActivity, IpBlock, MenuNode, Monitor, PageResult, PermissionOverview, Session } from '@/types'
+import type { AuditAction, AuditLog, IpActivity, IpBlock, MenuNode, Monitor, PageResult, PermissionOverview, RefundRow, RefundStatus, Session } from '@/types'
 
 export { ApiError, type Result } from '@shared/api'
 
@@ -69,4 +69,12 @@ export function setGrant(token: string, code: string, role: string, granted: boo
 
 export function setMenuEnabled(token: string, code: string, enabled: boolean): Promise<PermissionOverview> {
   return request(token, 'PATCH', `/ops/permissions/${code}`, {}, { enabled: enabled ? 1 : 0 })
+}
+
+export function listRefunds(token: string, status: RefundStatus, page: number, size: number): Promise<PageResult<RefundRow>> {
+  return request(token, 'GET', '/ops/refunds', { status, page, size })
+}
+
+export function markRefunded(token: string, id: number): Promise<RefundRow> {
+  return request(token, 'POST', `/ops/refunds/${id}/refunded`, {}, {})
 }
