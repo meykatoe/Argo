@@ -74,6 +74,8 @@
 | 錯誤編號 | 錯誤碼 | HTTP 狀態 | 說明 |
 |---|---|---|---|
 | 5006 | `PAYMENT_UNAVAILABLE` | 404 | 目前的付款模式不提供此操作 |
+| 5007 | `REFUND_NOT_FOUND` | 404 | 找不到該筆付款 |
+| 5008 | `REFUND_NOT_REQUIRED` | 409 | 該筆付款不需要退款 |
 
 ## 6xxx IP 防護
 

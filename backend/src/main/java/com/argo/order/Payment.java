@@ -101,6 +101,14 @@ public class Payment {
 		this.updatedAt = this.refundedAt;
 	}
 
+	public Long getId() {
+		return id;
+	}
+
+	public String getCurrency() {
+		return currency;
+	}
+
 	public String getMethod() {
 		return method;
 	}
@@ -131,6 +139,10 @@ public class Payment {
 
 	public String getRefundStatus() {
 		return refundStatus;
+	}
+
+	public OffsetDateTime getUpdatedAt() {
+		return updatedAt;
 	}
 
 	public OffsetDateTime getRefundedAt() {

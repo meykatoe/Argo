@@ -47,6 +47,8 @@ public enum ErrorCode {
 
 	// 付款
 	PAYMENT_UNAVAILABLE(5006, HttpStatus.NOT_FOUND, "目前的付款模式不提供此操作"),
+	REFUND_NOT_FOUND(5007, HttpStatus.NOT_FOUND, "找不到該筆付款"),
+	REFUND_NOT_REQUIRED(5008, HttpStatus.CONFLICT, "該筆付款不需要退款"),
 
 	// IP 防護
 	IP_BLOCKED(6001, HttpStatus.FORBIDDEN, "來源 IP 已被封鎖"),
