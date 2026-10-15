@@ -125,6 +125,7 @@ public class PaymentService {
 			events.publishEvent(OrderNotice.of(OrderNotice.Kind.PAID, order));
 		} else {
 			// 款已收但訂單已取消，需人工退款
+			p.requireRefund();
 			log.error("payment succeeded for non-payable order {} status={}", order.getOrderNo(), order.getStatus());
 		}
 	}

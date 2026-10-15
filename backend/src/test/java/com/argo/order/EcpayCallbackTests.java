@@ -165,5 +165,29 @@ class EcpayCallbackTests {
 		OrderView after = orders.get(o.orderNo(), EMAIL);
 		assertEquals(OrderStatus.CANCELLED, after.status());
 		assertTrue("SUCCEEDED".equals(after.payment().status()));
+		assertEquals("REQUIRED", refundStatus(trade));
+	}
+
+	@Test
+	void normalPaymentNeedsNoRefund() throws Exception {
+		OrderView o = newOrder();
+		String trade = payments.start(o.orderNo(), EMAIL).tradeNo();
+		send("/api/payments/ecpay/notify", signed(trade, o.totalTwd(), "1")).andExpect(content().string("1|OK"));
+		assertEquals("NONE", refundStatus(trade));
+	}
+
+	@Test
+	void repeatedNoticeKeepsRefundRequired() throws Exception {
+		OrderView o = newOrder();
+		String trade = payments.start(o.orderNo(), EMAIL).tradeNo();
+		orders.cancel(o.orderNo(), EMAIL);
+		send("/api/payments/ecpay/notify", signed(trade, o.totalTwd(), "1"));
+		send("/api/payments/ecpay/notify", signed(trade, o.totalTwd(), "1")).andExpect(content().string("1|OK"));
+		assertEquals("REQUIRED", refundStatus(trade));
+	}
+
+	private String refundStatus(String trade) {
+		em.flush();
+		return jdbc.queryForObject("select refund_status from payment where trade_no = ?", String.class, trade);
 	}
 }
