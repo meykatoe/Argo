@@ -1,0 +1,71 @@
+# 開發與試跑用，正式環境請看 docs/deploy.md
+name: argo
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: argo
+      POSTGRES_USER: argo
+      POSTGRES_PASSWORD: "1234"
+    volumes:
+      - dbdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U argo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/argo
+      DB_USER: argo
+      DB_PASSWORD: "1234"
+      ARGO_CORS_ORIGINS: http://localhost:5173,http://localhost:5174,http://localhost:5175
+      ARGO_SITE_URL: http://localhost:5173
+      ARGO_SECURITY_TRUSTED_PROXIES: 172.28.0.0/16
+    ports:
+      - "8080:8080"
+
+  official-site:
+    build: &web-build
+      context: .
+      dockerfile: deploy/web/Dockerfile
+      args: { APP: official-site }
+    depends_on: [backend]
+    environment: &web-env
+      BACKEND_URL: http://backend:8080
+      FORM_ACTION: https://payment-stage.ecpay.com.tw
+    ports:
+      - "5173:80"
+
+  admin:
+    build:
+      <<: *web-build
+      args: { APP: admin }
+    depends_on: [backend]
+    environment: *web-env
+    ports:
+      - "5174:80"
+
+  ops:
+    build:
+      <<: *web-build
+      args: { APP: ops }
+    depends_on: [backend]
+    environment: *web-env
+    ports:
+      - "5175:80"
+
+volumes:
+  dbdata:
