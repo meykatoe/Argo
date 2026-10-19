@@ -6,6 +6,7 @@ import com.argo.card.CardSet;
 import com.argo.card.CardSetRepository;
 import com.argo.card.OptcgCard;
 import java.math.BigDecimal;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ public class CardSyncService {
 	private final CardSetRepository sets;
 
 	private final BigDecimal saleRate;
+	private final AtomicBoolean running = new AtomicBoolean();
 
 	public CardSyncService(OptcgApiClient api, CardRepository cards, CardSetRepository sets,
 			@Value("${argo.pricing.sale-rate}") BigDecimal saleRate) {
@@ -43,6 +45,18 @@ public class CardSyncService {
 	}
 
 	public void syncAll() {
+		// 已在同步就略過
+		if (!running.compareAndSet(false, true)) {
+			return;
+		}
+		try {
+			syncSources();
+		} finally {
+			running.set(false);
+		}
+	}
+
+	private void syncSources() {
 		SOURCES.entrySet().stream()
 				// 固定同步順序
 				.sorted(Map.Entry.comparingByKey())

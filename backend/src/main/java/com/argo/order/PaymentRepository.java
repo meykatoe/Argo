@@ -30,5 +30,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 			+ "and p.method = :method and o.status = :orderStatus "
 			+ "and (p.createdAt < :paymentBefore or o.createdAt < :orderBefore) order by p.id")
 	List<Payment> findReconcilable(@Param("method") String method, @Param("orderStatus") OrderStatus orderStatus,
-			@Param("paymentBefore") OffsetDateTime paymentBefore, @Param("orderBefore") OffsetDateTime orderBefore);
+			@Param("paymentBefore") OffsetDateTime paymentBefore, @Param("orderBefore") OffsetDateTime orderBefore, Pageable limit);
 }

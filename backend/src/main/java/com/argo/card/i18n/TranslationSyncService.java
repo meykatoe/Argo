@@ -3,6 +3,7 @@ package com.argo.card.i18n;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -22,6 +23,8 @@ public class TranslationSyncService {
 	private final CardSetTranslationRepository sets;
 	private final long delayMs;
 
+	private final AtomicBoolean running = new AtomicBoolean();
+
 	public TranslationSyncService(TcSiteClient client, CardTranslationRepository cards,
 			CardSetTranslationRepository sets, @Value("${argo.tc.delay-ms}") long delayMs) {
 		this.client = client;
@@ -31,6 +34,18 @@ public class TranslationSyncService {
 	}
 
 	public void syncAll() throws InterruptedException {
+		// 已在同步就略過
+		if (!running.compareAndSet(false, true)) {
+			return;
+		}
+		try {
+			syncPages();
+		} finally {
+			running.set(false);
+		}
+	}
+
+	private void syncPages() throws InterruptedException {
 		List<TcPageParser.Series> series = TcPageParser.parseSeries(client.fetchIndex());
 		Map<String, TcPageParser.Card> all = new LinkedHashMap<>();
 		for (TcPageParser.Series s : series) {

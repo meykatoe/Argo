@@ -46,7 +46,7 @@ public class EcpayQueryClient implements PaymentQuery {
 					.retrieve().body(String.class);
 			return parse(body);
 		} catch (Exception e) {
-			log.warn("ecpay query failed trade={} error={}", tradeNo, e.toString());
+			log.debug("ecpay query failed trade={} error={}", tradeNo, e.toString());
 			return Optional.empty();
 		}
 	}
@@ -64,7 +64,7 @@ public class EcpayQueryClient implements PaymentQuery {
 			}
 		}
 		if (!ecpay.verify(p)) {
-			log.warn("ecpay query response has a bad signature");
+			log.debug("ecpay query response has a bad signature");
 			return Optional.empty();
 		}
 		try {

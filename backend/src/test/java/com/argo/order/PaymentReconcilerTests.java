@@ -54,7 +54,7 @@ class PaymentReconcilerTests {
 			calls++;
 			return Optional.ofNullable(answers.get(tradeNo));
 		};
-		reconciler = new PaymentReconciler(paymentRepo, payments, stub, 5, 30);
+		reconciler = new PaymentReconciler(paymentRepo, payments, stub, 5, 30, 50);
 		em.clear();
 	}
 
@@ -167,12 +167,24 @@ class PaymentReconcilerTests {
 	}
 
 	@Test
+	void batchLimitCapsQueriesPerRun() {
+		for (int i = 0; i < 3; i++) {
+			pendingEcpay(newOrder());
+		}
+		new PaymentReconciler(paymentRepo, payments, tradeNo -> {
+			calls++;
+			return Optional.empty();
+		}, 5, 30, 2).run();
+		assertEquals(2, calls);
+	}
+
+	@Test
 	void queryFailureIsSwallowed() {
 		OrderView o = newOrder();
 		pendingEcpay(o);
 		PaymentReconciler broken = new PaymentReconciler(paymentRepo, payments, t -> {
 			throw new IllegalStateException("boom");
-		}, 5, 30);
+		}, 5, 30, 50);
 		broken.run();
 		assertEquals(OrderStatus.PENDING_PAYMENT, orders.get(o.orderNo(), EMAIL).status());
 	}

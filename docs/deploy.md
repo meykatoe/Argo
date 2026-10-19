@@ -77,6 +77,8 @@ Spring 會把環境變數轉成設定：大寫、點與連字號改成底線，�
 | `ARGO_MAIL_FROM` | 寄件人（`no-reply@argo.local`） |
 | `SPRING_MAIL_HOST`、`SPRING_MAIL_PORT`、`SPRING_MAIL_USERNAME`、`SPRING_MAIL_PASSWORD` | 設了 host 才會真的寄信，否則只寫進日誌 |
 | `ARGO_PAYMENT_RECONCILE_MINUTES` | 待付款超過幾分鐘就向綠界對帳（`5`） |
+| `ARGO_PAYMENT_RECONCILE_BATCH` | 每次對帳最多處理幾筆（`50`） |
+| `SPRING_TASK_SCHEDULING_POOL_SIZE` | 排程執行緒數（`4`） |
 | `ARGO_ORDER_SHIPPING_FEE` | 運費（`0.00`） |
 | `ARGO_ORDER_EXPIRE_MINUTES` | 未付款保留分鐘數（`30`） |
 | `ARGO_PRICING_SALE_RATE` | 售價倍率（`0.9`） |
