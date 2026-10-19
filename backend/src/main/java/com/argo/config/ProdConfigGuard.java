@@ -45,6 +45,9 @@ public class ProdConfigGuard {
 		if (env.getProperty("argo.ecpay.checkout-url", "").contains("stage")) {
 			problems.add("ARGO_ECPAY_CHECKOUT_URL 不可用測試網址");
 		}
+		if (env.getProperty("argo.ecpay.query-url", "").contains("stage")) {
+			problems.add("ARGO_ECPAY_QUERY_URL 不可用測試網址");
+		}
 		for (String key : List.of("argo.site-url", "argo.payment.api-url", "argo.cors.origins")) {
 			if (isLocal(env.getProperty(key, ""))) {
 				problems.add(key + " 不可指向本機");

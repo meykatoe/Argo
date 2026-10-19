@@ -65,6 +65,16 @@ public class EcpayCheckout {
 		return new Form(checkoutUrl, f);
 	}
 
+	// 查詢交易的參數，時間戳為秒
+	public Map<String, String> queryParams(String tradeNo, long timestamp) {
+		Map<String, String> f = new LinkedHashMap<>();
+		f.put("MerchantID", merchantId);
+		f.put("MerchantTradeNo", tradeNo);
+		f.put("TimeStamp", Long.toString(timestamp));
+		f.put(MAC, mac(f));
+		return f;
+	}
+
 	// 驗證綠界回傳的參數，用常數時間比對
 	public boolean verify(Map<String, String> params) {
 		String given = params.get(MAC);

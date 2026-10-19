@@ -65,6 +65,7 @@ Spring 會把環境變數轉成設定：大寫、點與連字號改成底線，�
 | `ARGO_ECPAY_HASH_KEY` | 綠界 HashKey |
 | `ARGO_ECPAY_HASH_IV` | 綠界 HashIV |
 | `ARGO_ECPAY_CHECKOUT_URL` | 綠界正式結帳網址 |
+| `ARGO_ECPAY_QUERY_URL` | 綠界正式交易查詢網址（`https://payment.ecpay.com.tw/Cashier/QueryTradeInfo/V5`），對帳用，不可為測試網址 |
 | `ARGO_SITE_URL` | 官網公開網址，信件連結與付款後導回用 |
 | `ARGO_CORS_ORIGINS` | 三個前端的網址，逗號分隔，少一個該前端就會出現未知錯誤 |
 | `ARGO_SECURITY_TRUSTED_PROXIES` | 見上節 |
@@ -75,6 +76,7 @@ Spring 會把環境變數轉成設定：大寫、點與連字號改成底線，�
 | --- | --- |
 | `ARGO_MAIL_FROM` | 寄件人（`no-reply@argo.local`） |
 | `SPRING_MAIL_HOST`、`SPRING_MAIL_PORT`、`SPRING_MAIL_USERNAME`、`SPRING_MAIL_PASSWORD` | 設了 host 才會真的寄信，否則只寫進日誌 |
+| `ARGO_PAYMENT_RECONCILE_MINUTES` | 待付款超過幾分鐘就向綠界對帳（`5`） |
 | `ARGO_ORDER_SHIPPING_FEE` | 運費（`0.00`） |
 | `ARGO_ORDER_EXPIRE_MINUTES` | 未付款保留分鐘數（`30`） |
 | `ARGO_PRICING_SALE_RATE` | 售價倍率（`0.9`） |

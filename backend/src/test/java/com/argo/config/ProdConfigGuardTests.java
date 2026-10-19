@@ -16,6 +16,7 @@ class ProdConfigGuardTests {
 				.withProperty("argo.ecpay.hash-key", "realKey")
 				.withProperty("argo.ecpay.hash-iv", "realIv")
 				.withProperty("argo.ecpay.checkout-url", "https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5")
+				.withProperty("argo.ecpay.query-url", "https://payment.ecpay.com.tw/Cashier/QueryTradeInfo/V5")
 				.withProperty("argo.site-url", "https://shop.example.com")
 				.withProperty("argo.payment.api-url", "https://api.example.com")
 				.withProperty("argo.cors.origins", "https://shop.example.com,https://admin.example.com");
@@ -35,10 +36,11 @@ class ProdConfigGuardTests {
 				.withProperty("argo.ecpay.hash-key", "pwFHCqoQZGmho4w6")
 				.withProperty("argo.ecpay.hash-iv", "EkRm7iFT261dpevs")
 				.withProperty("argo.ecpay.checkout-url", "https://payment-stage.ecpay.com.tw/x")
+				.withProperty("argo.ecpay.query-url", "https://payment-stage.ecpay.com.tw/q")
 				.withProperty("argo.site-url", "http://localhost:5173")
 				.withProperty("argo.payment.api-url", "http://localhost:8080")
 				.withProperty("argo.cors.origins", "http://localhost:5173");
-		assertThat(ProdConfigGuard.check(dev)).hasSize(9);
+		assertThat(ProdConfigGuard.check(dev)).hasSize(10);
 	}
 
 	@Test

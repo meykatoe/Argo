@@ -9,14 +9,18 @@ import org.springframework.stereotype.Component;
 public class OrderExpiryScheduler {
 
 	private final OrderService orders;
+	private final PaymentReconciler reconciler;
 
-	public OrderExpiryScheduler(OrderService orders) {
+	public OrderExpiryScheduler(OrderService orders, PaymentReconciler reconciler) {
 		this.orders = orders;
+		this.reconciler = reconciler;
 	}
 
 	// 每分鐘檢查一次
 	@Scheduled(fixedDelay = 60_000, initialDelay = 60_000)
 	public void run() {
+		// 先對帳再取消
+		reconciler.run();
 		orders.expireOverdue();
 	}
 }
