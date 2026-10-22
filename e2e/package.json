@@ -1,0 +1,16 @@
+{
+  "name": "argo-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "browser": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.13.4",
+    "@types/pg": "^8.15.5",
+    "pg": "^8.16.3"
+  }
+}
