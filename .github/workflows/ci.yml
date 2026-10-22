@@ -56,7 +56,7 @@ jobs:
         working-directory: frontend/${{ matrix.app }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -92,7 +92,7 @@ jobs:
           distribution: temurin
           java-version: 25
           cache: maven
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - name: 啟動後端
